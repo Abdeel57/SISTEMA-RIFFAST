@@ -286,6 +286,7 @@ export const MESSAGES = {
 
   // ── Cuenta regresiva ──
   'countdown.until': { es: 'Faltan para el sorteo', en: 'Time left until the draw' },
+  'countdown.remaining': { es: 'Tiempo restante', en: 'Time remaining' },
   'countdown.days': { es: 'Días', en: 'Days' },
   'countdown.day': { es: 'Día', en: 'Day' },
   'countdown.hours': { es: 'Horas', en: 'Hours' },

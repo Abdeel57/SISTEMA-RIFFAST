@@ -579,6 +579,145 @@
   animation: attn-text-pulse 3.4s ease-in-out infinite;
 }
 
+/* ── Cuenta regresiva de metal pulido (RaffleCountdown) ─────────────
+   Placas de acero cromado con los dígitos grabados y un destello de luz que
+   las recorre en ola (cada placa con su retraso, --sheen-delay). En tema
+   oscuro el metal pasa a titanio con dígitos cromados. Todo es fondo/sombra
+   y transform: no repinta texto ni dispara layout en cada cuadro. */
+.metal-tile {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(86, 94, 106, 0.42);
+  border-radius: 16px;
+  /* Bandas claras y oscuras: el reflejo del entorno en un metal pulido. */
+  background: linear-gradient(
+    180deg,
+    #fdfdfe 0%,
+    #e7eaee 17%,
+    #c8cdd4 40%,
+    #f5f7f9 50%,
+    #d2d7dd 58%,
+    #aab1ba 84%,
+    #dde1e6 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.16),
+    0 1px 0 rgba(255, 255, 255, 0.7),
+    0 12px 24px -14px rgba(15, 23, 42, 0.6),
+    0 2px 5px -2px rgba(15, 23, 42, 0.22);
+}
+/* Cepillado: líneas horizontales finísimas sobre el cromo. */
+.metal-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.05) 0 1px,
+    rgba(0, 0, 0, 0.02) 1px 2px
+  );
+  pointer-events: none;
+}
+/* Destello: una franja de luz diagonal que cruza la placa y descansa. */
+.metal-tile::after {
+  content: '';
+  position: absolute;
+  inset: -20% -60%;
+  background: linear-gradient(
+    105deg,
+    transparent 43%,
+    rgba(255, 255, 255, 0.55) 48%,
+    rgba(255, 255, 255, 0.95) 50%,
+    rgba(255, 255, 255, 0.55) 52%,
+    transparent 57%
+  );
+  transform: translateX(-60%);
+  animation: metal-sheen 5.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  animation-delay: var(--sheen-delay, 0s);
+  pointer-events: none;
+}
+@keyframes metal-sheen {
+  0% {
+    transform: translateX(-60%);
+  }
+  30%,
+  100% {
+    transform: translateX(60%);
+  }
+}
+/* Dígitos grabados: acero oscuro con el filo inferior iluminado. */
+.metal-digits {
+  background: linear-gradient(180deg, #4b525c 0%, #1f2329 46%, #3b414a 54%, #121518 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.85));
+  font-variant-numeric: tabular-nums;
+}
+/* Separador: dos remaches cromados en lugar de ":". */
+.metal-rivet {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0%, #c9ced5 45%, #7d858f 100%);
+  box-shadow:
+    0 1px 1px rgba(15, 23, 42, 0.35),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+}
+/* Rótulo delgado con filetes a los lados. */
+.metal-caption::before,
+.metal-caption::after {
+  content: '';
+  height: 1px;
+  width: 28px;
+  background: linear-gradient(90deg, transparent, currentColor);
+  opacity: 0.45;
+}
+.metal-caption::after {
+  background: linear-gradient(90deg, currentColor, transparent);
+}
+
+.dark .metal-tile {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    180deg,
+    #5d6672 0%,
+    #353b44 17%,
+    #1f242b 44%,
+    #3d444e 50%,
+    #262b32 60%,
+    #15181d 86%,
+    #2c3139 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.5),
+    0 12px 26px -12px rgba(0, 0, 0, 0.85);
+}
+.dark .metal-tile::after {
+  background: linear-gradient(
+    105deg,
+    transparent 43%,
+    rgba(255, 255, 255, 0.16) 48%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.16) 52%,
+    transparent 57%
+  );
+}
+.dark .metal-digits {
+  background: linear-gradient(180deg, #ffffff 0%, #dde1e6 44%, #9ba4ae 52%, #f1f3f5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.6));
+}
+.dark .metal-rivet {
+  background: radial-gradient(circle at 35% 30%, #f1f3f5 0%, #8d96a1 50%, #3a4049 100%);
+}
+
 /* ── Editor de texto enriquecido (descripción/cartel) ── */
 .rt-editor,
 .rt-content {

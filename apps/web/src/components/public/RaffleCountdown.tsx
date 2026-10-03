@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { formatDateTime, RaffleStatus } from '@riffast/shared';
 import { useT, useLocale } from '@/store/site';
 
@@ -20,31 +20,27 @@ function breakdown(target: Date, now: number) {
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
-// Una unidad del contador: tarjeta con franja de acento (color del rifero),
-// número grande monoespaciado y etiqueta. `pulse` resalta los segundos.
-function Segment({ value, label, pulse = false }: { value: number; label: string; pulse?: boolean }) {
+// Una unidad del contador: placa de metal pulido con los dígitos grabados.
+// `index` escalona el destello para que recorra las placas en ola.
+function Plate({ value, index }: { value: number; index: number }) {
   return (
-    <div className="relative flex min-w-[54px] flex-col items-center overflow-hidden rounded-2xl border border-foreground/[0.07] bg-gradient-to-b from-muted/20 to-muted/70 px-2.5 py-2.5 shadow-[0_6px_18px_-10px_rgba(0,0,0,0.35)] backdrop-blur-sm sm:min-w-[78px] sm:py-3">
-      <span className="absolute inset-x-0 top-0 h-[3px] bg-[var(--rifero-primary)]" />
-      <span
-        className={`font-mono text-[1.75rem] font-black leading-none tabular-nums text-foreground sm:text-[2.4rem] ${
-          pulse ? 'text-[var(--rifero-primary)]' : ''
-        }`}
-      >
+    <div
+      className="metal-tile grid min-w-[64px] place-items-center px-3 py-3.5 sm:min-w-[88px] sm:px-4 sm:py-4"
+      style={{ '--sheen-delay': `${index * 0.14}s` } as React.CSSProperties}
+    >
+      <span className="metal-digits font-sans text-[2.15rem] font-extrabold leading-none tracking-tight sm:text-[2.9rem]">
         {pad(value)}
-      </span>
-      <span className="mt-2 text-[9px] font-bold uppercase tracking-[0.18em] text-muted-foreground sm:text-[10px]">
-        {label}
       </span>
     </div>
   );
 }
 
-// Separador ":" alineado con los números (ignora la altura de las etiquetas).
-function Colon() {
+// Separador: dos remaches cromados (en lugar de ":").
+function Rivets() {
   return (
-    <span className="-mt-3 self-center font-mono text-2xl font-black leading-none text-foreground/25 sm:text-3xl">
-      :
+    <span className="flex flex-col justify-center gap-2 self-stretch sm:gap-2.5" aria-hidden>
+      <span className="metal-rivet" />
+      <span className="metal-rivet" />
     </span>
   );
 }
@@ -73,28 +69,27 @@ export function RaffleCountdown({ drawDate, status }: Props) {
 
   if (live && target) {
     const { d, h, m, s } = breakdown(target, now);
+    // Solo números: con días → DD HH MM SS; el último día → HH MM SS.
+    const values = d > 0 ? [d, h, m, s] : [h, m, s];
+    // Sin etiquetas visibles: el lector de pantalla recibe el tiempo completo.
+    const spoken = `${tr('countdown.remaining')}: ${d} ${tr(d === 1 ? 'countdown.day' : 'countdown.days')}, ${h} ${tr('countdown.hours')}, ${m} ${tr('countdown.minutes')}, ${s} ${tr('countdown.seconds')}`;
     return (
-      <section className="px-4 pb-4 pt-4 text-foreground">
-        <div className="mx-auto max-w-2xl text-center">
-          {/* Encabezado con punto "en vivo" */}
-          <div className="mb-3 flex items-center justify-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--rifero-primary)] opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--rifero-primary)]" />
-            </span>
-            <p className="text-xs font-bold uppercase tracking-[0.24em] text-[var(--rifero-primary)]">
-              {tr('countdown.until')}
-            </p>
-          </div>
+      <section className="px-4 pb-5 pt-4 text-foreground">
+        <div className="mx-auto max-w-2xl text-center" role="timer" aria-label={spoken}>
+          <p
+            aria-hidden
+            className="metal-caption mb-3.5 flex items-center justify-center gap-3 text-[11px] font-light uppercase tracking-[0.42em] text-muted-foreground sm:text-xs"
+          >
+            {tr('countdown.remaining')}
+          </p>
 
-          <div className="flex items-stretch justify-center gap-1 sm:gap-2">
-            <Segment value={d} label={tr(d === 1 ? 'countdown.day' : 'countdown.days')} />
-            <Colon />
-            <Segment value={h} label={tr('countdown.hours')} />
-            <Colon />
-            <Segment value={m} label={tr('countdown.minutes')} />
-            <Colon />
-            <Segment value={s} label={tr('countdown.seconds')} pulse />
+          <div aria-hidden className="flex items-stretch justify-center gap-2 sm:gap-3">
+            {values.map((value, i) => (
+              <Fragment key={values.length - i}>
+                {i > 0 && <Rivets />}
+                <Plate value={value} index={i} />
+              </Fragment>
+            ))}
           </div>
         </div>
       </section>
