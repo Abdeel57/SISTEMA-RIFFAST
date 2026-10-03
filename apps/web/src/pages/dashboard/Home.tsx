@@ -22,6 +22,7 @@ import { riferoService } from '@/services/riferos';
 import { useAuthStore } from '@/store/auth';
 import { buildRiferoShareUrl } from '@/lib/site';
 import { PageLoader } from '@/components/ui/misc';
+import { useIntroHold } from '@/lib/intro';
 import { PanelHeader, StatTile, SectionLabel, PANEL_CARD } from '@/components/owner/PanelKit';
 import { cn } from '@/lib/cn';
 import { toast } from 'sonner';
@@ -95,6 +96,8 @@ export default function Home() {
     queryKey: ['dashboard-summary'],
     queryFn: raffleService.dashboardSummary,
   });
+  // Al entrar al panel, la intro de Riffast espera a que las métricas estén listas.
+  useIntroHold(summaryQuery.isLoading);
 
   const profileQuery = useQuery({
     queryKey: ['rifero-me'],

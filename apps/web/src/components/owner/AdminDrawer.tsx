@@ -21,6 +21,7 @@ import { cn } from '@/lib/cn';
 import { useNotificationsSummary } from '@/lib/pwa/useNotificationsSummary';
 import { useAuthStore } from '@/store/auth';
 import { LogoMark } from '@/components/brand/LogoMark';
+import { IntroHold } from '@/lib/intro';
 
 function sectionTitle(pathname: string): string {
   if (pathname.startsWith('/admin/ordenes')) return 'Órdenes';
@@ -382,7 +383,15 @@ export function AdminDrawer() {
               'lg:pb-12',
             )}
           >
-            <Suspense fallback={<PageLoader />}>
+            {/* En la primera carga del panel, la intro espera también a la sección. */}
+            <Suspense
+              fallback={
+                <>
+                  <IntroHold />
+                  <PageLoader />
+                </>
+              }
+            >
               <Outlet />
             </Suspense>
           </div>

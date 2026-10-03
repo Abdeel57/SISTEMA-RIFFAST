@@ -11,6 +11,7 @@ import { RequireRifero, RequireGuest, RequireAdmin } from '@/components/RouteGua
 import { OfflineBanner } from '@/components/layout/OfflineBanner';
 import { InstallBanner } from '@/components/layout/InstallBanner';
 import { ThemeController } from '@/components/brand/ThemeController';
+import { useIntroBoot } from '@/lib/intro';
 
 // ── Páginas (lazy) ──────────────────────────────────────────
 const Login = lazy(() => import('@/pages/auth/Login'));
@@ -56,6 +57,9 @@ export function App() {
   useFacebookPixel();
   // Idioma y moneda del sitio ("Modo USA") para todo lo que ve el comprador.
   useSiteConfig();
+  // Intro de Riffast (montada en index.html): sale en cuanto ninguna pantalla
+  // de carga la sostenga.
+  useIntroBoot();
 
   return (
     <>

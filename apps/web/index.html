@@ -12,7 +12,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1, interactive-widget=resizes-content"
     />
-    <meta name="theme-color" content="#03120C" />
+    <meta name="theme-color" content="#008B5A" />
     <meta name="description" content="Aparta tus boletos, paga fácil y recibe tu boleto digital con QR." />
     <!-- Open Graph / vista previa al compartir (WhatsApp, Facebook) -->
     <meta property="og:type" content="website" />
@@ -36,6 +36,42 @@
     />
   </head>
   <body>
+    <!-- Intro de Riffast: el nombre se convierte en trébol mientras la app carga.
+         El div con estilo en línea tapa la página desde el primer pintado; la app
+         la suelta con ready() cuando ya hay contenido (ver src/lib/intro.ts). -->
+    <div id="riffast-intro" style="position:fixed;inset:0;z-index:9999;background:#008B5A"></div>
+    <script src="/riffast-intro.js"></script>
+    <script>
+      (function () {
+        var root = document.documentElement, done = false;
+        document.addEventListener('riffast-intro:done', function () { done = true; }, { once: true });
+        // Red de seguridad: pase lo que pase, la página nunca se queda tapada.
+        function release() {
+          if (done) return;
+          done = true;
+          var el = document.getElementById('riffast-intro');
+          if (el && el.parentNode) el.parentNode.removeChild(el);
+          root.classList.remove('riffast-intro-active');
+        }
+        // Solo cuenta el tiempo con la pestaña visible (en segundo plano la intro se pausa sola).
+        var budget = 9000, last = Date.now();
+        document.addEventListener('visibilitychange', function () { last = Date.now(); });
+        (function watch() {
+          if (done) return;
+          var now = Date.now();
+          if (!document.hidden) budget -= now - last;
+          last = now;
+          if (budget <= 0) release(); else setTimeout(watch, 500);
+        })();
+        try {
+          // Mismas opciones que src/lib/intro.ts. minTime 1.5: sale en cuanto se
+          // forma el trébol si la app ya está lista.
+          window.__riffastIntro = window.RiffastIntro.mount({
+            container: '#riffast-intro', ink: '#FFFFFF', autoReady: false, minTime: 1.5, maxWait: 6
+          });
+        } catch (e) { release(); }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

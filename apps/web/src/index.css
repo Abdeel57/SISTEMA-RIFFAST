@@ -61,6 +61,13 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* Mientras la intro de Riffast tapa la pantalla, la página de abajo no scrollea
+     (la intro pone esta clase en <html> y la quita al terminar). */
+  html.riffast-intro-active,
+  html.riffast-intro-active body {
+    overflow: hidden;
+  }
+
   /* Respetar el notch en móviles */
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom);
@@ -189,42 +196,20 @@
     background-repeat: no-repeat;
     animation: brand-shine 2.1s ease-in-out infinite;
   }
-  /* Aura: halo verde que respira detrás del ícono en la carga a pantalla
-     completa. Da profundidad y "vida" sin distraer del trébol. */
-  @keyframes brand-aura {
-    0%,
-    100% {
-      opacity: 0.4;
-      transform: scale(0.9);
-    }
-    50% {
-      opacity: 0.75;
-      transform: scale(1.08);
-    }
-  }
-  .brand-loader-aura {
-    background-image: radial-gradient(
-      closest-side,
-      rgba(16, 198, 95, 0.5),
-      rgba(0, 184, 107, 0.22) 58%,
-      transparent 74%
-    );
-    filter: blur(16px);
-    animation: brand-aura 2.6s ease-in-out infinite;
-  }
-  /* Respiración sutil del ícono: escala apenas perceptible, sincronizada con el
-     aura, para que el monograma "lata" en lugar de quedar congelado. */
+  /* Respiración del trébol en espera: la misma de la intro de Riffast
+     (BREATH en riffast-intro.js: periodo 3.2 s, amplitud 2.8 %), así la carga a
+     pantalla completa continúa sin salto el último cuadro de la intro. */
   @keyframes brand-breathe {
     0%,
     100% {
       transform: scale(1);
     }
     50% {
-      transform: scale(1.05);
+      transform: scale(1.028);
     }
   }
   .brand-loader-breathe {
-    animation: brand-breathe 2.6s ease-in-out infinite;
+    animation: brand-breathe 3.2s ease-in-out infinite;
   }
   /* Entrada suave del overlay (evita el "parpadeo" duro al montar). */
   @keyframes brand-loader-in {
@@ -238,11 +223,10 @@
   .brand-loader-in {
     animation: brand-loader-in 0.35s ease-out both;
   }
-  /* Accesibilidad: respeta a quien pide menos movimiento — sin barrido, aura
-     fija ni respiración; el ícono queda visible y quieto. */
+  /* Accesibilidad: respeta a quien pide menos movimiento — sin barrido ni
+     respiración; el ícono queda visible y quieto. */
   @media (prefers-reduced-motion: reduce) {
     .brand-loader-shine,
-    .brand-loader-aura,
     .brand-loader-breathe,
     .brand-loader-in {
       animation: none;

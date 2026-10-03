@@ -9,6 +9,7 @@ import { copyToClipboard } from '@/lib/clipboard';
 import { PANEL_CARD } from '@/components/owner/PanelKit';
 import { Button } from '@/components/ui/button';
 import { PageLoader } from '@/components/ui/misc';
+import { useIntroHold } from '@/lib/intro';
 import { cn } from '@/lib/cn';
 
 function MetricCard({
@@ -41,6 +42,8 @@ export default function SellerHome() {
 
   const statsQuery = useQuery({ queryKey: ['seller-stats'], queryFn: () => userService.myStats() });
   const s = statsQuery.data?.stats;
+  // Al entrar al panel, la intro de Riffast espera a que las métricas estén listas.
+  useIntroHold(statsQuery.isLoading);
 
   const shareLink = () => {
     if (!link) return;

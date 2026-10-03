@@ -1,11 +1,23 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth';
 import { PageLoader } from '@/components/ui/misc';
+import { IntroHold } from '@/lib/intro';
+
+// Mientras se verifica la sesión (arranque de la app) la intro de Riffast sigue
+// en pantalla: así el panel o el login aparecen ya listos, sin pasar por el spinner.
+function SessionLoader() {
+  return (
+    <>
+      <IntroHold />
+      <PageLoader />
+    </>
+  );
+}
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAuthStore();
   const location = useLocation();
-  if (!initialized) return <PageLoader />;
+  if (!initialized) return <SessionLoader />;
   if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   return <>{children}</>;
 }
@@ -15,7 +27,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 // limitada y las rutas de administración están protegidas con <RequireAdmin>.
 export function RequireRifero({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAuthStore();
-  if (!initialized) return <PageLoader />;
+  if (!initialized) return <SessionLoader />;
   if (!user) return <Navigate to="/login" replace />;
   // Debe pertenecer a un rifero (dueño con perfil o staff con membresía).
   if (!user.riferoId && user.role !== 'SUPER_ADMIN') return <Navigate to="/" replace />;
@@ -27,7 +39,7 @@ export function RequireRifero({ children }: { children: React.ReactNode }) {
 // a la del backend (requireRifero bloquea a los vendedores en la API).
 export function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAuthStore();
-  if (!initialized) return <PageLoader />;
+  if (!initialized) return <SessionLoader />;
   if (!user) return <Navigate to="/login" replace />;
   const isAdmin = user.role === 'RIFERO' || user.role === 'SUPER_ADMIN';
   if (!isAdmin) return <Navigate to="/admin/inicio" replace />;
@@ -36,7 +48,7 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
 
 export function RequireGuest({ children }: { children: React.ReactNode }) {
   const { user, initialized } = useAuthStore();
-  if (!initialized) return <PageLoader />;
+  if (!initialized) return <SessionLoader />;
   if (user) return <Navigate to="/admin" replace />;
   return <>{children}</>;
 }

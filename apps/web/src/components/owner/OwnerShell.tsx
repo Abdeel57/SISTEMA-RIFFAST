@@ -5,6 +5,7 @@ import { riferoService } from '@/services/riferos';
 import { raffleService } from '@/services/raffles';
 import { useSiteStore } from '@/store/site';
 import { PageLoader } from '@/components/ui/misc';
+import { IntroHold } from '@/lib/intro';
 import { Button } from '@/components/ui/button';
 import PublicRifero from '@/pages/public/PublicRifero';
 
@@ -77,6 +78,9 @@ export function OwnerShell() {
   if (profileQ.isLoading) {
     return (
       <div className="grid min-h-[100dvh] place-items-center">
+        {/* Al abrir el panel (o al entrar tras iniciar sesión) la intro de Riffast
+            sigue en pantalla hasta que el perfil está listo. */}
+        <IntroHold />
         <PageLoader label="Cargando tu página..." />
       </div>
     );

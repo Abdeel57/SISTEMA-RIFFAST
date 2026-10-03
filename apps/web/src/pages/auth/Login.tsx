@@ -8,6 +8,7 @@ import { authService } from '@/services/auth';
 import { useAuthStore } from '@/store/auth';
 import { ApiError } from '@/lib/api';
 import { track, identify } from '@/lib/analytics';
+import { playIntro, afterIntro } from '@/lib/intro';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,10 +34,13 @@ export default function Login() {
   const loginMutation = useMutation({
     mutationFn: (input: LoginInput) => authService.login(input),
     onSuccess: ({ user }) => {
+      // Entrada al panel con la intro de Riffast: tapa la transición y sale
+      // cuando el panel ya cargó su perfil y métricas (ver lib/intro).
+      playIntro();
       setUser(user);
       identify(user.id, { role: user.role });
       track('login_completed');
-      toast.success(`¡Bienvenido de nuevo, ${user.name.split(' ')[0]}!`);
+      afterIntro(() => toast.success(`¡Bienvenido de nuevo, ${user.name.split(' ')[0]}!`));
       navigate('/admin/inicio', { replace: true });
     },
     onError: (err) => {

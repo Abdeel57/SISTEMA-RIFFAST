@@ -192,8 +192,9 @@ export async function renderBrandedIndex(rawHtml: string, request: FastifyReques
   // provocaba un destello a pantalla completa ANTES de que apareciera y otro al
   // desvanecerse. Con este color la carga es continua, y al terminar RiferoTheme
   // cambia fondo y theme-color al color del rifero: aparece todo junto, con el
-  // resto de la página. Debe coincidir con el fondo de BrandLoader.
-  const LOADER_BG = '#03120C';
+  // resto de la página. Debe coincidir con el fondo de la intro de Riffast
+  // (public/riffast-intro.js) y de BrandLoader: verde #008B5A.
+  const LOADER_BG = '#008B5A';
   html = setName(html, 'theme-color', LOADER_BG);
   html = html.replace(/<body(\s[^>]*)?>/i, (_m, attrs: string | undefined) => {
     const a = (attrs ?? '').replace(/\sstyle\s*=\s*"[^"]*"/i, '');

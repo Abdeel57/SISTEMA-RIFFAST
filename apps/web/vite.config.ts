@@ -34,8 +34,10 @@ export default defineConfig({
         name: 'Rifas y sorteos',
         short_name: 'Rifas',
         description: 'Aparta tus boletos, paga fácil y recibe tu boleto digital con QR.',
-        theme_color: '#03120C',
-        background_color: '#03120C',
+        // Verde de la intro: la pantalla de bienvenida de la PWA instalada se
+        // continúa sin salto con la animación de entrada.
+        theme_color: '#008B5A',
+        background_color: '#008B5A',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
