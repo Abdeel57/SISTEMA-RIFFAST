@@ -1,92 +1,110 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import {
+  CreditCard,
+  Eye,
+  FileBarChart,
+  Headset,
+  LayoutDashboard,
+  Palette,
+  Settings,
+  User,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
-import { cn } from '@/lib/cn';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { ListGroup, ListRow } from '@/components/owner/List';
+import { useAssistant } from '@/components/owner/Assistant';
 
 interface RowDef {
   title: string;
   desc?: string;
-  to?: string;
-  action?: 'verPagina' | 'cerrarSesion';
-  danger?: boolean;
+  icon: LucideIcon;
+  to: string;
 }
 
 const GROUPS: { label: string; rows: RowDef[] }[] = [
   {
     label: 'Tu página',
     rows: [
-      { title: 'Apariencia', desc: 'Logo, colores y portada', to: '/admin/diseno' },
-      { title: 'Perfil', desc: 'Nombre, descripción y redes', to: '/admin/perfil' },
+      { title: 'Apariencia', desc: 'Logo, colores y portada', icon: Palette, to: '/admin/diseno' },
+      { title: 'Perfil', desc: 'Nombre, descripción y redes', icon: User, to: '/admin/perfil' },
     ],
   },
   {
     label: 'Cobros',
-    rows: [
-      { title: 'Datos de pago', desc: 'Cuenta, CLABE e instrucciones', to: '/admin/pagos' },
-    ],
+    rows: [{ title: 'Datos de pago', desc: 'Cuenta, CLABE e instrucciones', icon: CreditCard, to: '/admin/pagos' }],
   },
   {
     label: 'Tu negocio',
     rows: [
-      { title: 'Resumen', desc: 'Métricas de tus rifas', to: '/admin/inicio' },
-      { title: 'Reportes', desc: 'Exporta órdenes, boletos y compradores', to: '/admin/reportes' },
-      { title: 'Usuarios y Roles', desc: 'Administradores y vendedores con su link', to: '/admin/usuarios' },
-      { title: 'Ajustes', desc: 'Apartado, comprobantes y ganadores', to: '/admin/configuracion' },
-    ],
-  },
-  {
-    label: 'Cuenta',
-    rows: [
-      { title: 'Ver mi página pública', action: 'verPagina' },
-      { title: 'Cerrar sesión', action: 'cerrarSesion', danger: true },
+      { title: 'Resumen', desc: 'Métricas de tus rifas', icon: LayoutDashboard, to: '/admin/inicio' },
+      { title: 'Reportes', desc: 'Exporta órdenes, boletos y compradores', icon: FileBarChart, to: '/admin/reportes' },
+      { title: 'Usuarios y Roles', desc: 'Administradores y vendedores con su link', icon: Users, to: '/admin/usuarios' },
+      { title: 'Ajustes', desc: 'Apartado, comprobantes y ganadores', icon: Settings, to: '/admin/configuracion' },
     ],
   },
 ];
 
-// Hub de configuración (pestaña "Más"). Diseño tipo ajustes: filas con título +
-// descripción y un chevron discreto. Sin iconos decorativos.
+// Hub de configuración (pestaña "Más"): lista agrupada como Ajustes de iOS.
 export function MoreMenu({ onPick }: { onPick: (to: string) => void }) {
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
+  const { openAssistant } = useAssistant();
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  const handle = async (row: RowDef) => {
-    if (row.to) return onPick(row.to);
-    if (row.action === 'verPagina') return navigate('/');
-    if (row.action === 'cerrarSesion') {
+  const doLogout = async () => {
+    setLoggingOut(true);
+    try {
       await logout();
       navigate('/', { replace: true });
+    } finally {
+      setLoggingOut(false);
+      setConfirmLogout(false);
     }
   };
 
   return (
-    <div className="space-y-7">
+    <div>
       {GROUPS.map((group) => (
-        <section key={group.label}>
-          <h3 className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-            {group.label}
-          </h3>
-          <div className="divide-y overflow-hidden rounded-2xl border bg-card">
-            {group.rows.map((row) => (
-              <button
-                key={row.title}
-                type="button"
-                onClick={() => void handle(row)}
-                className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left transition-colors hover:bg-accent active:bg-accent/70"
-              >
-                <span className="min-w-0">
-                  <span className={cn('block text-[15px] font-medium', row.danger && 'text-destructive')}>
-                    {row.title}
-                  </span>
-                  {row.desc && <span className="mt-0.5 block text-xs text-muted-foreground">{row.desc}</span>}
-                </span>
-                {!row.danger && <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />}
-              </button>
-            ))}
-          </div>
-        </section>
+        <ListGroup key={group.label} header={group.label}>
+          {group.rows.map((row) => (
+            <ListRow key={row.title} icon={row.icon} title={row.title} subtitle={row.desc} onClick={() => onPick(row.to)} />
+          ))}
+        </ListGroup>
       ))}
 
-      <p className="px-1 pb-2 text-center text-[11px] text-muted-foreground/70">Riffast · Panel del rifero</p>
+      <ListGroup header="Ayuda">
+        <ListRow
+          icon={Headset}
+          title="Asistencia 24 h"
+          subtitle="Dudas y cambios en tu administrador"
+          onClick={openAssistant}
+        />
+      </ListGroup>
+
+      <ListGroup header="Cuenta">
+        <ListRow icon={Eye} iconTone="neutral" title="Ver mi página" onClick={() => navigate('/')} />
+      </ListGroup>
+
+      <ListGroup>
+        <ListRow title="Cerrar sesión" destructive center onClick={() => setConfirmLogout(true)} />
+      </ListGroup>
+
+      <p className="px-4 pb-2 pt-6 text-center text-caption text-rf-tertiary">Riffast · Panel del rifero</p>
+
+      <ConfirmDialog
+        open={confirmLogout}
+        onOpenChange={setConfirmLogout}
+        title="¿Cerrar sesión?"
+        description="Para volver a entrar tendrás que escribir tu usuario y contraseña."
+        confirmLabel="Cerrar sesión"
+        destructive
+        loading={loggingOut}
+        onConfirm={() => void doLogout()}
+      />
     </div>
   );
 }

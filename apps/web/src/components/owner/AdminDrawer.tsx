@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  ArrowLeft,
+  ChevronLeft,
   Eye,
   Home,
   Receipt,
@@ -17,12 +17,15 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { PageLoader } from '@/components/ui/misc';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { cn } from '@/lib/cn';
 import { useNotificationsSummary } from '@/lib/pwa/useNotificationsSummary';
 import { useAuthStore } from '@/store/auth';
 import { LogoMark } from '@/components/brand/LogoMark';
 import { IntroHold } from '@/lib/intro';
 import { SurfaceProvider } from '@/components/ui/surface';
+import { HeaderSlotProvider } from '@/components/owner/AdminChrome';
+import { AssistantProvider, AssistantBubble } from '@/components/owner/Assistant';
 
 function sectionTitle(pathname: string): string {
   if (pathname.startsWith('/admin/ordenes')) return 'Órdenes';
@@ -113,12 +116,39 @@ function isNavActive(pathname: string, to: string): boolean {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
+function CountBadge({ count, className }: { count: number; className?: string }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className={cn(
+        'grid h-[18px] min-w-[18px] place-items-center rounded-full bg-rf-danger px-1 text-caption font-semibold leading-none text-white tabular-nums',
+        className,
+      )}
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  );
+}
+
+// ¿Pantalla de escritorio? (la burbuja reserva menos espacio sin barra inferior)
+function useIsDesktop(): boolean {
+  const query = '(min-width: 1024px)';
+  const [match, setMatch] = useState(() => window.matchMedia(query).matches);
+  useEffect(() => {
+    const mql = window.matchMedia(query);
+    const on = () => setMatch(mql.matches);
+    mql.addEventListener('change', on);
+    return () => mql.removeEventListener('change', on);
+  }, []);
+  return match;
+}
+
 // Sidebar de escritorio (lg+): navegación completa, sin tabs inferiores.
 function DesktopSidebar({
   pathname,
   pendingTotal,
   groups,
-  title,
+  subtitle,
   showViewPage,
   onNavigate,
   onLogout,
@@ -126,26 +156,28 @@ function DesktopSidebar({
   pathname: string;
   pendingTotal: number;
   groups: { label: string; items: NavItem[] }[];
-  title: string;
+  subtitle: string;
   showViewPage: boolean;
   onNavigate: (to: string) => void;
   onLogout: () => void;
 }) {
+  const itemClass = 'rf-row flex h-11 w-full items-center gap-3 rounded-[10px] px-3 text-left text-callout outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45';
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r bg-card lg:flex xl:w-72">
+    <aside className="hidden w-[264px] shrink-0 flex-col border-r border-rf-separator bg-rf-surface lg:flex">
       {/* Marca */}
-      <div className="flex h-16 shrink-0 items-center gap-2.5 border-b px-5">
-        <LogoMark className="h-7 w-7" />
-        <span className="font-display text-lg font-extrabold tracking-tight">{title}</span>
+      <div className="flex h-16 shrink-0 items-center gap-3 px-5">
+        <LogoMark className="h-8 w-8" />
+        <div className="min-w-0 leading-tight">
+          <p className="text-body font-semibold">Riffast</p>
+          <p className="text-caption text-rf-secondary">{subtitle}</p>
+        </div>
       </div>
 
       {/* Navegación */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav aria-label="Secciones" className="flex-1 overflow-y-auto px-3 pb-4">
         {groups.map((group) => (
-          <div key={group.label} className="mb-5">
-            <p className="mb-1.5 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-              {group.label}
-            </p>
+          <div key={group.label} className="pt-4">
+            <p className="px-3 pb-1.5 text-caption font-semibold text-rf-secondary">{group.label}</p>
             <div className="space-y-0.5">
               {group.items.map((item) => {
                 const active = isNavActive(pathname, item.to);
@@ -157,22 +189,16 @@ function DesktopSidebar({
                     onClick={() => onNavigate(item.to)}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors',
-                      active
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                      itemClass,
+                      active ? 'bg-rf-accent/10 font-semibold text-rf-accent hover:bg-rf-accent/10' : 'font-medium text-rf-label',
                     )}
                   >
-                    {active && (
-                      <span className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-primary" aria-hidden />
-                    )}
-                    <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={active ? 2.4 : 2} />
-                    <span className="flex-1 truncate text-left">{item.label}</span>
-                    {item.badge && pendingTotal > 0 && (
-                      <span className="grid h-5 min-w-[20px] place-items-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold leading-none text-white">
-                        {pendingTotal > 99 ? '99+' : pendingTotal}
-                      </span>
-                    )}
+                    <Icon
+                      className={cn('h-5 w-5 shrink-0', active ? 'text-rf-accent' : 'text-rf-secondary')}
+                      strokeWidth={active ? 2.3 : 1.9}
+                    />
+                    <span className="flex-1 truncate">{item.label}</span>
+                    {item.badge && <CountBadge count={pendingTotal} />}
                   </button>
                 );
               })}
@@ -182,23 +208,15 @@ function DesktopSidebar({
       </nav>
 
       {/* Pie: ver página pública + cerrar sesión */}
-      <div className="shrink-0 space-y-0.5 border-t p-3">
+      <div className="shrink-0 space-y-0.5 border-t border-rf-separator p-3">
         {showViewPage && (
-          <button
-            type="button"
-            onClick={() => onNavigate('/')}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <Eye className="h-[18px] w-[18px] shrink-0" />
+          <button type="button" onClick={() => onNavigate('/')} className={cn(itemClass, 'font-medium text-rf-label')}>
+            <Eye className="h-5 w-5 shrink-0 text-rf-secondary" strokeWidth={1.9} />
             Ver mi página
           </button>
         )}
-        <button
-          type="button"
-          onClick={onLogout}
-          className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-        >
-          <LogOut className="h-[18px] w-[18px] shrink-0" />
+        <button type="button" onClick={onLogout} className={cn(itemClass, 'font-medium text-rf-danger')}>
+          <LogOut className="h-5 w-5 shrink-0" strokeWidth={1.9} />
           Cerrar sesión
         </button>
       </div>
@@ -206,6 +224,7 @@ function DesktopSidebar({
   );
 }
 
+// Pestaña de la barra inferior (estilo iOS): ícono + texto, verde si está activa.
 function Tab({
   label,
   icon: Icon,
@@ -223,22 +242,17 @@ function Tab({
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1"
       aria-current={active ? 'page' : undefined}
+      className={cn(
+        'flex h-tabbar min-w-0 flex-1 flex-col items-center justify-center gap-[3px] pt-1 outline-none transition-opacity duration-fast active:opacity-50 focus-visible:bg-rf-fill',
+        active ? 'text-rf-accent' : 'text-rf-secondary',
+      )}
     >
-      <span className={cn('absolute top-0 h-[3px] w-9 rounded-full transition-colors', active ? 'bg-brand' : 'bg-transparent')} />
       <span className="relative">
-        <Icon
-          className={cn('h-[22px] w-[22px] transition-colors', active ? 'text-brand' : 'text-muted-foreground group-hover:text-foreground')}
-          strokeWidth={active ? 2.4 : 2}
-        />
-        {badge !== undefined && badge > 0 && (
-          <span className="absolute -right-2.5 -top-2 grid h-[17px] min-w-[17px] place-items-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
-            {badge > 99 ? '99+' : badge}
-          </span>
-        )}
+        <Icon className="h-6 w-6" strokeWidth={active ? 2.3 : 1.8} />
+        {badge !== undefined && <CountBadge count={badge} className="absolute -right-3 -top-1.5 ring-2 ring-white" />}
       </span>
-      <span className={cn('text-[11px] tracking-tight transition-colors', active ? 'font-bold text-brand' : 'font-medium text-muted-foreground')}>
+      <span className={cn('max-w-full truncate px-1 text-caption leading-none', active ? 'font-semibold' : 'font-medium')}>
         {label}
       </span>
     </button>
@@ -252,17 +266,30 @@ export function AdminDrawer() {
   const logout = useAuthStore((s) => s.logout);
   const role = useAuthStore((s) => s.user?.role);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isDesktop = useIsDesktop();
   // Raíz del panel: los diálogos y hojas se montan aquí para heredar sus tokens.
   const [root, setRoot] = useState<HTMLDivElement | null>(null);
   const surface = useMemo(() => ({ kind: 'admin' as const, container: root }), [root]);
+  // Hueco de la barra superior para la acción de cada pantalla.
+  const [actionSlot, setActionSlot] = useState<HTMLDivElement | null>(null);
+  // Título grande → al hacer scroll se reduce al título de la barra.
+  const [collapsed, setCollapsed] = useState(false);
+  const [confirmLogout, setConfirmLogout] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   // Los vendedores ven un panel reducido (solo su panel y sus ventas).
   const isSeller = role === 'SELLER';
+  const title = sectionTitle(location.pathname);
 
-  const viewMyPage = () => navigate('/');
   const handleLogout = async () => {
-    await logout();
-    navigate('/', { replace: true });
+    setLoggingOut(true);
+    try {
+      await logout();
+      navigate('/', { replace: true });
+    } finally {
+      setLoggingOut(false);
+      setConfirmLogout(false);
+    }
   };
 
   const raffleBack = raffleBackTarget(location.pathname);
@@ -271,10 +298,13 @@ export function AdminDrawer() {
   const isSubScreen = raffleBack !== null || moreBack !== null;
 
   // Cerrar con Escape (escritorio) + bloquear scroll del fondo (la página pública
-  // queda detrás del panel; su scroll no debe filtrarse).
+  // queda detrás del panel; su scroll no debe filtrarse). Si hay un diálogo
+  // abierto, Escape solo cierra el diálogo.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') navigate('/');
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      if (document.querySelector('[role="dialog"]')) return;
+      navigate('/');
     };
     window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
@@ -285,9 +315,27 @@ export function AdminDrawer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Título grande que se reduce: pasado el título, la barra muestra el título
+  // compacto y una línea fina. Un solo listener pasivo + rAF (barato).
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let raf = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setCollapsed(el.scrollTop > 40));
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
   // Al cambiar de pantalla, empezar arriba (evita aterrizar a media lista).
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 });
+    setCollapsed(false);
   }, [location.pathname]);
 
   const onInicio = location.pathname.startsWith('/admin/inicio');
@@ -295,134 +343,162 @@ export function AdminDrawer() {
   const onRifas = location.pathname.startsWith('/admin/rifas');
   const masActive = !onInicio && !onOrdenes && !onRifas;
 
+  // Espacio que la burbuja de Asistencia deja libre abajo: la barra de
+  // pestañas (49 px) o la barra de guardar de las sub-pantallas.
+  const bubbleReserve = isDesktop ? 24 : isSubScreen ? 96 : 49 + 12;
+
+  const backButton = raffleBack ? (
+    <BackButton label="Rifas" onClick={() => navigate(raffleBack)} />
+  ) : moreBack ? (
+    // Las secciones de "Más" solo necesitan "atrás" en móvil (en escritorio
+    // están en el sidebar).
+    <BackButton label="Más" onClick={() => navigate(moreBack)} className="lg:hidden" />
+  ) : null;
+
   return (
     <SurfaceProvider value={surface}>
-    <div ref={setRoot} className="rf-admin fixed inset-0 z-50 flex">
-      {/* Backdrop sólo en tablet (sm–md): deja ver la página detrás, click cierra.
-          En escritorio (lg+) hay sidebar, así que no aplica. */}
-      <button
-        aria-label="Cerrar administrador"
-        onClick={viewMyPage}
-        className="hidden flex-1 animate-fade-in-fast cursor-default bg-black/40 backdrop-blur-[2px] sm:block lg:hidden"
-      />
+      <AssistantProvider>
+        <div ref={setRoot} className="rf-admin fixed inset-0 z-50 flex">
+          {/* Backdrop sólo en tablet (sm–md): deja ver la página detrás, click cierra.
+              En escritorio (lg+) hay sidebar, así que no aplica. */}
+          <button
+            aria-label="Cerrar administrador"
+            onClick={() => navigate('/')}
+            className="hidden flex-1 cursor-default bg-black/30 animate-rf-fade-in sm:block lg:hidden"
+          />
 
-      {/* Sidebar de escritorio */}
-      <DesktopSidebar
-        pathname={location.pathname}
-        pendingTotal={pendingTotal}
-        groups={isSeller ? SELLER_NAV_GROUPS : NAV_GROUPS}
-        title={isSeller ? 'Vendedor' : 'Administrador'}
-        showViewPage={!isSeller}
-        onNavigate={navigate}
-        onLogout={() => void handleLogout()}
-      />
+          {/* Sidebar de escritorio */}
+          <DesktopSidebar
+            pathname={location.pathname}
+            pendingTotal={pendingTotal}
+            groups={isSeller ? SELLER_NAV_GROUPS : NAV_GROUPS}
+            subtitle={isSeller ? 'Vendedor' : 'Administrador'}
+            showViewPage={!isSeller}
+            onNavigate={navigate}
+            onLogout={() => setConfirmLogout(true)}
+          />
 
-      {/* Panel principal: pantalla completa en móvil, drawer en tablet, columna
-          de contenido en escritorio (ocupa el resto junto al sidebar). */}
-      <aside className="flex h-full w-full min-w-0 flex-col border-l bg-background shadow-2xl sm:max-w-lg sm:animate-slide-in-right lg:max-w-none lg:flex-1 lg:border-l-0 lg:shadow-none">
-        {/* Barra superior: atrás contextual + título + ver mi página (móvil) */}
-        <header className="flex shrink-0 items-center gap-1.5 border-b px-3 py-2.5 safe-top sm:px-4 lg:px-8 lg:py-3.5">
-          {raffleBack ? (
-            <button
-              type="button"
-              onClick={() => navigate(raffleBack)}
-              aria-label="Atrás"
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent"
+          {/* Columna principal: pantalla completa en móvil, panel lateral en
+              tablet y columna de contenido en escritorio. */}
+          <section className="relative flex h-full w-full min-w-0 flex-col bg-rf-bg sm:max-w-lg sm:animate-slide-in-right sm:shadow-float lg:max-w-none lg:flex-1 lg:animate-none lg:shadow-none">
+            {/* Barra superior: atrás + título compacto (al hacer scroll) + acción */}
+            <header
+              className={cn(
+                'relative z-20 shrink-0 border-b pt-safe transition-colors duration-base',
+                collapsed ? 'border-rf-separator bg-rf-bg/95' : 'border-transparent bg-rf-bg',
+              )}
             >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-          ) : (
-            moreBack && (
-              // Las secciones de "Más" sólo necesitan "atrás" en móvil (en escritorio
-              // están en el sidebar).
-              <button
-                type="button"
-                onClick={() => navigate(moreBack)}
-                aria-label="Atrás"
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent lg:hidden"
+              <div className="relative mx-auto flex h-navbar max-w-[960px] items-center gap-2 px-2 lg:px-6">
+                <div className="flex min-w-0 flex-1 items-center">{backButton}</div>
+                <p
+                  aria-hidden={!collapsed}
+                  className={cn(
+                    'pointer-events-none absolute left-1/2 max-w-[52%] -translate-x-1/2 truncate text-body font-semibold text-rf-label transition-opacity duration-base',
+                    collapsed ? 'opacity-100' : 'opacity-0',
+                  )}
+                >
+                  {title}
+                </p>
+                <div ref={setActionSlot} className="flex min-w-0 flex-1 items-center justify-end gap-1" />
+                {/* Vendedores: no tienen «Más», así que salen desde aquí (en
+                    escritorio está en el sidebar). */}
+                {isSeller && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmLogout(true)}
+                    className="flex h-11 shrink-0 items-center gap-1.5 rounded-full px-2 text-body font-semibold text-rf-danger outline-none active:opacity-50 focus-visible:ring-2 focus-visible:ring-rf-accent/45 lg:hidden"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    Salir
+                  </button>
+                )}
+              </div>
+            </header>
+
+            {/* Contenido. El padding vive en el wrapper interior (NO en el scroller):
+                el padding del scroller desplaza el anclaje de los elementos sticky. */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain">
+              <div
+                className={cn(
+                  'mx-auto w-full max-w-[960px] px-gutter lg:px-8',
+                  // En sub-pantallas móviles no hay tabs: respetar el home indicator.
+                  isSubScreen ? 'pb-[max(1.25rem,env(safe-area-inset-bottom))]' : 'pb-24',
+                  'lg:pb-16',
+                )}
               >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-            )
-          )}
-          <h2
-            className={cn(
-              'min-w-0 flex-1 truncate font-display text-xl font-extrabold tracking-tight lg:text-2xl',
-              !raffleBack && 'pl-2 lg:pl-0',
-            )}
-          >
-            {sectionTitle(location.pathname)}
-          </h2>
-          {/* "Mi página": en escritorio vive en el sidebar; aquí sólo para móvil/tablet.
-              Los vendedores no administran la página pública, así que ven "Salir". */}
-          {isSeller ? (
-            <button
-              type="button"
-              onClick={() => void handleLogout()}
-              className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive active:bg-accent lg:hidden"
-            >
-              <LogOut className="h-[18px] w-[18px]" />
-              Salir
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={viewMyPage}
-              className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl px-3 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent hover:text-foreground active:bg-accent lg:hidden"
-            >
-              <Eye className="h-[18px] w-[18px]" />
-              Mi página
-            </button>
-          )}
-        </header>
+                <HeaderSlotProvider value={actionSlot}>
+                  {/* Título grande: se va con el scroll y queda el compacto arriba. */}
+                  <h1 className="pb-3 pt-0.5 text-title text-rf-label lg:pt-4">{title}</h1>
+                  {/* En la primera carga del panel, la intro espera también a la sección. */}
+                  <Suspense
+                    fallback={
+                      <>
+                        <IntroHold />
+                        <PageLoader />
+                      </>
+                    }
+                  >
+                    <Outlet />
+                  </Suspense>
+                </HeaderSlotProvider>
+              </div>
+            </div>
 
-        {/* Contenido. El padding vive en el wrapper interior (NO en el scroller):
-            el padding del scroller desplaza el anclaje de los elementos sticky.
-            En escritorio se centra con un ancho cómodo de lectura/trabajo. */}
-        <div ref={scrollRef} className="flex-1 overflow-y-auto overscroll-contain lg:bg-muted/30">
-          <div
-            className={cn(
-              'mx-auto w-full max-w-5xl px-4 pt-4 sm:px-5 lg:px-8 lg:pt-6',
-              // En sub-pantallas móviles no hay tabs: respetar el home indicator.
-              isSubScreen ? 'pb-[max(1.25rem,env(safe-area-inset-bottom))]' : 'pb-8',
-              'lg:pb-12',
+            {/* Barra de pestañas (sólo móvil/tablet). Se oculta en sub-pantallas y en
+                escritorio (que usa el sidebar). El vendedor ve solo su panel y ventas. */}
+            {!isSubScreen && (
+              <nav
+                aria-label="Secciones"
+                className="relative z-20 flex shrink-0 border-t border-rf-separator bg-[rgba(250,250,252,0.97)] pb-safe lg:hidden"
+              >
+                {isSeller ? (
+                  <>
+                    <Tab label="Mi panel" icon={Home} active={onInicio} onClick={() => navigate('/admin/inicio')} />
+                    <Tab label="Mis ventas" icon={Receipt} active={onOrdenes} badge={pendingTotal} onClick={() => navigate('/admin/ordenes')} />
+                  </>
+                ) : (
+                  <>
+                    <Tab label="Inicio" icon={Home} active={onInicio} onClick={() => navigate('/admin/inicio')} />
+                    <Tab label="Órdenes" icon={Receipt} active={onOrdenes} badge={pendingTotal} onClick={() => navigate('/admin/ordenes')} />
+                    <Tab label="Rifas" icon={Ticket} active={onRifas} onClick={() => navigate('/admin/rifas')} />
+                    <Tab label="Más" icon={Menu} active={masActive} onClick={() => navigate('/admin/mas')} />
+                  </>
+                )}
+              </nav>
             )}
-          >
-            {/* En la primera carga del panel, la intro espera también a la sección. */}
-            <Suspense
-              fallback={
-                <>
-                  <IntroHold />
-                  <PageLoader />
-                </>
-              }
-            >
-              <Outlet />
-            </Suspense>
-          </div>
+
+            {/* Asistencia 24 h: burbuja flotante y arrastrable, nunca sobre la barra. */}
+            <AssistantBubble reserve={bubbleReserve} />
+          </section>
+
+          <ConfirmDialog
+            open={confirmLogout}
+            onOpenChange={setConfirmLogout}
+            title="¿Cerrar sesión?"
+            description="Para volver a entrar tendrás que escribir tu usuario y contraseña."
+            confirmLabel="Cerrar sesión"
+            destructive
+            loading={loggingOut}
+            onConfirm={() => void handleLogout()}
+          />
         </div>
-
-        {/* Menú inferior (sólo móvil/tablet). Se oculta en sub-pantallas y en
-            escritorio (que usa el sidebar). El vendedor ve solo su panel y ventas. */}
-        {!isSubScreen && (
-          <nav className="flex shrink-0 items-stretch border-t bg-background/95 backdrop-blur safe-bottom lg:hidden">
-            {isSeller ? (
-              <>
-                <Tab label="Mi panel" icon={Home} active={onInicio} onClick={() => navigate('/admin/inicio')} />
-                <Tab label="Mis ventas" icon={Receipt} active={onOrdenes} badge={pendingTotal} onClick={() => navigate('/admin/ordenes')} />
-              </>
-            ) : (
-              <>
-                <Tab label="Inicio" icon={Home} active={onInicio} onClick={() => navigate('/admin/inicio')} />
-                <Tab label="Órdenes" icon={Receipt} active={onOrdenes} badge={pendingTotal} onClick={() => navigate('/admin/ordenes')} />
-                <Tab label="Rifas" icon={Ticket} active={onRifas} onClick={() => navigate('/admin/rifas')} />
-                <Tab label="Más" icon={Menu} active={masActive} onClick={() => navigate('/admin/mas')} />
-              </>
-            )}
-          </nav>
-        )}
-      </aside>
-    </div>
+      </AssistantProvider>
     </SurfaceProvider>
+  );
+}
+
+function BackButton({ label, onClick, className }: { label: string; onClick: () => void; className?: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        '-ml-1 flex h-11 min-w-0 items-center rounded-full pr-2 text-body text-rf-accent outline-none transition-opacity active:opacity-50 focus-visible:ring-2 focus-visible:ring-rf-accent/45',
+        className,
+      )}
+    >
+      <ChevronLeft className="h-7 w-7 shrink-0" strokeWidth={2.2} />
+      <span className="truncate">{label}</span>
+    </button>
   );
 }
