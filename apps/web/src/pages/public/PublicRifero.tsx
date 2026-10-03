@@ -352,7 +352,9 @@ export default function PublicRifero({ subdomain, previewData }: Props) {
 
   return (
     <RiferoTheme primaryColor={rifero.primaryColor} secondaryColor={rifero.secondaryColor}>
-      <div className="min-h-screen bg-muted/40">
+      {/* Fondo OPACO: RiferoTheme pinta <html>/<body> con el color del rifero
+          (franja de estado del teléfono); un fondo translúcido lo dejaría ver. */}
+      <div className="min-h-screen bg-background">
         {/* ── Portada (banner) ── */}
         <div className="relative h-44 w-full overflow-hidden sm:h-56 lg:h-64">
           {cover ? (

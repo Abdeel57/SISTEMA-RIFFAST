@@ -84,7 +84,9 @@ export default function DigitalTicket() {
 
   return (
     <RiferoTheme primaryColor={ticket?.primaryColor} secondaryColor={ticket?.secondaryColor}>
-      <div className="flex min-h-screen flex-col bg-muted/30">
+      {/* Fondo opaco: un fondo translúcido dejaría ver el color del rifero que
+          RiferoTheme aplica a <html>/<body>. */}
+      <div className="flex min-h-screen flex-col bg-background">
         {/* Encabezado con la marca del organizador */}
         <header className="sticky top-0 z-30 border-b bg-background/90 backdrop-blur safe-top">
           <div className="mx-auto flex h-14 max-w-2xl items-center justify-center px-4 lg:h-16 lg:max-w-5xl lg:px-6">
