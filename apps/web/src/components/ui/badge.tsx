@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/cn';
+import { useAdminSurface } from '@/components/ui/surface';
 
 const badgeVariants = cva(
   'inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors',
@@ -21,10 +22,31 @@ const badgeVariants = cva(
   },
 );
 
+// Insignia del administrador: píldora de 13 px con tono suave del color de estado.
+const adminBadgeVariants = cva(
+  'inline-flex h-6 shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2.5 text-caption font-semibold [&_svg]:h-3.5 [&_svg]:w-3.5',
+  {
+    variants: {
+      variant: {
+        default: 'bg-rf-accent text-white',
+        secondary: 'bg-rf-fill-strong text-rf-label',
+        outline: 'ring-1 ring-inset ring-rf-separator text-rf-label',
+        success: 'bg-rf-accent/[0.12] text-rf-accent',
+        warning: 'bg-rf-warning/[0.12] text-rf-warning',
+        info: 'bg-rf-info/10 text-rf-info',
+        danger: 'bg-rf-danger/10 text-rf-danger',
+        muted: 'bg-rf-fill-strong text-rf-secondary',
+      },
+    },
+    defaultVariants: { variant: 'default' },
+  },
+);
+
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
 
 export function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+  const admin = useAdminSurface();
+  return <div className={cn(admin ? adminBadgeVariants({ variant }) : badgeVariants({ variant }), className)} {...props} />;
 }
 
 export { badgeVariants };

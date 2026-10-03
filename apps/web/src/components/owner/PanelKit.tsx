@@ -1,6 +1,30 @@
+import { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/cn';
+
+// Botón de solo ícono (44×44): «⋯» de las tarjetas, acciones del encabezado.
+// `label` es obligatorio: es lo que lee el lector de pantalla.
+export const IconButton = forwardRef<
+  HTMLButtonElement,
+  React.ButtonHTMLAttributes<HTMLButtonElement> & { icon: LucideIcon; label: string; tone?: 'neutral' | 'accent' }
+>(({ icon: Icon, label, tone = 'neutral', className, type = 'button', ...props }, ref) => (
+  <button
+    ref={ref}
+    type={type}
+    aria-label={label}
+    title={label}
+    className={cn(
+      'rf-press grid h-11 w-11 shrink-0 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45 disabled:opacity-40',
+      tone === 'accent' ? 'text-rf-accent active:bg-rf-accent/10' : 'bg-rf-fill text-rf-label active:bg-rf-fill-strong',
+      className,
+    )}
+    {...props}
+  >
+    <Icon className="h-[22px] w-[22px]" strokeWidth={2} />
+  </button>
+));
+IconButton.displayName = 'IconButton';
 
 // Kit visual del panel del rifero (estética Apple): tarjetas blancas sobre el
 // fondo gris, sin bordes y con sombra mínima; el verde de la marca es el único
