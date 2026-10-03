@@ -1,0 +1,608 @@
+// Bismark — Prisma schema
+// Plataforma SaaS multi-rifero. PostgreSQL.
+//
+// Convenciones:
+// - IDs: cuid()
+// - Timestamps: createdAt / updatedAt en cada modelo principal
+// - Soft delete: campo `status` (DELETED) o `deletedAt` donde aplica
+// - Dinero: enteros en centavos NO; usamos Decimal/Int en pesos. Precios en MXN como Int (pesos enteros).
+//   ticketPrice y montos se guardan como Int (pesos MXN). Para fracciones futuras, migrar a Decimal.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────────────────────
+
+enum UserRole {
+  VISITOR
+  RIFERO // dueño/administrador de un rifero (acceso total al panel)
+  SELLER // vendedor: acceso limitado, solo sus propias ventas
+  SUPER_ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum RiferoStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
+  DELETED
+}
+
+enum PlanStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+  CANCELLED
+}
+
+enum RaffleStatus {
+  DRAFT // creada pero no publicada
+  PUBLISHED // visible públicamente (requiere plan activo)
+  FINISHED // sorteo realizado / cerrada
+  CANCELLED
+}
+
+enum TicketStatus {
+  AVAILABLE // disponible (verde)
+  RESERVED // apartado por comprador, esperando pago (amarillo)
+  PENDING_PAYMENT // comprobante en revisión
+  PAID // pagado (azul)
+  RIFERO_RESERVED // reservado manualmente por el rifero (negro)
+  CANCELLED // cancelado / liberado
+  WINNER // ganador (dorado/morado)
+}
+
+enum OrderStatus {
+  PENDING // creada, sin apartar aún
+  RESERVED // apartada (boletos bloqueados temporalmente)
+  PAID // pago confirmado por el rifero
+  REJECTED // pago rechazado
+  CANCELLED // cancelada por el rifero
+  EXPIRED // tiempo de apartado vencido
+}
+
+enum PaymentMethod {
+  TRANSFER
+  DEPOSIT
+  OTHER
+}
+
+enum PaymentProofStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ActivityType {
+  AUTH
+  RAFFLE
+  ORDER
+  TICKET
+  PAYMENT
+  SUBSCRIPTION
+  ADMIN
+  DRAW
+}
+
+// ─────────────────────────────────────────────────────────────
+// USERS & RIFERO PROFILE
+// ─────────────────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  phone        String?
+  passwordHash String
+  role         UserRole   @default(RIFERO)
+  status       UserStatus @default(ACTIVE)
+
+  // Perfil propio (solo el DUEÑO de un rifero tiene uno). Relación nombrada para
+  // poder coexistir con la membresía de staff de abajo.
+  riferoProfile RiferoProfile? @relation("RiferoOwner")
+
+  // Membresía de staff: a qué rifero pertenece este usuario (admins extra y
+  // vendedores). El dueño deriva su rifero del riferoProfile; el staff, de aquí.
+  memberOfRiferoId String?
+  memberOfRifero   RiferoProfile? @relation("RiferoStaff", fields: [memberOfRiferoId], references: [id], onDelete: Cascade)
+
+  // Código único de vendedor (solo para role SELLER). Alimenta el link de venta.
+  sellerCode String? @unique
+
+  sellerOrders Order[] @relation("OrderSeller")
+
+  activityLogs  ActivityLog[]
+  drawsExecuted Winner[]       @relation("WinnerDrawnBy")
+  passwordResetTokens PasswordResetToken[]
+  pushSubscriptions   PushSubscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([status])
+  @@index([memberOfRiferoId])
+}
+
+// Token de recuperación de contraseña. Se guarda HASHEADO (sha256); el valor en
+// claro sólo viaja en el enlace del correo. De un solo uso y con expiración.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+// Suscripción Web Push de un rifero (organizador). Solo organizadores reciben
+// avisos. Una fila por dispositivo/navegador (endpoint único).
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model RiferoProfile {
+  id         String @id @default(cuid())
+  userId     String @unique
+  user       User   @relation("RiferoOwner", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Staff del rifero: admins extra y vendedores (no dueños).
+  staff      User[] @relation("RiferoStaff")
+
+  publicName String
+  slug       String  @unique // usado como subdominio: <slug>.bismark.com
+  subdomain  String  @unique // normalmente == slug; separado por flexibilidad futura
+  customDomain String? @unique // futuro: dominio propio
+
+  logoUrl     String?
+  coverUrl    String?
+  description String?
+
+  whatsapp        String?
+  whatsappCountry String  @default("MX") // ISO MX/US: define la lada (+52/+1) del WhatsApp de contacto
+  whatsappName    String? // quién atiende ese número (se muestra al comprador)
+  facebook  String?
+  instagram String?
+  tiktok    String?
+
+  // Pixel de Facebook (Meta) del rifero: solo el ID numérico. Vacío = sin pixel.
+  // Se aplica únicamente a las páginas públicas (nunca al panel del admin).
+  facebookPixelId String?
+  // Código de verificación de dominio de Meta (Business Manager → Seguridad de la
+  // marca → Dominios). Solo el valor de `content`. Vacío = no se inyecta nada.
+  facebookDomainVerification String?
+
+  // ── Modo USA ────────────────────────────────────────────────
+  // Idioma de TODO lo que ve el comprador (página pública, boleto digital,
+  // WhatsApp y correos): "es" | "en". El panel del rifero sigue en español.
+  locale   String @default("es")
+  // Moneda en la que se cobran los boletos: "MXN" | "USD". Define el formato de
+  // los precios en la página, los correos y el PDF del boleto.
+  currency String @default("MXN")
+
+  primaryColor   String  @default("#1d4ed8")
+  secondaryColor String  @default("#0f172a")
+  templateKey    String  @default("classic")
+  logoScale      Int     @default(100) // % del tamaño base del logo (50–250)
+  logoGlow       Boolean @default(false) // halo de color detrás del logo (útil para PNG transparentes)
+  publicDarkMode Boolean @default(false) // tema oscuro de la página pública (lo elige el rifero en Apariencia)
+
+  // Configuración de pagos (instrucciones manuales del rifero)
+  payHolderName   String?
+  payBank         String?
+  payClabe        String?
+  payCardNumber   String?
+  payConcept      String?
+  payInstructions    String?
+  payWhatsapp        String?
+  payWhatsappCountry String  @default("MX") // ISO MX/US: lada del WhatsApp de comprobantes
+  payWhatsappName    String? // quién recibe los comprobantes en ese número
+  // Varios métodos de pago (lista JSON de PaymentMethodDTO); los campos pay* de
+  // arriba quedan como compatibilidad (espejo del primer método).
+  paymentMethods  Json?
+  // Preguntas frecuentes personalizadas (lista JSON de {q, a}). Vacía = se
+  // muestran las DEFAULT_FAQS de @bismark/shared en la página pública.
+  faqs            Json    @default("[]")
+
+  // Configuración operativa
+  defaultReserveMinutes Int     @default(120) // tiempo de apartado por defecto
+  allowProofUpload      Boolean @default(true) // recibir comprobantes en la plataforma (single-tenant: activo por defecto)
+  // Liberación automática de apartados vencidos. true (default) = el job libera
+  // los boletos al expirar el apartado sin pago. false = nada se libera solo (el
+  // rifero gestiona manualmente) y las reservas nuevas se crean SIN expiración.
+  autoReleaseExpired    Boolean @default(true)
+  showWinners           Boolean @default(true)
+  useDigitalDraw        Boolean @default(false)
+
+  status   RiferoStatus @default(PENDING)
+  verified Boolean      @default(false) // palomita azul (plan verificado)
+
+  subscriptions Subscription[]
+  raffles       Raffle[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([slug])
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLANS & SUBSCRIPTIONS
+// ─────────────────────────────────────────────────────────────
+
+model Plan {
+  id            String     @id @default(cuid())
+  name          String
+  slug          String     @unique
+  price         Int // MXN pesos enteros (mensual)
+  priceYearly   Int? // MXN pesos enteros (anual); null = sin opción anual
+  currency      String     @default("MXN")
+  billingPeriod String     @default("monthly")
+
+  maxActiveRaffles      Int
+  maxTicketsPerRaffle   Int
+  allowProofUpload      Boolean @default(false)
+  allowMultipleWinners  Boolean @default(false)
+  allowReportsExcel     Boolean @default(false)
+  allowReportsPdf       Boolean @default(false)
+  allowVerificationBadge Boolean @default(false)
+  allowDigitalDraw      Boolean @default(false)
+  allowCustomDomainFuture Boolean @default(false)
+
+  features Json @default("[]") // string[] de features mostradas en la landing
+
+  status    PlanStatus @default(ACTIVE)
+  sortOrder Int        @default(0)
+
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Subscription {
+  id       String             @id @default(cuid())
+  riferoId String
+  rifero   RiferoProfile      @relation(fields: [riferoId], references: [id], onDelete: Cascade)
+  planId   String
+  plan     Plan               @relation(fields: [planId], references: [id])
+  status   SubscriptionStatus @default(PENDING)
+
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([riferoId])
+  @@index([status])
+}
+
+// ─────────────────────────────────────────────────────────────
+// RAFFLES & TICKETS
+// ─────────────────────────────────────────────────────────────
+
+model Raffle {
+  id          String       @id @default(cuid())
+  riferoId    String
+  rifero      RiferoProfile @relation(fields: [riferoId], references: [id], onDelete: Cascade)
+
+  eventNumber Int // consecutivo por rifero: 1, 2, 3 -> e1, e2, e3
+  title       String
+  slug        String
+  description String?
+  prize       String?
+
+  ticketPrice  Int // MXN
+  totalTickets Int
+  ticketFormat Int @default(3) // padding: 3 -> 001, 4 -> 0001, 5 -> 00001
+  ticketStart  Int @default(1)
+  ticketEnd    Int // ticketStart + totalTickets - 1
+  maxTicketsPerOrder Int? // opcional
+
+  startDate DateTime?
+  endDate   DateTime?
+  drawDate  DateTime?
+
+  status RaffleStatus @default(DRAFT)
+  // Visibilidad en la página pública: una rifa PUBLISHED con hidden=true se oculta
+  // del sitio sin cancelarla (toggle "activa / oculta"). Default visible.
+  hidden Boolean @default(false)
+
+  terms               String?
+  paymentInstructions String?
+  reserveMinutes      Int     @default(120)
+
+  allowWinnerPublication Boolean @default(true)
+  useDigitalDraw         Boolean @default(false)
+  showCountdown          Boolean @default(true) // mostrar la cuenta regresiva al sorteo en la rifa pública
+  // Cuántas filas muestra la tabla de precios pública ("N boletos por $X"): de 1 a priceListRows.
+  priceListRows          Int     @default(10)
+  // Selección manual de boletos en la página pública: true = cuadrícula normal;
+  // false = la cuadrícula se oculta y el comprador elige solo con la maquinita.
+  manualSelection        Boolean @default(true)
+  // "Próximamente": la rifa se anuncia en la página (foto, premio y fecha) pero
+  // TODAVÍA no se puede apartar. Es visible como anticipo, no como borrador.
+  comingSoon             Boolean @default(false)
+
+  // Oportunidades por boleto: por cada boleto manual elegido, el comprador recibe
+  // (opportunities - 1) números de regalo del rango de emisiones extra. 1 = sin
+  // regalos (comportamiento original). Emisiones totales = totalTickets * opportunities.
+  // Rango manual: [ticketStart, ticketEnd]. Rango regalo: [ticketEnd+1, ticketStart + emisiones - 1].
+  opportunities  Int     @default(1)
+
+  // Promociones de volumen (listas JSON). Vacías = sólo precio base.
+  // pricingTiers:   [{ minQty, unitPrice }]  → a partir de minQty, cada boleto a unitPrice (a todo el pedido)
+  // pricingBundles: [{ qty, price }]         → qty boletos por price (cantidad exacta)
+  pricingTiers   Json @default("[]")
+  pricingBundles Json @default("[]")
+
+  // Promoción/aviso: tira a todo lo ancho bajo el header de la rifa pública.
+  // Se configura por rifa desde "Promociones" en el panel del rifero.
+  promoEnabled   Boolean @default(false)
+  promoTitle     String?
+  promoSubtitle  String?
+  promoColorFrom String? // hex; null = degradado naranja-rojo por defecto
+  promoColorTo   String?
+
+  images  RaffleImage[]
+  tickets TicketNumber[]
+  orders  Order[]
+  winners Winner[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([riferoId, eventNumber])
+  @@index([riferoId])
+  @@index([status])
+}
+
+model RaffleImage {
+  id       String @id @default(cuid())
+  raffleId String
+  raffle   Raffle @relation(fields: [raffleId], references: [id], onDelete: Cascade)
+  url      String
+  sortOrder Int   @default(0)
+
+  createdAt DateTime @default(now())
+
+  @@index([raffleId])
+}
+
+model TicketNumber {
+  id            String       @id @default(cuid())
+  raffleId      String
+  raffle        Raffle       @relation(fields: [raffleId], references: [id], onDelete: Cascade)
+  number        Int // valor numérico
+  displayNumber String // formateado: "001"
+  status        TicketStatus @default(AVAILABLE)
+
+  // Boleto de regalo (oportunidades). Los regalos NO son seleccionables a mano y
+  // viven en el rango de emisiones extra. parentNumber = número del boleto manual
+  // que lo generó (dentro de la misma rifa); null en boletos manuales.
+  isGift       Boolean @default(false)
+  parentNumber Int?
+
+  buyerId String?
+  buyer   Buyer?  @relation(fields: [buyerId], references: [id])
+  orderId String?
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  reservedUntil DateTime?
+  paidAt        DateTime?
+
+  orderTickets OrderTicket[]
+  winners      Winner[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([raffleId, number])
+  @@index([raffleId, status])
+  @@index([raffleId, updatedAt])
+  // Acelera el muestreo del pool de regalos disponibles por rifa.
+  @@index([raffleId, isGift, status])
+  @@index([orderId])
+  @@index([buyerId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// BUYERS & ORDERS
+// ─────────────────────────────────────────────────────────────
+
+model Buyer {
+  id       String  @id @default(cuid())
+  fullName String
+  phone    String
+  country  String  @default("MX") // ISO MX/US: define la lada (+52/+1) del WhatsApp
+  whatsapp String?
+  state    String?
+
+  orders  Order[]
+  tickets TicketNumber[]
+  winners Winner[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phone])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  code        String      @unique // folio legible: BSK-XXXX
+  raffleId    String
+  raffle      Raffle      @relation(fields: [raffleId], references: [id], onDelete: Cascade)
+  buyerId     String
+  buyer       Buyer       @relation(fields: [buyerId], references: [id])
+  totalAmount Int
+  status      OrderStatus @default(RESERVED)
+
+  // Vendedor al que se atribuye la venta (si el comprador llegó por su link).
+  // Nulo = venta directa / sin vendedor. Las órdenes antiguas quedan así.
+  sellerId String?
+  seller   User?   @relation("OrderSeller", fields: [sellerId], references: [id])
+
+  expiresAt DateTime?
+  paidAt    DateTime?
+
+  // Cómo se confirmó el pago (efectivo / transferencia / etc.) y una nota opcional
+  // con detalles. Se capturan al marcar pagado; null en órdenes antiguas o no pagadas.
+  paymentMethod String?
+  paymentNote   String?
+
+  orderTickets  OrderTicket[]
+  tickets       TicketNumber[]
+  paymentProofs PaymentProof[]
+  digitalTicket DigitalTicket?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([raffleId, status])
+  @@index([buyerId])
+  @@index([sellerId])
+}
+
+model OrderTicket {
+  id       String       @id @default(cuid())
+  orderId  String
+  order    Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  ticketId String
+  ticket   TicketNumber @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([orderId, ticketId])
+  @@index([ticketId])
+}
+
+model PaymentProof {
+  id       String             @id @default(cuid())
+  orderId  String
+  order    Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method   PaymentMethod      @default(TRANSFER)
+  fileUrl  String
+  note     String?
+  status   PaymentProofStatus @default(PENDING)
+
+  uploadedAt DateTime  @default(now())
+  reviewedAt DateTime?
+
+  @@index([orderId])
+}
+
+// ─────────────────────────────────────────────────────────────
+// WINNERS & DIGITAL TICKETS
+// ─────────────────────────────────────────────────────────────
+
+model Winner {
+  id               String  @id @default(cuid())
+  raffleId         String
+  raffle           Raffle  @relation(fields: [raffleId], references: [id], onDelete: Cascade)
+  ticketId         String
+  ticket           TicketNumber @relation(fields: [ticketId], references: [id])
+  buyerId          String?
+  buyer            Buyer?  @relation(fields: [buyerId], references: [id])
+  position         Int // 1 = primer lugar
+  prizeDescription String?
+  published        Boolean @default(false)
+  evidenceUrl      String? // video/imagen del sorteo
+
+  drawnById String?
+  drawnBy   User?   @relation("WinnerDrawnBy", fields: [drawnById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([raffleId])
+}
+
+model DigitalTicket {
+  id      String @id @default(cuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  code    String @unique // código de verificación público
+  pdfUrl  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([code])
+}
+
+// ─────────────────────────────────────────────────────────────
+// PLATFORM SETTINGS & ACTIVITY LOG
+// ─────────────────────────────────────────────────────────────
+
+model PlatformSettings {
+  id    String @id @default(cuid())
+  key   String @unique
+  value Json
+
+  updatedAt DateTime @updatedAt
+}
+
+model ActivityLog {
+  id     String       @id @default(cuid())
+  userId String?
+  user   User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  type   ActivityType
+  action String
+  meta   Json?
+  ip     String?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────
+// STORED ASSETS (imágenes/comprobantes guardados en la BD)
+// ─────────────────────────────────────────────────────────────
+// Binarios guardados en Postgres para que SOBREVIVAN a los deploys de Railway
+// (el disco del contenedor es efímero y se borra en cada despliegue). La `key`
+// coincide con la URL pública /uploads/<key>. Se activa con STORAGE_DRIVER=db.
+model StoredAsset {
+  key       String   @id
+  mime      String
+  bytes     Bytes
+  size      Int
+  createdAt DateTime @default(now())
+}

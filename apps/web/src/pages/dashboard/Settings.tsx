@@ -1,0 +1,465 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { z } from 'zod';
+import {
+  Save,
+  Clock,
+  Upload,
+  Trophy,
+  Sparkles,
+  Lock,
+  Users,
+  ChevronRight,
+  BarChart3,
+  Languages,
+  DollarSign,
+  ShieldCheck,
+} from 'lucide-react';
+import { updateRiferoSchema } from '@bismark/shared';
+import { riferoService } from '@/services/riferos';
+import { ApiError } from '@/lib/api';
+import { PanelIntro } from '@/components/owner/PanelKit';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Separator, PageLoader } from '@/components/ui/misc';
+import { PushToggle } from '@/components/owner/PushToggle';
+import { toast } from 'sonner';
+
+const settingsSchema = updateRiferoSchema.pick({
+  defaultReserveMinutes: true,
+  allowProofUpload: true,
+  autoReleaseExpired: true,
+  showWinners: true,
+  useDigitalDraw: true,
+  facebookPixelId: true,
+  facebookDomainVerification: true,
+  locale: true,
+  currency: true,
+});
+type SettingsForm = z.infer<typeof settingsSchema>;
+
+// Atajos de tiempo de apartado: escribir "1440" en un teléfono es tedioso.
+const RESERVE_PRESETS = [
+  { label: '1 hora', minutes: 60 },
+  { label: '2 horas', minutes: 120 },
+  { label: '6 horas', minutes: 360 },
+  { label: '24 horas', minutes: 1440 },
+  { label: '3 días', minutes: 4320 },
+];
+
+function humanMinutes(min: number): string {
+  if (!min || Number.isNaN(min)) return '';
+  if (min < 60) return `${min} minuto${min === 1 ? '' : 's'}`;
+  if (min < 1440) {
+    const h = Math.round((min / 60) * 10) / 10;
+    return `${h} hora${h === 1 ? '' : 's'}`;
+  }
+  const d = Math.round((min / 1440) * 10) / 10;
+  return `${d} día${d === 1 ? '' : 's'}`;
+}
+
+interface ToggleRowProps {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+  note?: string;
+}
+
+function ToggleRow({ icon: Icon, title, description, checked, onChange, disabled, note }: ToggleRowProps) {
+  return (
+    <div className="flex items-start gap-3 py-1">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold leading-tight">{title}</p>
+        <p className="text-sm text-muted-foreground">{description}</p>
+        {disabled && note && (
+          <p className="mt-1 flex items-center gap-1 text-xs font-medium text-amber-600 dark:text-amber-400">
+            <Lock className="h-3 w-3" />
+            {note}
+          </p>
+        )}
+      </div>
+      <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} />
+    </div>
+  );
+}
+
+export default function Settings() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+
+  const profileQuery = useQuery({
+    queryKey: ['rifero-me'],
+    queryFn: riferoService.me,
+  });
+  const profile = profileQuery.data?.profile;
+  const planAllowsProof = profile?.activePlan?.allowProofUpload ?? false;
+
+  // Por defecto el tiempo de apartado solo aplica a rifas NUEVAS. Si se activa,
+  // al guardar se sincroniza también con las rifas ya creadas (DRAFT/PUBLISHED).
+  const [applyReserveToExisting, setApplyReserveToExisting] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    setValue,
+    watch,
+    formState: { errors, isDirty },
+  } = useForm<SettingsForm>({
+    resolver: zodResolver(settingsSchema),
+    defaultValues: {
+      defaultReserveMinutes: 120,
+      allowProofUpload: false,
+      autoReleaseExpired: true,
+      showWinners: true,
+      useDigitalDraw: false,
+      facebookPixelId: '',
+      facebookDomainVerification: '',
+      locale: 'es',
+      currency: 'MXN',
+    },
+  });
+
+  useEffect(() => {
+    if (profile) {
+      reset({
+        defaultReserveMinutes: profile.defaultReserveMinutes,
+        allowProofUpload: profile.allowProofUpload,
+        autoReleaseExpired: profile.autoReleaseExpired,
+        showWinners: profile.showWinners,
+        useDigitalDraw: profile.useDigitalDraw,
+        facebookPixelId: profile.facebookPixelId ?? '',
+        facebookDomainVerification: profile.facebookDomainVerification ?? '',
+        locale: profile.locale,
+        currency: profile.currency,
+      });
+    }
+  }, [profile, reset]);
+
+  const updateMutation = useMutation({
+    mutationFn: (values: SettingsForm & { applyReserveToExisting?: boolean }) => riferoService.update(values),
+    onSuccess: (res) => {
+      toast.success(applyReserveToExisting ? 'Ajustes guardados y aplicados a tus rifas' : 'Ajustes guardados');
+      void queryClient.invalidateQueries({ queryKey: ['rifero-me'] });
+      void queryClient.invalidateQueries({ queryKey: ['raffles'] });
+      setApplyReserveToExisting(false);
+      reset({
+        defaultReserveMinutes: res.profile.defaultReserveMinutes,
+        allowProofUpload: res.profile.allowProofUpload,
+        autoReleaseExpired: res.profile.autoReleaseExpired,
+        showWinners: res.profile.showWinners,
+        useDigitalDraw: res.profile.useDigitalDraw,
+        facebookPixelId: res.profile.facebookPixelId ?? '',
+        facebookDomainVerification: res.profile.facebookDomainVerification ?? '',
+        locale: res.profile.locale,
+        currency: res.profile.currency,
+      });
+    },
+    onError: (e) => toast.error(e instanceof ApiError ? e.message : 'Algo salió mal'),
+  });
+
+  const onSubmit = (values: SettingsForm) => {
+    updateMutation.mutate({
+      ...values,
+      allowProofUpload: planAllowsProof ? values.allowProofUpload : false,
+      applyReserveToExisting,
+    });
+  };
+
+  if (profileQuery.isLoading) {
+    return <PageLoader />;
+  }
+
+  return (
+    <div>
+      <PanelIntro description="Ajustes que se aplican por defecto a tus nuevas rifas." />
+
+      {/* Acceso a Usuarios y Roles (administradores y vendedores). */}
+      <button
+        type="button"
+        onClick={() => navigate('/admin/usuarios')}
+        className="mb-4 flex w-full items-center gap-3 rounded-2xl border bg-card px-4 py-3.5 text-left shadow-sm transition-colors hover:bg-accent"
+      >
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+          <Users className="h-5 w-5" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-semibold leading-tight">Usuarios y Roles</span>
+          <span className="block text-xs text-muted-foreground">
+            Da acceso a administradores y vendedores, con su link de venta y métricas.
+          </span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/60" />
+      </button>
+
+      {/* Avisos push del rifero (este dispositivo). El comprador no recibe push. */}
+      <div className="mb-4">
+        <PushToggle />
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <Card>
+          <CardContent className="flex flex-col gap-2 p-5">
+            <Label htmlFor="defaultReserveMinutes" className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              Minutos para apartar un boleto
+            </Label>
+            <div className="flex flex-wrap gap-2">
+              {RESERVE_PRESETS.map((p) => {
+                const active = watch('defaultReserveMinutes') === p.minutes;
+                return (
+                  <button
+                    key={p.minutes}
+                    type="button"
+                    onClick={() => setValue('defaultReserveMinutes', p.minutes, { shouldDirty: true })}
+                    className={
+                      active
+                        ? 'rounded-full bg-brand px-3.5 py-2 text-sm font-bold text-white'
+                        : 'rounded-full border px-3.5 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent'
+                    }
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+            <Input
+              id="defaultReserveMinutes"
+              type="number"
+              inputMode="numeric"
+              min={5}
+              max={10080}
+              {...register('defaultReserveMinutes', { valueAsNumber: true })}
+            />
+            <p className="text-xs text-muted-foreground">
+              Tiempo que un comprador tiene para pagar antes de que su apartado expire.
+              {(() => {
+                const eq = humanMinutes(Number(watch('defaultReserveMinutes')));
+                return eq ? (
+                  <>
+                    {' '}
+                    Ahora: <span className="font-semibold text-foreground">{eq}</span>.
+                  </>
+                ) : null;
+              })()}
+            </p>
+            {errors.defaultReserveMinutes && (
+              <p className="mt-1 text-sm text-destructive">{errors.defaultReserveMinutes.message}</p>
+            )}
+            {/* Por defecto el tiempo solo aplica a rifas nuevas. Este toggle lo
+                sincroniza también con las rifas ya creadas (publicadas/borrador). */}
+            <div className="mt-1 flex items-start justify-between gap-3 rounded-xl bg-muted/50 px-3 py-2.5">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold leading-tight">Aplicar también a mis rifas activas</p>
+                <p className="text-xs text-muted-foreground">
+                  Normalmente este tiempo solo aplica a rifas nuevas. Actívalo para actualizar también las que ya tienes publicadas o en borrador.
+                </p>
+              </div>
+              <Switch checked={applyReserveToExisting} onCheckedChange={setApplyReserveToExisting} />
+            </div>
+            {/* Interruptor maestro: liberar (o no) los boletos cuando vence el apartado. */}
+            <Controller
+              control={control}
+              name="autoReleaseExpired"
+              render={({ field }) => (
+                <div className="flex items-start justify-between gap-3 rounded-xl border bg-card px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-tight">Liberar boletos automáticamente</p>
+                    <p className="text-xs text-muted-foreground">
+                      Cuando un apartado vence sin pago, sus boletos se liberan solos. Desactívalo para que <strong>nada se libere automáticamente</strong>: los apartados no expiran y tú decides cuándo liberarlos.
+                    </p>
+                  </div>
+                  <Switch checked={field.value ?? true} onCheckedChange={field.onChange} />
+                </div>
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="flex flex-col gap-4 p-5">
+            <Controller
+              control={control}
+              name="allowProofUpload"
+              render={({ field }) => (
+                <ToggleRow
+                  icon={Upload}
+                  title="Permitir subir comprobantes"
+                  description="Los compradores podrán adjuntar su comprobante de pago."
+                  checked={planAllowsProof ? !!field.value : false}
+                  onChange={field.onChange}
+                  disabled={!planAllowsProof}
+                  note="Tu plan actual no incluye esta función."
+                />
+              )}
+            />
+            <Separator />
+            <Controller
+              control={control}
+              name="showWinners"
+              render={({ field }) => (
+                <ToggleRow
+                  icon={Trophy}
+                  title="Mostrar ganadores"
+                  description="Publica a los ganadores en tu página pública."
+                  checked={!!field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+            <Separator />
+            <Controller
+              control={control}
+              name="useDigitalDraw"
+              render={({ field }) => (
+                <ToggleRow
+                  icon={Sparkles}
+                  title="Usar sorteo digital"
+                  description="Realiza el sorteo dentro de Bismark de forma transparente."
+                  checked={!!field.value}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+          </CardContent>
+        </Card>
+
+        {/* ── Modo USA: idioma de lo que ve el comprador + moneda de cobro ── */}
+        <Card>
+          <CardContent className="flex flex-col gap-4 p-5">
+            <Controller
+              control={control}
+              name="locale"
+              render={({ field }) => (
+                <ToggleRow
+                  icon={Languages}
+                  title="Modo USA (página en inglés)"
+                  description="Todo lo que ve el comprador pasa a inglés: la página, el boleto digital, los mensajes de WhatsApp y los correos. Las rifas se llaman giveaways. Tu panel sigue en español."
+                  checked={field.value === 'en'}
+                  onChange={(v) => {
+                    field.onChange(v ? 'en' : 'es');
+                    // La moneda acompaña al modo, pero se puede cambiar abajo.
+                    setValue('currency', v ? 'USD' : 'MXN', { shouldDirty: true });
+                  }}
+                />
+              )}
+            />
+            <Separator />
+            <div>
+              <Label htmlFor="currency" className="flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Moneda de tus boletos
+              </Label>
+              <p className="mb-2 mt-1 text-xs text-muted-foreground">
+                Con la que cobras. Cambia cómo se ven los precios en tu página, en los correos y en el boleto
+                digital. <strong>No convierte cantidades</strong>: si cambias a dólares, un boleto de 50 pasa a
+                costar 50 dólares.
+              </p>
+              <Select id="currency" {...register('currency')}>
+                <option value="MXN">🇲🇽 Pesos mexicanos (MXN)</option>
+                <option value="USD">🇺🇸 Dólares (USD)</option>
+              </Select>
+            </div>
+            <p className="rounded-xl bg-muted/50 px-3.5 py-3 text-xs leading-relaxed text-muted-foreground">
+              Recuerda que el <strong>título, la descripción, los términos y las preguntas frecuentes</strong> los
+              escribes tú: si activas el modo USA, reescríbelos en inglés desde Rifas y Perfil. En Métodos de pago
+              ya puedes agregar Zelle, Cash App, Venmo y PayPal.
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Pixel de Facebook (Meta): mide tus anuncios en la página pública. */}
+        <Card>
+          <CardContent className="flex flex-col gap-2 p-5">
+            <Label htmlFor="facebookPixelId" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Pixel de Facebook (Meta)
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Pega el <strong>ID del pixel</strong> que aparece en Meta Events Manager (solo números). Mide a los
+              visitantes de tu página pública para tus anuncios. Déjalo vacío para no cargar ningún pixel.
+            </p>
+            <Input
+              id="facebookPixelId"
+              inputMode="numeric"
+              placeholder="1234567890123456"
+              {...register('facebookPixelId')}
+            />
+            {errors.facebookPixelId && (
+              <p className="text-sm text-destructive">{errors.facebookPixelId.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Se registran: visitas <em>(PageView)</em>, ver una rifa <em>(ViewContent)</em>, elegir boletos{' '}
+              <em>(AddToCart)</em>, abrir el formulario <em>(InitiateCheckout)</em> y, al dar clic en APARTAR,{' '}
+              <strong>Completar registro</strong> <em>(CompleteRegistration)</em>: ese es el evento de conversión
+              con el que debes optimizar tus anuncios.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              La compra no se reporta como <em>Purchase</em> a propósito: el pago es manual y tú lo confirmas
+              después, así que reportarlo como venta inflaría tus resultados y Meta optimizaría mal.
+            </p>
+
+            <Separator className="my-1" />
+
+            <Label htmlFor="facebookDomainVerification" className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              Código de verificación del dominio
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Es la <strong>meta etiqueta</strong> con la que Meta comprueba que este sitio es tuyo. Sácala en
+              Business Manager → Configuración del negocio → Seguridad de la marca → <strong>Dominios</strong> →
+              agrega tu dominio → «Verificación por meta etiqueta». Puedes pegar la etiqueta completa: se guarda
+              solo el código.
+            </p>
+            <Input
+              id="facebookDomainVerification"
+              placeholder="ej. k8s2m1p9v3x7…"
+              {...register('facebookDomainVerification')}
+            />
+            {errors.facebookDomainVerification && (
+              <p className="text-sm text-destructive">{errors.facebookDomainVerification.message}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Sin esto no puedes reclamar tu dominio en Meta, y las conversiones de usuarios de iPhone se miden
+              mal. Al guardar, la etiqueta tarda <strong>hasta un minuto</strong> en aparecer en tu página; luego
+              vuelve a Meta y pulsa «Verificar».
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Barra de guardar sticky: visible apenas hay cambios, sin perseguirla. */}
+        <div className="sticky bottom-0 z-10 -mx-4 -mb-[max(1.25rem,env(safe-area-inset-bottom))] border-t bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:-mx-5 sm:px-5">
+          {(isDirty || applyReserveToExisting) && (
+            <p className="mb-2 text-center text-xs font-semibold text-amber-600 dark:text-amber-400">
+              Tienes cambios sin guardar
+            </p>
+          )}
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full"
+            loading={updateMutation.isPending}
+            disabled={!isDirty && !applyReserveToExisting}
+          >
+            <Save className="h-5 w-5" />
+            Guardar cambios
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}

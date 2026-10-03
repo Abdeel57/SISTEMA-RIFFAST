@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "RiferoProfile" ADD COLUMN "logoScale" INTEGER NOT NULL DEFAULT 100;

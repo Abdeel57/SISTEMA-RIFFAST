@@ -1,0 +1,496 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 228 96% 57%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 47% 11%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 228 96% 57%;
+    --radius: 0.85rem;
+  }
+
+  .dark {
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+    --card: 222 44% 10%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 44% 10%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 228 96% 64%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 20%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 20%;
+    --input: 217 33% 22%;
+    --ring: 228 96% 64%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Respetar el notch en móviles */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  /* Permite que páginas de rifero apliquen su color de marca */
+  .brand-primary {
+    background-color: var(--rifero-primary, hsl(var(--primary)));
+  }
+  .text-brand-primary {
+    color: var(--rifero-primary, hsl(var(--primary)));
+  }
+
+  /* ── Utilidades de la landing ─────────────────────────── */
+  /* Grano sutil para dar textura/profundidad sobre fondos oscuros */
+  .grain {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  }
+  /* Borde perforado de boleto (lado izquierdo y derecho) */
+  .ticket-edge {
+    -webkit-mask-image: radial-gradient(circle at left center, transparent 7px, #000 8px),
+      radial-gradient(circle at right center, transparent 7px, #000 8px);
+    -webkit-mask-composite: source-in;
+    mask-image: radial-gradient(circle at left center, transparent 7px, #000 8px),
+      radial-gradient(circle at right center, transparent 7px, #000 8px);
+    mask-composite: intersect;
+  }
+  /* Flotación sutil del boleto del titular (hero) */
+  @keyframes ticket-float {
+    0%,
+    100% {
+      transform: rotate(-3deg) translateY(0);
+    }
+    50% {
+      transform: rotate(-1.5deg) translateY(-4px);
+    }
+  }
+  .ticket-float {
+    animation: ticket-float 5.5s ease-in-out infinite;
+  }
+
+  /* Micro-animaciones del bento de beneficios (landing) */
+  @keyframes typing-dot {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.35;
+    }
+    30% {
+      transform: translateY(-3px);
+      opacity: 1;
+    }
+  }
+  .typing-dot {
+    animation: typing-dot 1.3s ease-in-out infinite;
+  }
+  @keyframes qr-scan {
+    0% {
+      transform: translateY(-130%);
+    }
+    55%,
+    100% {
+      transform: translateY(300%);
+    }
+  }
+  .qr-scan {
+    animation: qr-scan 2.8s ease-in-out infinite;
+  }
+  @keyframes drum-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  .drum-spin {
+    animation: drum-spin 12s linear infinite;
+  }
+  /* Rendimiento: pausa las micro-animaciones cuando la tarjeta no está en
+     pantalla (dispositivos de baja potencia agradecen no animar a ciegas). */
+  .anim-paused .typing-dot,
+  .anim-paused .qr-scan,
+  .anim-paused .drum-spin,
+  .anim-paused .animate-float {
+    animation-play-state: paused;
+  }
+
+  /* Desvanecido en los extremos del marquee */
+  .marquee-fade {
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  /* Destello que barre el monograma (BrandLoader). La capa va recortada a la
+     silueta del logo (mask en el componente); aquí solo viaja el brillo. El
+     núcleo lleva el azul de Bismark alrededor de un centro blanco para que la
+     luz que cruza el monograma se sienta de marca, no un brillo neutro. */
+  @keyframes brand-shine {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+  .brand-loader-shine {
+    background-image: linear-gradient(
+      115deg,
+      transparent 38%,
+      rgba(65, 120, 255, 0.55) 45%,
+      rgba(255, 255, 255, 0.98) 50%,
+      rgba(26, 77, 255, 0.55) 55%,
+      transparent 62%
+    );
+    background-size: 200% 100%;
+    background-repeat: no-repeat;
+    animation: brand-shine 2.1s ease-in-out infinite;
+  }
+  /* Aura: halo azul que respira detrás del ícono en la carga a pantalla
+     completa. Da profundidad y "vida" sin distraer del monograma. */
+  @keyframes brand-aura {
+    0%,
+    100% {
+      opacity: 0.4;
+      transform: scale(0.9);
+    }
+    50% {
+      opacity: 0.75;
+      transform: scale(1.08);
+    }
+  }
+  .brand-loader-aura {
+    background-image: radial-gradient(
+      closest-side,
+      rgba(26, 77, 255, 0.6),
+      rgba(65, 120, 255, 0.28) 58%,
+      transparent 74%
+    );
+    filter: blur(16px);
+    animation: brand-aura 2.6s ease-in-out infinite;
+  }
+  /* Respiración sutil del ícono: escala apenas perceptible, sincronizada con el
+     aura, para que el monograma "lata" en lugar de quedar congelado. */
+  @keyframes brand-breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+  .brand-loader-breathe {
+    animation: brand-breathe 2.6s ease-in-out infinite;
+  }
+  /* Entrada suave del overlay (evita el "parpadeo" duro al montar). */
+  @keyframes brand-loader-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  .brand-loader-in {
+    animation: brand-loader-in 0.35s ease-out both;
+  }
+  /* Accesibilidad: respeta a quien pide menos movimiento — sin barrido, aura
+     fija ni respiración; el ícono queda visible y quieto. */
+  @media (prefers-reduced-motion: reduce) {
+    .brand-loader-shine,
+    .brand-loader-aura,
+    .brand-loader-breathe,
+    .brand-loader-in {
+      animation: none;
+    }
+    .brand-loader-shine {
+      opacity: 0;
+    }
+  }
+  /* Destello del sello "Estos sorteos son seguros": efecto de "pulido" — una
+     línea de brillo delgada que cruza la píldora despacio (como al pulir un
+     metal) y descansa unos segundos antes de la siguiente pasada. Mismo
+     lenguaje del BrandLoader (barrido diagonal 115° por background-position),
+     pero más fino, más lento y con núcleo azul-blanco para verse sobre claro. */
+  @keyframes seal-shine {
+    0% {
+      background-position: 100% 0;
+    }
+    55%,
+    100% {
+      background-position: 0% 0;
+    }
+  }
+  .safe-seal-shine {
+    background-image: linear-gradient(
+      115deg,
+      transparent 48%,
+      rgba(37, 99, 235, 0.1) 49%,
+      rgba(150, 180, 255, 0.55) 50%,
+      rgba(37, 99, 235, 0.1) 51%,
+      transparent 52%
+    );
+    background-size: 300% 100%;
+    background-repeat: no-repeat;
+    animation: seal-shine 7s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  }
+  /* Destello "pulido" blanco que barre la tira de promoción (PromoBanner).
+     Misma pasada diagonal del sello, pero blanca y un poco más ancha para
+     leerse sobre el degradado de color de la tira. */
+  @keyframes promo-shine {
+    0% {
+      background-position: 100% 0;
+    }
+    45%,
+    100% {
+      background-position: 0% 0;
+    }
+  }
+  .promo-shine {
+    background-image: linear-gradient(
+      115deg,
+      transparent 44%,
+      rgba(255, 255, 255, 0.08) 47%,
+      rgba(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0.08) 53%,
+      transparent 56%
+    );
+    background-size: 300% 100%;
+    background-repeat: no-repeat;
+    animation: promo-shine 5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  }
+  /* Gradiente de texto de marca */
+  .text-gradient-brand {
+    background: linear-gradient(120deg, #fff 20%, #6fa0ff 55%, #1a4dff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ── Móvil: campos de formulario siempre ≥16px ───────────────────
+   iOS hace zoom automático al enfocar cualquier control con letra menor a
+   16px, lo que desencuadra la página. Esta regla lo evita en TODOS los
+   campos (incluye buscadores y el editor de texto enriquecido) sin importar
+   la clase de Tailwind que tengan. */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file']),
+  select,
+  textarea,
+  [contenteditable]:not([contenteditable='false']) {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* ── Maquinita de la suerte: glow arcoíris, confeti, pop ────────── */
+@keyframes lucky-pan {
+  to {
+    background-position: 200% 0;
+  }
+}
+.lucky-glow {
+  position: relative;
+  isolation: isolate;
+}
+.lucky-glow::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff004c, #ff8a00, #ffe600, #00d084, #00b4ff, #7c4dff, #ff004c);
+  background-size: 200% 100%;
+  filter: blur(9px);
+  opacity: 0.6;
+  animation: lucky-pan 3.5s linear infinite;
+}
+@keyframes lucky-confetti {
+  0% {
+    transform: translate(-50%, -50%) scale(0.4);
+    opacity: 1;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot));
+    opacity: 0;
+  }
+}
+.lucky-confetti {
+  animation: lucky-confetti 2.3s cubic-bezier(0.1, 0.5, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+@keyframes lucky-pop {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.42);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.lucky-pop {
+  animation: lucky-pop 0.6s ease-out;
+  z-index: 3;
+}
+
+/* ── Latido de atención (botón APARTAR): pulsa cada cierto rato ── */
+@keyframes attn-pulse {
+  0%,
+  60%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow:
+      0 4px 12px rgba(0, 0, 0, 0.18),
+      0 0 0 8px color-mix(in srgb, var(--rifero-primary) 26%, transparent);
+  }
+  82% {
+    transform: scale(0.99);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  }
+  92% {
+    transform: scale(1.02);
+  }
+}
+.attn-pulse {
+  animation: attn-pulse 3.4s ease-in-out infinite;
+}
+@keyframes attn-arrow-l {
+  0%,
+  60%,
+  100% {
+    transform: translateX(0);
+  }
+  72% {
+    transform: translateX(5px);
+  }
+  86% {
+    transform: translateX(0);
+  }
+}
+@keyframes attn-arrow-r {
+  0%,
+  60%,
+  100% {
+    transform: translateX(0);
+  }
+  72% {
+    transform: translateX(-5px);
+  }
+  86% {
+    transform: translateX(0);
+  }
+}
+.attn-arrow-l {
+  display: inline-block;
+  animation: attn-arrow-l 3.4s ease-in-out infinite;
+}
+.attn-arrow-r {
+  display: inline-block;
+  animation: attn-arrow-r 3.4s ease-in-out infinite;
+}
+/* Latido para etiquetas de texto (p. ej. "Sube tu pago aquí" del cintillo) */
+@keyframes attn-text-pulse {
+  0%,
+  60%,
+  100% {
+    transform: scale(1);
+    text-shadow:
+      0 0 5px var(--rifero-primary),
+      0 0 11px var(--rifero-primary);
+  }
+  72% {
+    transform: scale(1.07);
+    text-shadow:
+      0 0 8px var(--rifero-primary),
+      0 0 16px var(--rifero-primary),
+      0 0 24px var(--rifero-primary);
+  }
+  86% {
+    transform: scale(1);
+  }
+}
+.attn-text-pulse {
+  animation: attn-text-pulse 3.4s ease-in-out infinite;
+}
+
+/* ── Editor de texto enriquecido (descripción/cartel) ── */
+.rt-editor,
+.rt-content {
+  text-align: center; /* el cartel va centrado por defecto; el usuario puede alinear */
+}
+.rt-editor:empty::before {
+  content: attr(data-placeholder);
+  color: hsl(var(--muted-foreground));
+  pointer-events: none;
+}
+.rt-content {
+  line-height: 1.45;
+  word-break: break-word;
+}
+.rt-content ul,
+.rt-content ol {
+  display: inline-block;
+  margin: 0.25rem 0;
+  padding-left: 1.4em;
+  list-style: revert;
+  text-align: left;
+}

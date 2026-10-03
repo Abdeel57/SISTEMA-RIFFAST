@@ -1,0 +1,16 @@
+node_modules
+**/node_modules
+**/dist
+.git
+.github
+*.log
+.env
+**/.env
+**/.env.local
+apps/api/.localdb
+apps/api/.localdb-log.txt
+apps/api/uploads
+qa
+.vscode
+.idea
+*.md

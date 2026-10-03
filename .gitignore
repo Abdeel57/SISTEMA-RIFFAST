@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Builds
+dist/
+build/
+.vite/
+*.tsbuildinfo
+
+# Env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Prisma
+apps/api/prisma/*.db
+apps/api/prisma/migrations/dev.db*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Uploads (local dev fallback)
+apps/api/uploads/
+
+# Testing / coverage
+coverage/
+
+# Misc
+*.local
+.cache/
+
+# Local embedded postgres data dir
+apps/api/.localdb/
+apps/api/.localdb-log.txt
