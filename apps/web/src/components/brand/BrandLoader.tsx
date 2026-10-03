@@ -22,8 +22,8 @@ function maskFor(url: string): CSSProperties {
 const INTRO_BG = 'radial-gradient(120% 90% at 50% 46%, #0F9264 0%, #008B5A 52%, #007D51 100%)';
 
 // Caja del trébol dentro del lienzo de la intro (viewBox 1000×640, trébol ×1.25
-// centrado): x 253.125, y 53.125, 490×530 → en porcentajes del lienzo.
-const CLOVER_BOX: CSSProperties = { left: '25.3125%', top: '8.3008%', width: '49%', height: '82.8125%' };
+// centrado: translate(207.66 8.13)): x 252.66, y 53.13, 490×530 → en porcentajes.
+const CLOVER_BOX: CSSProperties = { left: '25.266%', top: '8.3016%', width: '49%', height: '82.8125%' };
 
 // Pantalla de carga de marca.
 //   fullScreen (default): el cuadro final de la intro de Riffast —trébol blanco

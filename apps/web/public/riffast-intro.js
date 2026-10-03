@@ -1,4 +1,4 @@
-/*! Riffast Intro 1.0 — animación de entrada / pantalla de carga
+/*! Riffast Intro 1.2 — animación de entrada / pantalla de carga
  *
  *  INTEGRACIÓN MÍNIMA (pégalo justo después de <body>):
  *
@@ -28,6 +28,10 @@
  *    maxWait        10          Segundos máximos de espera antes de salir sí o sí.
  *    reducedMotion  'auto'      'auto' respeta prefers-reduced-motion; true/false lo fuerza.
  *    speed          1           Velocidad de reproducción (útil para revisar la animación).
+ *    rush           1           Multiplicador de velocidad cuando ready() llega ANTES de
+ *                               minTime: si la página ya cargó, el resto de la animación
+ *                               se acelera (p. ej. 2 = al doble) hasta salir; la salida
+ *                               corre a `speed`. 1 = sin aceleración (comportamiento 1.1).
  *    zIndex         9999
  *    removeOnDone   true        Elimina el overlay del DOM al terminar.
  *    onDone         fn          Callback al terminar. También se emite el evento
@@ -122,7 +126,7 @@
   var RM = { fadeIn: 0.3, minHold: 0.7, exitDur: 0.3 }; // alternativa con movimiento reducido
   var DEFAULTS = {
     container: null, preset: 'agil', background: '#008B5A', ink: '#DFEFE6', autoReady: true,
-    minTime: null, maxWait: 10, reducedMotion: 'auto', speed: 1, zIndex: 9999,
+    minTime: null, maxWait: 10, reducedMotion: 'auto', speed: 1, rush: 1, zIndex: 9999,
     removeOnDone: true, onDone: null
   };
 
@@ -156,6 +160,44 @@
     var w = 2 * h + 1, ox = new Array(n), oy = new Array(n);
     for (var k = 0; k < n; k++) { var a = k + n - h, b = k + n + h + 1; ox[k] = (px[b] - px[a]) / w; oy[k] = (py[b] - py[a]) / w; }
     return [ox, oy];
+  };
+  // Muestreo de trazados en JS puro: n puntos equiespaciados por longitud de arco,
+  // igual que getPointAtLength(L·i/n). El navegador recorre el trazado en CADA
+  // llamada a getPointAtLength: las ~3,500 llamadas del montaje costaban ~330 ms
+  // en PC (varias veces más en celular) con la pantalla aún sin pintar. Aquí cada
+  // contorno se aplana una vez (curvas → tramos rectos) y se recorre una vez.
+  var CUBIC_STEPS = 24;
+  var TOKEN = /[MLCZmlcz]|[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/g;
+  var flattenPath = function (d) { // solo M, L, C y Z absolutos (los de este logotipo)
+    var tk = d.match(TOKEN) || [], pts = [], i = 0, cmd = '', x = 0, y = 0, sx = 0, sy = 0;
+    var num = function () { return parseFloat(tk[i++]); };
+    while (i < tk.length) {
+      if (/[A-Za-z]/.test(tk[i])) cmd = tk[i++].toUpperCase();
+      if (cmd === 'M') { x = sx = num(); y = sy = num(); pts.push([x, y]); cmd = 'L'; } // pares extra = L
+      else if (cmd === 'L') { x = num(); y = num(); pts.push([x, y]); }
+      else if (cmd === 'C') {
+        var x1 = num(), y1 = num(), x2 = num(), y2 = num(), x3 = num(), y3 = num();
+        for (var s = 1; s <= CUBIC_STEPS; s++) {
+          var u = s / CUBIC_STEPS, v = 1 - u, a = v * v * v, b = 3 * v * v * u, c = 3 * v * u * u, e = u * u * u;
+          pts.push([a * x + b * x1 + c * x2 + e * x3, a * y + b * y1 + c * y2 + e * y3]);
+        }
+        x = x3; y = y3;
+      } else if (cmd === 'Z') { pts.push([sx, sy]); x = sx; y = sy; cmd = ''; }
+      else i++;
+    }
+    return pts;
+  };
+  var samplePath = function (d, n) {
+    var pts = flattenPath(d), m = pts.length, cum = new Float64Array(m);
+    for (var k = 1; k < m; k++) { var dx = pts[k][0] - pts[k - 1][0], dy = pts[k][1] - pts[k - 1][1]; cum[k] = cum[k - 1] + Math.sqrt(dx * dx + dy * dy); }
+    var L = cum[m - 1], out = new Array(n), j = 1;
+    for (var i = 0; i < n; i++) {
+      var at = L * i / n;
+      while (j < m - 1 && cum[j] < at) j++;
+      var seg = cum[j] - cum[j - 1], f = seg > 0 ? (at - cum[j - 1]) / seg : 0, p = pts[j - 1], q = pts[j];
+      out[i] = [p[0] + (q[0] - p[0]) * f, p[1] + (q[1] - p[1]) * f];
+    }
+    return out;
   };
   var shade = function (hex, amt) { // aclara (>0) u oscurece (<0) un color hex
     var m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
@@ -208,16 +250,7 @@
 
   Intro.prototype._geometry = function () {
     if (this.rm) return; // la versión de movimiento reducido no morfea
-    var meas = document.createElementNS(NS, 'svg');
-    meas.setAttribute('width', '10'); meas.setAttribute('height', '10');
-    meas.style.cssText = 'position:absolute;left:-9999px;top:0;width:10px;height:10px;overflow:hidden;pointer-events:none';
-    (document.body || document.documentElement).appendChild(meas);
-    var sample = function (d, n) {
-      var p = document.createElementNS(NS, 'path'); p.setAttribute('d', d); meas.appendChild(p);
-      var L = p.getTotalLength(), out = new Array(n);
-      for (var i = 0; i < n; i++) { var q = p.getPointAtLength(L * i / n); out[i] = [q.x, q.y]; }
-      meas.removeChild(p); return out;
-    };
+    var sample = samplePath;
     var cx = VB.w / 2, cy = VB.h / 2;
     // Hojas en coordenadas locales del trébol (centro = origen, ya escaladas)
     var leaves = LEAVES.map(function (d) { return sample(d, N_OUT); });
@@ -258,7 +291,6 @@
       }
       return { g: pl.g, glyph: pl.glyph, primary: pl.primary, leaf: pl.leaf, dot: !!pl.dot, c0: c0, qc: qc, rings: data, el: null };
     });
-    meas.parentNode.removeChild(meas);
   };
 
   Intro.prototype._dom = function () {
@@ -337,7 +369,10 @@
   Intro.prototype._tick = function (now) {
     var dt = Math.min(0.05, (now - this.last) / 1000); // sin saltos al volver de otra pestaña
     this.last = now;
-    this.t += dt * this.o.speed;
+    var sp = this.o.speed;
+    // La página ya está lista y la salida aún no puede empezar: acelerar el resto.
+    if (this.isReady && this.exitStart === null && this.t < this.o.minTime) sp *= this.o.rush;
+    this.t += dt * sp;
     this._render(this.t);
     if (this.state !== 'done') this.raf = requestAnimationFrame(this._tick);
   };
@@ -529,5 +564,5 @@
     return new Intro(o);
   }
 
-  global.RiffastIntro = { mount: mount, presets: PRESETS, version: '1.1.0' };
+  global.RiffastIntro = { mount: mount, presets: PRESETS, version: '1.2.0' };
 })(typeof window !== 'undefined' ? window : this);

@@ -30,10 +30,27 @@
     <title>Rifas y sorteos</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Tipografías SIN bloquear el primer pintado (media=print → all al cargar):
+         así la intro aparece al instante. La intro las espera (máx. ~1 s) antes de
+         salir para que el texto no cambie de fuente a la vista (ver lib/intro.ts). -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800;900&family=Archivo:wdth,wght@125,700..900&display=swap"
-      rel="stylesheet"
     />
+    <link
+      id="app-fonts"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800;900&family=Archivo:wdth,wght@125,700..900&display=swap"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800;900&family=Archivo:wdth,wght@125,700..900&display=swap"
+      />
+    </noscript>
   </head>
   <body>
     <!-- Intro de Riffast: el nombre se convierte en trébol mientras la app carga.
@@ -63,12 +80,19 @@
           last = now;
           if (budget <= 0) release(); else setTimeout(watch, 500);
         })();
+        // Opciones únicas de la intro (src/lib/intro.ts las reutiliza al volver a
+        // reproducirla). Se adapta a la carga real:
+        //   - speed 1.15: ritmo base, por si la conexión es lenta (forma el trébol en ~1 s).
+        //   - rush 2: si la app ya está lista, el resto corre al doble (~2.3×).
+        //   - minTime 1.26: sale en cuanto el trébol termina de formarse.
+        //   - maxWait 6: nunca tapa más de 6 s.
+        window.__riffastIntroOptions = {
+          ink: '#FFFFFF', autoReady: false, speed: 1.15, rush: 2, minTime: 1.26, maxWait: 6
+        };
         try {
-          // Mismas opciones que src/lib/intro.ts. minTime 1.5: sale en cuanto se
-          // forma el trébol si la app ya está lista.
-          window.__riffastIntro = window.RiffastIntro.mount({
-            container: '#riffast-intro', ink: '#FFFFFF', autoReady: false, minTime: 1.5, maxWait: 6
-          });
+          window.__riffastIntro = window.RiffastIntro.mount(
+            Object.assign({ container: '#riffast-intro' }, window.__riffastIntroOptions)
+          );
         } catch (e) { release(); }
       })();
     </script>

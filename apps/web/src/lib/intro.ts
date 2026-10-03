@@ -19,16 +19,18 @@ declare global {
   interface Window {
     RiffastIntro?: IntroApi;
     __riffastIntro?: IntroInstance;
+    /** Opciones de la intro, definidas una sola vez en index.html. */
+    __riffastIntroOptions?: Record<string, unknown>;
   }
 }
 
-// Mismas opciones que index.html (y que la landing): sale en cuanto se forma el
-// trébol si la app ya está lista, y nunca tapa más de 6 s.
-const OPTIONS = { ink: '#FFFFFF', autoReady: false, minTime: 1.5, maxWait: 6 };
-
 // Margen antes de soltar: entre dos cargas encadenadas (fallback de Suspense →
-// pantalla de carga de la página) el contador pasa un instante por cero.
-const SETTLE_MS = 150;
+// pantalla de carga de la página) el contador puede pasar un instante por cero.
+const SETTLE_MS = 50;
+
+// Tope de espera por las tipografías: con conexión lenta no vale la pena tapar
+// más la página por evitar el cambio de fuente.
+const FONTS_MAX_MS = 1000;
 
 let holds = 0;
 let timer: ReturnType<typeof setTimeout> | undefined;
@@ -64,9 +66,37 @@ export function IntroHold(): null {
   return null;
 }
 
-/** Arranque de la app: si ninguna pantalla pidió sostener la intro, que salga. */
+// Las tipografías de Google Fonts cargan sin bloquear el primer pintado
+// (index.html, <link id="app-fonts" media="print">). Resuelve cuando su hoja ya
+// cargó y las caras que se ven primero están listas.
+function fontsReady(): Promise<void> {
+  const link = document.getElementById('app-fonts') as HTMLLinkElement | null;
+  const sheet = new Promise<void>((resolve) => {
+    if (!link || link.media === 'all') return resolve();
+    link.addEventListener('load', () => resolve(), { once: true });
+    link.addEventListener('error', () => resolve(), { once: true });
+  });
+  return sheet.then(() => {
+    const fonts = document.fonts;
+    if (!fonts?.load) return;
+    // Se piden de forma explícita: el navegador solo descarga las que usa el
+    // texto ya pintado, y bajo la intro todavía no hay texto.
+    return Promise.all([
+      fonts.load('400 16px Inter'),
+      fonts.load('700 16px Inter'),
+      fonts.load('800 24px "Bricolage Grotesque"'),
+    ]).then(() => undefined);
+  });
+}
+
+/** Arranque de la app: la intro sale en cuanto ninguna pantalla la sostenga. */
 export function useIntroBoot(): void {
   useEffect(() => {
+    if (isIntroPlaying()) {
+      const release = holdIntro();
+      const timeout = new Promise<void>((resolve) => setTimeout(resolve, FONTS_MAX_MS));
+      Promise.race([fontsReady(), timeout]).then(release, release);
+    }
     scheduleRelease();
   }, []);
 }
@@ -90,7 +120,7 @@ export function afterIntro(fn: () => void): void {
 export function playIntro(): void {
   if (!window.RiffastIntro || isIntroPlaying()) return;
   try {
-    window.__riffastIntro = window.RiffastIntro.mount(OPTIONS);
+    window.__riffastIntro = window.RiffastIntro.mount({ ...window.__riffastIntroOptions, autoReady: false });
   } catch {
     return;
   }
