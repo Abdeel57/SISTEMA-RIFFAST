@@ -31,8 +31,8 @@ if (process.env.NODE_ENV === 'production') {
 // Recomendado para mayor seguridad: definir JWT_SECRET y COOKIE_SECRET propios en
 // Railway (tienen prioridad sobre este respaldo).
 function derivedSecret(purpose: string): string {
-  const base = process.env.DATABASE_URL ?? 'bismark-local-dev';
-  return createHash('sha256').update(`bismark:${purpose}:${base}`).digest('hex');
+  const base = process.env.DATABASE_URL ?? 'riffast-local-dev';
+  return createHash('sha256').update(`riffast:${purpose}:${base}`).digest('hex');
 }
 
 // ¿La base de datos es local (desarrollo) o remota (Railway/producción)?
@@ -138,7 +138,7 @@ export const env = {
     driver: (process.env.EMAIL_DRIVER || (process.env.RESEND_API_KEY ? 'resend' : 'log')) as
       | 'log'
       | 'resend',
-    from: str('EMAIL_FROM', 'Bismark <onboarding@resend.dev>'),
+    from: str('EMAIL_FROM', 'Riffast <onboarding@resend.dev>'),
     replyTo: process.env.EMAIL_REPLY_TO || undefined,
     resendApiKey: process.env.RESEND_API_KEY ?? '',
     // Minutos de validez del enlace de recuperación de contraseña.
@@ -154,7 +154,7 @@ export const env = {
   push: {
     vapidPublic: process.env.VAPID_PUBLIC_KEY || '',
     vapidPrivate: process.env.VAPID_PRIVATE_KEY || '',
-    vapidSubject: process.env.VAPID_SUBJECT || 'mailto:soporte@bismark.com',
+    vapidSubject: process.env.VAPID_SUBJECT || 'mailto:soporte@riffast.com',
   },
 
   storage: {
@@ -167,7 +167,7 @@ export const env = {
       cloudName: process.env.CLOUDINARY_CLOUD_NAME ?? '',
       apiKey: process.env.CLOUDINARY_API_KEY ?? '',
       apiSecret: process.env.CLOUDINARY_API_SECRET ?? '',
-      folder: process.env.CLOUDINARY_FOLDER ?? 'bismark',
+      folder: process.env.CLOUDINARY_FOLDER ?? 'riffast',
     },
     s3: {
       endpoint: process.env.S3_ENDPOINT ?? '',

@@ -50,7 +50,7 @@ try {
   await loadPage(`${WEB}/r/${SLUG}/e1`, 'existente E1');
 
   // 2) Crear rifa con descripción enriquecida (demo tiene plan) + publicar
-  await api('/auth/login', { method: 'POST', body: { email: 'demo@bismark.com', password: 'Demo1234!' } });
+  await api('/auth/login', { method: 'POST', body: { email: 'demo@riffast.com', password: 'Demo1234!' } });
   const created = await api('/raffles', {
     method: 'POST',
     body: { title: 'Rifa RichText QA', prize: 'Premio', description: RICH, ticketPrice: 50, totalTickets: 50, ticketFormat: 3, ticketStart: 1 },

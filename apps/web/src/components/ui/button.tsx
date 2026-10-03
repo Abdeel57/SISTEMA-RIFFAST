@@ -10,7 +10,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm',
-        brand: 'bg-brand text-white hover:bg-brand-electric shadow-lg shadow-brand/25',
+        // CTA de marca (igual que .btn-verde de la landing): verde vivo con texto noche.
+        brand: 'bg-brand-electric text-brand-ink hover:bg-brand shadow-lg shadow-brand-electric/30',
         secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/85',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',

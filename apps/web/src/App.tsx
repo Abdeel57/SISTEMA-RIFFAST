@@ -50,7 +50,7 @@ export function App() {
   useEffect(() => {
     void fetchMe();
   }, [fetchMe]);
-  // Marca de la PWA según la sección: admin = Bismark (siempre), público = rifero.
+  // Marca de la PWA según la sección: admin = Riffast (siempre), público = rifero.
   usePwaBranding();
   // Pixel de Facebook del rifero: solo páginas públicas y solo si lo configuró.
   useFacebookPixel();

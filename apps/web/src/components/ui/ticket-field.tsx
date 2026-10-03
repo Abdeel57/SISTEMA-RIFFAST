@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 // `ticketInputClass` para conservar register() de react-hook-form.
 
 export const ticketInputClass =
-  'h-12 rounded-xl border-[#E3E9F8] bg-[#F8FAFF] pl-11 font-medium placeholder:font-normal dark:border-border dark:bg-muted/30 transition-colors hover:border-brand/40 focus-visible:border-brand focus-visible:ring-brand/50';
+  'h-12 rounded-xl border-[#DCE7E0] bg-[#F7FAF8] pl-11 font-medium placeholder:font-normal dark:border-border dark:bg-muted/30 transition-colors hover:border-brand/40 focus-visible:border-brand focus-visible:ring-brand/50';
 
 interface Props {
   label: string;

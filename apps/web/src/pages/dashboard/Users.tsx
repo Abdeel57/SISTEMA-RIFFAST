@@ -10,7 +10,7 @@ import {
   type PanelUserDTO,
   type CreatePanelUserInput,
   type UpdatePanelUserInput,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import { userService } from '@/services/users';
 import { ApiError } from '@/lib/api';
 import { buildSellerHomeUrl } from '@/lib/site';

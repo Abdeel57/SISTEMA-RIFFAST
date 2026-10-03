@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListPlus, User, Hash, Gift } from 'lucide-react';
-import { TICKET_STATUS_LABELS, dialCodeForCountry, type TicketStatus } from '@bismark/shared';
+import { TICKET_STATUS_LABELS, dialCodeForCountry, type TicketStatus } from '@riffast/shared';
 import { raffleService } from '@/services/raffles';
 import { ticketService } from '@/services/tickets';
 import { ApiError } from '@/lib/api';

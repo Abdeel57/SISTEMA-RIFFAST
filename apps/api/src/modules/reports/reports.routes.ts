@@ -5,7 +5,7 @@ import { requireRifero } from '../../middlewares/auth.js';
 import { loadOwnedRaffle } from '../../lib/ownership.js';
 import { assertFeature } from '../../lib/plan.js';
 import { buildExcelStream, buildPdfTable, type ReportColumn, type ReportRow } from '../../lib/reports.js';
-import { ORDER_STATUS_LABELS, TICKET_STATUS_LABELS, formatDateTimeMX } from '@bismark/shared';
+import { ORDER_STATUS_LABELS, TICKET_STATUS_LABELS, formatDateTimeMX } from '@riffast/shared';
 
 type Format = 'excel' | 'pdf';
 

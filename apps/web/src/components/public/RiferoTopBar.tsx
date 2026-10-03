@@ -48,7 +48,7 @@ export function RiferoTopBar({
       <div
         aria-hidden
         className="pointer-events-none fixed inset-x-0 top-0 z-[45]"
-        style={{ height: bandCss, background: 'var(--rifero-primary, #1A4DFF)' }}
+        style={{ height: bandCss, background: 'var(--rifero-primary, #0A8F5A)' }}
       />
       <div
         className={cn(
@@ -56,9 +56,9 @@ export function RiferoTopBar({
           'transform-gpu transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-transform',
           hidden ? '-translate-y-full' : 'translate-y-0',
         )}
-        style={{ background: 'var(--rifero-primary, #1A4DFF)', paddingTop: bandCss }}
+        style={{ background: 'var(--rifero-primary, #0A8F5A)', paddingTop: bandCss }}
       >
-      <div className="border-y-[8px] border-[var(--rifero-primary,#1A4DFF)] bg-zinc-950/95 backdrop-blur">
+      <div className="border-y-[8px] border-[var(--rifero-primary,#0A8F5A)] bg-zinc-950/95 backdrop-blur">
       <div
         className="mx-auto flex max-w-2xl items-center justify-between gap-2 px-3 lg:max-w-5xl lg:px-6"
         style={{ height: 56 }}
@@ -82,7 +82,7 @@ export function RiferoTopBar({
               }}
             />
           ) : (
-            <div className="grid h-full w-full place-items-center rounded-full border-2 border-white bg-[var(--rifero-primary,#1A4DFF)] text-xl font-black text-white">
+            <div className="grid h-full w-full place-items-center rounded-full border-2 border-white bg-[var(--rifero-primary,#0A8F5A)] text-xl font-black text-white">
               {publicName.charAt(0).toUpperCase()}
             </div>
           )}

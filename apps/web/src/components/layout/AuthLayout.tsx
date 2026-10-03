@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, ArrowLeft, Ticket, Star, BadgeCheck } from 'lucide-react';
-import { LogoMark } from '@/components/brand/LogoMark';
+import { Logo } from '@/components/brand/Logo';
 
 interface Props {
   children: ReactNode;
@@ -13,16 +13,16 @@ interface Props {
   ticketLabel?: string;
 }
 
-// Layout de autenticación — concepto "Boleto Bismark": panel de marca en tinta
-// (izq, desktop) y el formulario dentro de un boleto troquelado sobre papel azul suave.
-export function AuthLayout({ children, badge, sideTitle, sideSubtitle, bullets, ticketLabel = 'Acceso Bismark' }: Props) {
+// Layout de autenticación — concepto "Boleto Riffast": panel de marca en noche
+// (izq, desktop) y el formulario dentro de un boleto troquelado sobre papel verde suave.
+export function AuthLayout({ children, badge, sideTitle, sideSubtitle, bullets, ticketLabel = 'Acceso Riffast' }: Props) {
   return (
     <div className="min-h-screen font-body lg:grid lg:grid-cols-[1.05fr_1fr]">
       {/* ── Panel de marca ── */}
       <aside className="relative hidden overflow-hidden bg-brand-ink p-12 text-white lg:flex lg:flex-col lg:justify-between">
         {/* Atmósfera */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-32 -top-24 h-[28rem] w-[28rem] rounded-full bg-brand/30 blur-[120px]" />
+          <div className="absolute -left-32 -top-24 h-[28rem] w-[28rem] rounded-full bg-brand-electric/25 blur-[120px]" />
           <div className="absolute -bottom-32 right-0 h-96 w-96 rounded-full bg-brand-deep/40 blur-[110px]" />
           <div className="absolute bottom-1/3 left-1/4 h-60 w-60 rounded-full bg-brand-mint/10 blur-[90px]" />
         </div>
@@ -40,9 +40,8 @@ export function AuthLayout({ children, badge, sideTitle, sideSubtitle, bullets, 
         </p>
 
         {/* Logo */}
-        <Link to="/" className="relative z-10 flex w-fit items-center gap-2 font-display text-xl font-extrabold text-white">
-          <LogoMark variant="white" className="h-8 w-8" />
-          Bismark
+        <Link to="/" className="relative z-10 flex w-fit items-center" aria-label="Riffast">
+          <Logo tone="light" className="h-9" />
         </Link>
 
         {/* Mensaje */}
@@ -65,9 +64,9 @@ export function AuthLayout({ children, badge, sideTitle, sideSubtitle, bullets, 
             ))}
           </ul>
 
-          {/* Boleto decorativo (azul eléctrico de marca) */}
+          {/* Boleto decorativo (verde Riffast) */}
           <div className="mt-10 w-fit rotate-[-3deg] animate-float-slow">
-            <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-brand-electric via-brand to-brand-deep px-4 py-3 text-white shadow-[0_14px_40px_-12px_rgba(26,77,255,0.6)]">
+            <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-brand-electric via-brand to-brand-deep px-4 py-3 text-white shadow-[0_14px_40px_-12px_rgba(16,198,95,0.55)]">
               <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/15">
                 <Ticket className="h-5 w-5" />
               </div>
@@ -86,12 +85,11 @@ export function AuthLayout({ children, badge, sideTitle, sideSubtitle, bullets, 
         </p>
       </aside>
 
-      {/* ── Área del formulario (papel crema) ── */}
-      <main className="relative flex min-h-screen flex-col bg-[#F5F7FF] dark:bg-background">
+      {/* ── Área del formulario (papel) ── */}
+      <main className="relative flex min-h-screen flex-col bg-[#F1F5F2] dark:bg-background">
         <div className="flex items-center justify-between p-4 lg:p-5">
-          <Link to="/" className="flex items-center gap-2 font-display text-lg font-extrabold lg:hidden">
-            <LogoMark className="h-7 w-7" />
-            Bismark
+          <Link to="/" className="flex items-center lg:hidden" aria-label="Riffast">
+            <Logo className="h-7" />
           </Link>
           <div className="flex items-center gap-1">
             <Link
@@ -106,11 +104,11 @@ export function AuthLayout({ children, badge, sideTitle, sideSubtitle, bullets, 
         <div className="flex flex-1 items-start justify-center px-4 pb-12 pt-2 sm:items-center sm:px-6">
           {/* Boleto del formulario */}
           <div className="w-full max-w-md animate-reveal">
-            <div className="relative overflow-hidden rounded-3xl border border-[#E3E9F8] bg-white shadow-[0_24px_60px_-24px_rgba(13,20,43,0.25)] dark:border-border dark:bg-card">
+            <div className="relative overflow-hidden rounded-3xl border border-[#DCE7E0] bg-white shadow-[0_24px_60px_-24px_rgba(3,18,12,0.22)] dark:border-border dark:bg-card">
               {/* Cabecera del boleto */}
               <div className="flex items-center justify-between px-6 pt-5 sm:px-8">
                 <p className="inline-flex items-center gap-2 font-ticket text-[10px] font-bold uppercase tracking-[0.28em] text-muted-foreground">
-                  <Star className="h-3 w-3 text-brand-mint" />
+                  <Star className="h-3 w-3 text-brand-electric" />
                   {ticketLabel}
                 </p>
                 <p className="font-ticket text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
@@ -119,9 +117,9 @@ export function AuthLayout({ children, badge, sideTitle, sideSubtitle, bullets, 
               </div>
               {/* Perforación con muescas */}
               <div className="relative mt-4">
-                <div className="border-t-2 border-dashed border-[#E3E9F8] dark:border-border" />
-                <span className="absolute -left-3.5 -top-3.5 h-7 w-7 rounded-full bg-[#F5F7FF] dark:bg-background" aria-hidden />
-                <span className="absolute -right-3.5 -top-3.5 h-7 w-7 rounded-full bg-[#F5F7FF] dark:bg-background" aria-hidden />
+                <div className="border-t-2 border-dashed border-[#DCE7E0] dark:border-border" />
+                <span className="absolute -left-3.5 -top-3.5 h-7 w-7 rounded-full bg-[#F1F5F2] dark:bg-background" aria-hidden />
+                <span className="absolute -right-3.5 -top-3.5 h-7 w-7 rounded-full bg-[#F1F5F2] dark:bg-background" aria-hidden />
               </div>
 
               <div className="px-6 py-7 sm:px-8 sm:py-8">{children}</div>

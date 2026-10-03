@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { drawSchema } from '@bismark/shared';
+import { drawSchema } from '@riffast/shared';
 import { prisma } from '../../lib/prisma.js';
 import { validate } from '../../lib/http.js';
 import { badRequest, notFound, forbidden, conflict } from '../../lib/errors.js';

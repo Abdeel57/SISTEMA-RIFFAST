@@ -6,7 +6,7 @@ import { loadAccessibleOrder } from '../../lib/ownership.js';
 import { getPlanContext } from '../../lib/plan.js';
 import { storage } from '../../lib/storage.js';
 import { toPaymentProofDTO } from '../../lib/serializers.js';
-import { ALLOWED_PROOF_MIME, LIMITS, PaymentMethod } from '@bismark/shared';
+import { ALLOWED_PROOF_MIME, LIMITS, PaymentMethod } from '@riffast/shared';
 import { logActivity } from '../../lib/activity.js';
 import { sendPushToUser } from '../../lib/push.js';
 import { env } from '../../config/env.js';

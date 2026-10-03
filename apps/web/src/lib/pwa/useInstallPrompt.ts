@@ -7,7 +7,7 @@ interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
 }
 
-const DISMISS_KEY = 'bismark:a2hs-dismissed';
+const DISMISS_KEY = 'riffast:a2hs-dismissed';
 
 function alreadyDismissed(): boolean {
   try {
@@ -34,7 +34,7 @@ interface InstallPromptState {
 }
 
 /**
- * Captura `beforeinstallprompt` para ofrecer un banner "Instala Bismark"
+ * Captura `beforeinstallprompt` para ofrecer un banner "Instala Riffast"
  * personalizado. Recuerda el descarte del usuario en localStorage para no
  * volver a molestarlo. No hace nada si la app ya está instalada (standalone).
  */

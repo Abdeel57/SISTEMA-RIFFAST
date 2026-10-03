@@ -1,10 +1,10 @@
-# Bismark — Página de Rifas (plantilla por cliente) 🎟️
+# Riffast — Página de Rifas (plantilla por cliente) 🎟️
 
 Sitio web **PWA de rifas para UN solo organizador**. Cada cliente recibe su propia copia desplegada en Railway (backend + base de datos + frontend en **un solo servicio**). La página pública del rifero es la **página principal** del sitio; el administrador vive en **`/admin`** detrás de un inicio de sesión.
 
 - **Mobile-first**, instalable como app (PWA), modo claro/oscuro.
 - Pensada para público **mexicano**. WhatsApp como canal principal. Pagos manuales directos al organizador.
-- Pie de página discreto **"Desarrollado por Bismark"** con enlace al WhatsApp de Bismark (configurable).
+- Pie de página discreto **"Desarrollado por Riffast"** con enlace al WhatsApp de Riffast (configurable).
 
 ---
 
@@ -26,7 +26,7 @@ No hay registro público, ni planes, ni landing: todo eso se eliminó. La cuenta
 
 | Usuario | Contraseña |
 |---------|------------|
-| `Bismark` | `admin123` |
+| `Riffast` | `admin123` |
 
 Se pueden personalizar por cliente con las variables `ADMIN_USER` / `ADMIN_PASSWORD` (solo aplican la primera vez; el seed es idempotente y nunca pisa datos existentes).
 
@@ -72,7 +72,7 @@ npm run dev                  # API :4000  ·  Web :5173
 npm run db:local:stop
 ```
 
-Entra a `http://localhost:5173/admin` con `Bismark` / `admin123`.
+Entra a `http://localhost:5173/admin` con `Riffast` / `admin123`.
 
 ---
 
@@ -94,7 +94,7 @@ Listo: la raíz del dominio muestra la página del rifero y `tudominio.com/admin
 
 > **Imágenes y comprobantes**: en producción se guardan automáticamente en Postgres (tabla `StoredAsset`, `STORAGE_DRIVER=db`) y se sirven en `/uploads/<key>`. Sobreviven a los deploys sin depender de un disco ni un Volume. En desarrollo local se usa disco (`apps/api/uploads/`).
 
-> El WhatsApp del pie "Desarrollado por Bismark" se define **al compilar** con `VITE_BISMARK_WHATSAPP` (en `apps/web/.env.production` o como variable del servicio en Railway).
+> El WhatsApp del pie "Desarrollado por Riffast" se define **al compilar** con `VITE_RIFFAST_WHATSAPP` (en `apps/web/.env.production` o como variable del servicio en Railway).
 
 ---
 

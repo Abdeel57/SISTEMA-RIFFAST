@@ -1,4 +1,4 @@
-import type { PaymentMethodDTO } from '@bismark/shared';
+import type { PaymentMethodDTO } from '@riffast/shared';
 import { BankCard } from '@/components/public/BankCard';
 
 // Datos de pago del rifero (mismo shape en lookup y en la rifa).

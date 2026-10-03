@@ -50,7 +50,7 @@ async function visit(name, url, checkFn) {
   }
 }
 
-console.log(`\n🖥️  Bismark UI check → ${BASE}\n`);
+console.log(`\n🖥️  Riffast UI check → ${BASE}\n`);
 
 // ── Páginas públicas ──
 await visit('Landing /', '/', async () => {
@@ -94,7 +94,7 @@ issues.length = 0;
 try {
   await page.goto(`${BASE}/login`, { waitUntil: 'networkidle2' });
   await page.waitForSelector('#email', { timeout: 10000 });
-  await page.type('#email', 'demo@bismark.com');
+  await page.type('#email', 'demo@riffast.com');
   await page.type('#password', 'Demo1234!');
   await page.click('button[type=submit]');
   await page.waitForFunction(() => location.pathname.startsWith('/panel') || location.pathname.startsWith('/dashboard'), { timeout: 15000 });
@@ -159,7 +159,7 @@ try {
   await cdp.send('Network.clearBrowserCookies');
   await page.goto(`${BASE}/login`, { waitUntil: 'networkidle2' });
   await page.waitForSelector('#email', { timeout: 10000 });
-  await page.type('#email', 'admin@bismark.com');
+  await page.type('#email', 'admin@riffast.com');
   await page.type('#password', 'Admin1234!');
   await page.click('button[type=submit]');
   await page.waitForFunction(() => !location.pathname.includes('/login'), { timeout: 15000 });

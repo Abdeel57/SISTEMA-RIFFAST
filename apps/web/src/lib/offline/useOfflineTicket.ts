@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { DigitalTicketDTO } from '@bismark/shared';
+import type { DigitalTicketDTO } from '@riffast/shared';
 import { loadTicket, saveTicket } from './ticketStore';
 
 interface Options {

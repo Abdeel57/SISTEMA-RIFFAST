@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { createPanelUserSchema, updatePanelUserSchema, type PanelUserDTO } from '@bismark/shared';
+import { createPanelUserSchema, updatePanelUserSchema, type PanelUserDTO } from '@riffast/shared';
 import type { User } from '@prisma/client';
 import { prisma } from '../../lib/prisma.js';
 import { validate } from '../../lib/http.js';

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Megaphone, Layers, Package, Plus, Trash2 } from 'lucide-react';
-import { computeOrderPrice, formatMXN } from '@bismark/shared';
+import { computeOrderPrice, formatMXN } from '@riffast/shared';
 import { raffleService } from '@/services/raffles';
 import { ApiError } from '@/lib/api';
 import { PanelIntro } from '@/components/owner/PanelKit';

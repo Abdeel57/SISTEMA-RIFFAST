@@ -1,14 +1,14 @@
 {
   "id": "/admin",
-  "name": "Bismark | ADMIN",
-  "short_name": "Bismark ADMIN",
-  "description": "Panel de administración de Bismark.",
+  "name": "Riffast | ADMIN",
+  "short_name": "Riffast ADMIN",
+  "description": "Panel de administración de Riffast.",
   "start_url": "/admin",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "lang": "es-MX",
-  "theme_color": "#2751fb",
+  "theme_color": "#0A8F5A",
   "background_color": "#ffffff",
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

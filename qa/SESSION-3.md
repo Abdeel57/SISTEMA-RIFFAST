@@ -6,7 +6,7 @@
 
 ## ⏭️ Para retomar (snapshot 2026-06-11)
 App completa, **re-temada a la identidad oficial** (azul #1A4DFF / tinta #0A0A0A / menta #4DFFA3, ref.
-bismarkdigital.com) y landing pulida con capturas reales del sistema. Typecheck verde en 3 paquetes.
+riffastdigital.com) y landing pulida con capturas reales del sistema. Typecheck verde en 3 paquetes.
 Esta sesión sumó: re-tema landing+auth · titular hero Archivo expandida + **boleto rojo SVG “RIFAS”** ·
 capturas reales (hero perfil/showcase rifa+boletera/admin Inicio+Órdenes, `?v=3/4`) · bento 3 tarjetas
 con mini-UIs animadas (pausa fuera de viewport) · **planes premium** (Pro tinta central, rosetón en
@@ -17,7 +17,7 @@ un pantallazo) · fixes críticos (expiración con comprobante, confirmar RESERV
 ⚠️ Tras tocar `tailwind.config.ts`: **reiniciar Vite** (no recarga config).
 
 **Falta para lanzar (igual que antes):**
-1. **Producción (solo usuario):** Railway (PG+Volume+API) · Netlify · DNS bismark.com + api · Resend ·
+1. **Producción (solo usuario):** Railway (PG+Volume+API) · Netlify · DNS riffast.com + api · Resend ·
    env prod. Runbook `qa/DEPLOY-RAILWAY.md`. **Sembrar la cuenta demo en prod** (la landing enlaza
    `/r/rifasdelasuerte`).
 2. **Decisión grande:** pasarela de suscripciones (MercadoPago/Stripe) + webhook — hoy es manual.
@@ -246,7 +246,7 @@ npm run typecheck          # shared + api + web
   color del premio, seriales Space Mono y perforaciones de boleto. Cambios:
   1. **Producto real en vez de mockup:** capturé la demo con Chrome+sharp → `public/demo-rifero.webp` y
      `public/demo-rifa.webp` (~78 KB c/u). El teléfono del hero y una **nueva sección showcase** (“Así se
-     ve una página hecha con Bismark”, 2 teléfonos inclinados) muestran píxeles reales + link a la demo.
+     ve una página hecha con Riffast”, 2 teléfonos inclinados) muestran píxeles reales + link a la demo.
   2. **Talón de stats perforado** (`.ticket-edge`) encimado al hero: 0% comisión · 100% directo · 10,000
      boletos · 24/7 (se quitó la débil “3 planes accesibles”).
   3. **Beneficios → bento asimétrico** (lg:grid-cols-6, spans 3/3/2/2/2/3/3) con **mini-UIs ilustrativas**
@@ -397,7 +397,7 @@ npm run typecheck          # shared + api + web
   reescrita — de círculo plano azul a **sello festoneado** (rosetón de 8 lóbulos, la forma universal de
   “verificado”) en SVG con **degradado de profundidad** (#60a5fa→#2563eb→#1e40af), **brillo superior**
   radial tipo cristal, palomita en trazo redondeado nítido, sombra sutil y `<title>` “Rifero verificado
-  por Bismark” (tooltip). Ids de gradiente únicos por instancia (`useId` saneado — los “:” rompen
+  por Riffast” (tooltip). Ids de gradiente únicos por instancia (`useId` saneado — los “:” rompen
   `url()` en SVG). **Misma API** (className, size) → mejora automática en todos los usos: nombre del
   perfil, badge del avatar, sello SafeSeal, ganadores, footer. Verificado con captura @3x (avatar 26px
   y nombre 22px se ven nítidos). Typecheck VERDE.
@@ -407,8 +407,8 @@ npm run typecheck          # shared + api + web
     de boletos) y `RiferoTopBar.tsx` (verificar/pago): fuera el aro blanco, sello directo (17px) con
     sombra oscura. `VerifiedBadge` ahora acepta prop `style` (la barra posiciona el badge con top
     dinámico según el tamaño del logo).
-- 🎨 **RE-TEMA a la identidad oficial de Bismark (a pedido del usuario — “Bismark no usa esos colores”,
-  referencia: bismarkdigital.com):** extraje la paleta real del sitio con curl (markdown-fetch borra el
+- 🎨 **RE-TEMA a la identidad oficial de Riffast (a pedido del usuario — “Riffast no usa esos colores”,
+  referencia: riffastdigital.com):** extraje la paleta real del sitio con curl (markdown-fetch borra el
   CSS): **azul eléctrico `#1A4DFF`** (+`#4178FF`/`#0E37D6`), **tinta `#0A0A0A`**, tintes azul suave
   `#F5F7FF`/`#EEF3FF`, **menta `#4DFFA3`**, cielo `#6FA0FF`, ámbar puntual `#F5A623`; tipografía Geist
   (no migrada — sólo colores, como pidió). Cambios:
@@ -419,7 +419,7 @@ npm run typecheck          # shared + api + web
     TODOS los acentos dorados→**menta** (subrayado “rifas”, dots, marquee ★, folios oscuros, números de
     pasos, hilo conector, estrella footer), hairline del nav→azul, plan popular dorado→**azul** (pill
     menta), stub “¡Ganaste!” crema→blanco+menta, marcos de teléfono a tinta neutra, sombras
-    `rgba(39,81,251)`→`rgba(26,77,255)`, y el **CTA final “boleto dorado”→“boleto Bismark” azul
+    `rgba(39,81,251)`→`rgba(26,77,255)`, y el **CTA final “boleto dorado”→“boleto Riffast” azul
     eléctrico** (gradiente electric→deep, botón blanco/tinta, etiqueta menta).
   - **Auth** (`AuthLayout`, `ticket-field`, Login/Register/Recover): mismo barrido — fondo `#F5F7FF`,
     inputs `#F8FAFF`/borde `#E3E9F8`, acentos gold→mint, boleto decorativo dorado→azul eléctrico.
@@ -427,7 +427,7 @@ npm run typecheck          # shared + api + web
     Design (DEFAULT_PRIMARY) y RiferoTheme (`#1d4ed8`→`#1A4DFF`). `theme-color` meta y
     `text-gradient-brand` actualizados. `OwnerShell` PreviewBanner a ink+mint.
   - **Verificado:** typecheck VERDE · capturas desktop full/móvil/registro — todo lee como la familia
-    bismarkdigital (blanco/tinta + azul + menta) · 0 pageerrors. *Pendiente opcional:* migrar tipografía
+    riffastdigital (blanco/tinta + azul + menta) · 0 pageerrors. *Pendiente opcional:* migrar tipografía
     a Geist para matchear 100% (hoy Bricolage/Jakarta/Space Mono).
 - 📸 **Nuevas capturas del sistema + sección del administrador (a pedido del usuario):**
   - **Demo con banner de auto:** `coverUrl` del demo (`rifasdelasuerte`) ahora usa la foto Unsplash del
@@ -539,8 +539,8 @@ npm run typecheck          # shared + api + web
 - 💬 **Burbuja flotante de WhatsApp en la landing (a pedido del usuario):** `WhatsAppFab` en
   `Landing.tsx` — verde oficial #25D366, `WhatsappIcon` real, label “¿Dudas? Escríbenos” (sm+; en
   móvil sólo icono), ping sutil, y **`useHideOnScroll`** (se esconde al bajar, reaparece al detenerse —
-  consistente con tuerca/SafeSeal). **Número real extraído de bismarkdigital.com** con curl:
-  `wa.me/5216629480105`, mensaje prellenado “Hola 👋 Vengo de la página de Bismark…”. Verificado:
+  consistente con tuerca/SafeSeal). **Número real extraído de riffastdigital.com** con curl:
+  `wa.me/5216629480105`, mensaje prellenado “Hola 👋 Vengo de la página de Riffast…”. Verificado:
   visible con href correcto · se oculta/reaparece al scrollear · 0 pageerrors · typecheck VERDE.
   - *Iteración (usuario): 2 pantallas en la sección del administrador.* Sembré **4 apartados realistas**
     en el demo vía el endpoint público (`qa/seed-demo-orders.mjs`, utilidad conservada — los apartados

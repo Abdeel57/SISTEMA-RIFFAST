@@ -7,7 +7,7 @@
 // En desarrollo (Vite sirve el index.html tal cual) no hay atributos y se
 // corrige al cargar el perfil.
 import { create } from 'zustand';
-import { translate, isLocale, isCurrency, formatMoney, type Currency, type Locale, type MessageKey } from '@bismark/shared';
+import { translate, isLocale, isCurrency, formatMoney, type Currency, type Locale, type MessageKey } from '@riffast/shared';
 
 interface SiteState {
   locale: Locale;

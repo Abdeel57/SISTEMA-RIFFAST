@@ -1,28 +1,28 @@
 {
-  "name": "bismark",
+  "name": "riffast",
   "version": "0.1.0",
   "private": true,
-  "description": "Bismark — Plataforma SaaS multi-rifero para organizar rifas y sorteos",
+  "description": "Riffast — Plataforma SaaS multi-rifero para organizar rifas y sorteos",
   "workspaces": [
     "packages/*",
     "apps/*"
   ],
   "scripts": {
     "dev": "concurrently -n api,web -c blue,magenta \"npm:dev:api\" \"npm:dev:web\"",
-    "dev:api": "npm run dev --workspace=@bismark/api",
-    "dev:web": "npm run dev --workspace=@bismark/web",
-    "db:local": "npm run db:local --workspace=@bismark/api",
-    "db:local:stop": "npm run db:local:stop --workspace=@bismark/api",
-    "setup:local": "npm run db:local --workspace=@bismark/api && npm run db:migrate --workspace=@bismark/api && npm run db:seed --workspace=@bismark/api",
-    "start": "export NODE_ENV=production && npm run db:migrate:deploy --workspace=@bismark/api && npm run db:seed --workspace=@bismark/api && npm run start --workspace=@bismark/api",
-    "build": "npm run build --workspace=@bismark/shared && npm run build --workspace=@bismark/api && npm run build --workspace=@bismark/web",
-    "build:shared": "npm run build --workspace=@bismark/shared",
-    "typecheck": "npm run typecheck --workspace=@bismark/shared && npm run typecheck --workspace=@bismark/api && npm run typecheck --workspace=@bismark/web",
-    "db:generate": "npm run db:generate --workspace=@bismark/api",
-    "db:migrate": "npm run db:migrate --workspace=@bismark/api",
-    "db:push": "npm run db:push --workspace=@bismark/api",
-    "db:seed": "npm run db:seed --workspace=@bismark/api",
-    "db:studio": "npm run db:studio --workspace=@bismark/api"
+    "dev:api": "npm run dev --workspace=@riffast/api",
+    "dev:web": "npm run dev --workspace=@riffast/web",
+    "db:local": "npm run db:local --workspace=@riffast/api",
+    "db:local:stop": "npm run db:local:stop --workspace=@riffast/api",
+    "setup:local": "npm run db:local --workspace=@riffast/api && npm run db:migrate --workspace=@riffast/api && npm run db:seed --workspace=@riffast/api",
+    "start": "export NODE_ENV=production && npm run db:migrate:deploy --workspace=@riffast/api && npm run db:seed --workspace=@riffast/api && npm run start --workspace=@riffast/api",
+    "build": "npm run build --workspace=@riffast/shared && npm run build --workspace=@riffast/api && npm run build --workspace=@riffast/web",
+    "build:shared": "npm run build --workspace=@riffast/shared",
+    "typecheck": "npm run typecheck --workspace=@riffast/shared && npm run typecheck --workspace=@riffast/api && npm run typecheck --workspace=@riffast/web",
+    "db:generate": "npm run db:generate --workspace=@riffast/api",
+    "db:migrate": "npm run db:migrate --workspace=@riffast/api",
+    "db:push": "npm run db:push --workspace=@riffast/api",
+    "db:seed": "npm run db:seed --workspace=@riffast/api",
+    "db:studio": "npm run db:studio --workspace=@riffast/api"
   },
   "engines": {
     "node": ">=20"

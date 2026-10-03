@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Copy, Link2, Receipt, ArrowRight, Ticket, Wallet, Clock, CheckCircle2 } from 'lucide-react';
-import { formatMXN } from '@bismark/shared';
+import { formatMXN } from '@riffast/shared';
 import { userService } from '@/services/users';
 import { useAuthStore } from '@/store/auth';
 import { buildSellerHomeUrl } from '@/lib/site';

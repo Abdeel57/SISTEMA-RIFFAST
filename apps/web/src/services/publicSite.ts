@@ -8,7 +8,7 @@ import type {
   PaymentProofDTO,
   PaymentMethodDTO,
   OrderStatus,
-} from '@bismark/shared';
+} from '@riffast/shared';
 
 // Resultado de "Verificar boletos" (búsqueda por teléfono dentro de un rifero).
 export interface PublicOrderLookupItem {

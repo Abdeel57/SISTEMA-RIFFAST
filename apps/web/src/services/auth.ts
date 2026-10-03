@@ -1,5 +1,5 @@
 import { apiFetch, setAuthToken } from '@/lib/api';
-import type { AuthUserDTO, LoginInput } from '@bismark/shared';
+import type { AuthUserDTO, LoginInput } from '@riffast/shared';
 
 type AuthReply = { user: AuthUserDTO; token?: string };
 

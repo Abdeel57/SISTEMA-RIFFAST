@@ -26,7 +26,7 @@ export default defineConfig({
         'apple-touch-icon.png',
         'og-default.png',
         'offline.html',
-        // Manifest dedicado del administrador (marca Bismark, abre directo en /admin).
+        // Manifest dedicado del administrador (marca Riffast, abre directo en /admin).
         // El manifest público lo genera vite-plugin-pwa; este es estático.
         'admin.webmanifest',
       ],
@@ -34,8 +34,8 @@ export default defineConfig({
         name: 'Rifas y sorteos',
         short_name: 'Rifas',
         description: 'Aparta tus boletos, paga fácil y recibe tu boleto digital con QR.',
-        theme_color: '#2751fb',
-        background_color: '#070b18',
+        theme_color: '#03120C',
+        background_color: '#03120C',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
@@ -56,7 +56,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@bismark/shared': fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)),
+      '@riffast/shared': fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)),
     },
   },
   server: {

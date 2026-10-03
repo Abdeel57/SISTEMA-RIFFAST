@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
-// Kit visual del panel del rifero: refinado y sobrio (azul Bismark).
+// Kit visual del panel del rifero: refinado y sobrio (azul Riffast).
 // Da una capa de pulido consistente (tarjetas con sombra suave/elevada,
 // encabezados claros, métricas y secciones) sin sobrecargar de color.
 

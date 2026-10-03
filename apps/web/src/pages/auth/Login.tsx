@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { User, Lock, ArrowRight } from 'lucide-react';
-import { loginSchema, type LoginInput } from '@bismark/shared';
+import { loginSchema, type LoginInput } from '@riffast/shared';
 import { authService } from '@/services/auth';
 import { useAuthStore } from '@/store/auth';
 import { ApiError } from '@/lib/api';

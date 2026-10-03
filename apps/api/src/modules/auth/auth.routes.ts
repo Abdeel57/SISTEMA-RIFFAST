@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { loginSchema } from '@bismark/shared';
+import { loginSchema } from '@riffast/shared';
 import { prisma } from '../../lib/prisma.js';
 import { validate } from '../../lib/http.js';
 import { verifyPassword } from '../../lib/auth.js';

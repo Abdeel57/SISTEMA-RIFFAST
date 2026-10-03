@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { Prisma } from '@prisma/client';
-import { reserveTicketsSchema, reserveManualSchema, normalizeCountryCode, computeOrderPrice, TicketStatus } from '@bismark/shared';
+import { reserveTicketsSchema, reserveManualSchema, normalizeCountryCode, computeOrderPrice, TicketStatus } from '@riffast/shared';
 import { prisma } from '../../lib/prisma.js';
 import { validate } from '../../lib/http.js';
 import { badRequest, conflict, notFound, forbidden } from '../../lib/errors.js';

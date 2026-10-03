@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { AuthUserDTO } from '@bismark/shared';
+import type { AuthUserDTO } from '@riffast/shared';
 import { authService } from '@/services/auth';
 import { ApiError } from '@/lib/api';
 

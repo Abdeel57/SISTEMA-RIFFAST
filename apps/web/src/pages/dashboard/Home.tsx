@@ -16,7 +16,7 @@ import {
   Check,
   type LucideIcon,
 } from 'lucide-react';
-import { formatMXN } from '@bismark/shared';
+import { formatMXN } from '@riffast/shared';
 import { raffleService } from '@/services/raffles';
 import { riferoService } from '@/services/riferos';
 import { useAuthStore } from '@/store/auth';

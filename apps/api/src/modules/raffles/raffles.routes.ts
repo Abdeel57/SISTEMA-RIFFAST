@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { Prisma } from '@prisma/client';
-import { createRaffleSchema, updateRaffleSchema, slugify } from '@bismark/shared';
+import { createRaffleSchema, updateRaffleSchema, slugify } from '@riffast/shared';
 import { prisma } from '../../lib/prisma.js';
 import { validate } from '../../lib/http.js';
 import { badRequest, conflict } from '../../lib/errors.js';

@@ -6,7 +6,7 @@ import {
   TICKET_STATUS_LABELS,
   type TicketLiteDTO,
   type TicketStatus,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import { useT, useMoney } from '@/store/site';
 import {
   type TicketMapData,

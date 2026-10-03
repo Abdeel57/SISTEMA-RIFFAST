@@ -21,7 +21,7 @@ import {
   PHONE_COUNTRIES,
   type FaqItemDTO,
   type RiferoProfileDTO,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import { riferoService } from '@/services/riferos';
 import { ApiError } from '@/lib/api';
 import { PanelIntro } from '@/components/owner/PanelKit';

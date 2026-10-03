@@ -3,7 +3,7 @@
 //   - Administrador (/admin, /login): siempre claro.
 //   - Páginas públicas: lo elige el rifero (publicDarkMode); por defecto claro.
 // La clase `dark` activa los tokens de color oscuros de index.css (darkMode:'class').
-const LIGHT_THEME_COLOR = '#1d4ed8';
+const LIGHT_THEME_COLOR = '#0A8F5A';
 
 // Color de la barra del navegador para el PANEL (siempre la marca del producto).
 export const ADMIN_THEME_COLOR = LIGHT_THEME_COLOR;

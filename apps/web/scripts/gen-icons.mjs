@@ -27,13 +27,15 @@ await png('apple-touch-icon.svg', 180, 'apple-touch-icon.png');
 await png('favicon.svg', 32, 'favicon-32.png');
 
 // Imagen por defecto para vista previa de enlaces (Open Graph) 1200×630:
-// fondo de marca con el logotipo B centrado. Es el fallback cuando una rifa
-// no tiene imagen propia (la edge function usa la de la rifa cuando existe).
-const logo = await sharp(await readFile(join(PUBLIC, 'icon.svg')), { density: 384 })
-  .resize(340, 340)
+// fondo "noche" con el logotipo horizontal de Riffast (versión clara) centrado.
+// Es el fallback cuando una rifa no tiene imagen propia (la edge function usa
+// la de la rifa cuando existe).
+const ASSETS = join(PUBLIC, '..', 'src', 'assets');
+const logo = await sharp(await readFile(join(ASSETS, 'riffast-logo-light.svg')), { density: 384 })
+  .resize(760, null)
   .png()
   .toBuffer();
-await sharp({ create: { width: 1200, height: 630, channels: 4, background: '#070b18' } })
+await sharp({ create: { width: 1200, height: 630, channels: 4, background: '#03120C' } })
   .composite([{ input: logo, gravity: 'center' }])
   .png()
   .toFile(join(PUBLIC, 'og-default.png'));

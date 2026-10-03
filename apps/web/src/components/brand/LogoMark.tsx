@@ -1,27 +1,26 @@
 import { cn } from '@/lib/cn';
-import logoUrl from '@/assets/bismark-logo.png';
+import cloverUrl from '@/assets/riffast-clover.svg';
 
-// Monograma oficial de Bismark ("BISMARK LOGO PERFECTO"). El archivo es negro
-// sobre transparente, así que:
-//   variant="black" → tal cual (para superficies claras).
-//   variant="white" → invertido a blanco (para superficies oscuras).
-//   variant="auto"  → negro en tema claro, blanco en tema oscuro (dark:invert).
+// Símbolo oficial de Riffast: el trébol de cuatro boletos (verde #00B86B sobre
+// transparente). Se lee bien tanto en superficies claras como oscuras, así que
+// por defecto va a color:
+//   variant="color" → trébol verde de marca (default).
+//   variant="white" → trébol blanco (sobre fondos verdes o fotos).
 export function LogoMark({
   className,
-  variant = 'auto',
+  variant = 'color',
 }: {
   className?: string;
-  variant?: 'black' | 'white' | 'auto';
+  variant?: 'color' | 'white';
 }) {
   return (
     <img
-      src={logoUrl}
-      alt="Bismark"
+      src={cloverUrl}
+      alt="Riffast"
       draggable={false}
       className={cn(
         'block h-8 w-8 select-none object-contain',
-        variant === 'white' && 'invert',
-        variant === 'auto' && 'dark:invert',
+        variant === 'white' && 'brightness-0 invert',
         className,
       )}
     />

@@ -1,6 +1,6 @@
 import { Copy, Wifi } from 'lucide-react';
 import { toast } from 'sonner';
-import type { PaymentMethodDTO } from '@bismark/shared';
+import type { PaymentMethodDTO } from '@riffast/shared';
 import { detectBank } from '@/lib/banks';
 import { t, useT, useLocale } from '@/store/site';
 

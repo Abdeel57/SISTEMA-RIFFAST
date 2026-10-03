@@ -1,4 +1,4 @@
-// Versión single-tenant: ya no hay planes ni suscripciones de Bismark.
+// Versión single-tenant: ya no hay planes ni suscripciones de Riffast.
 // Cada copia del sitio pertenece a un solo cliente y tiene TODO incluido,
 // así que estas funciones conservan su firma pero siempre permiten.
 import type { Plan, Subscription } from '@prisma/client';

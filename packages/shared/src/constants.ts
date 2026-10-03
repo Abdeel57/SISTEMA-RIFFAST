@@ -1,10 +1,10 @@
 // Constantes compartidas de la plataforma.
 
 export const BRAND = {
-  name: 'Bismark',
-  poweredBy: 'Impulsado por Bismark',
-  generatedBy: 'Generado por Bismark',
-  rootDomain: 'bismark.com',
+  name: 'Riffast',
+  poweredBy: 'Impulsado por Riffast',
+  generatedBy: 'Generado por Riffast',
+  rootDomain: 'riffast.com',
 } as const;
 
 // Palabras reservadas que NO pueden usarse como slug/subdominio de rifero.
@@ -17,7 +17,7 @@ export const RESERVED_SLUGS = [
   'login',
   'register',
   'registro',
-  'bismark',
+  'riffast',
   'soporte',
   'support',
   'help',

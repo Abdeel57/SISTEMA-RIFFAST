@@ -18,7 +18,7 @@ import {
   DollarSign,
   ShieldCheck,
 } from 'lucide-react';
-import { updateRiferoSchema } from '@bismark/shared';
+import { updateRiferoSchema } from '@riffast/shared';
 import { riferoService } from '@/services/riferos';
 import { ApiError } from '@/lib/api';
 import { PanelIntro } from '@/components/owner/PanelKit';
@@ -329,7 +329,7 @@ export default function Settings() {
                 <ToggleRow
                   icon={Sparkles}
                   title="Usar sorteo digital"
-                  description="Realiza el sorteo dentro de Bismark de forma transparente."
+                  description="Realiza el sorteo dentro de Riffast de forma transparente."
                   checked={!!field.value}
                   onChange={field.onChange}
                 />

@@ -2,7 +2,7 @@
 // CREAR rifas (201) y NO poder PUBLICAR (402). Uso: node qa/diag-noplan-create.mjs
 const BASE = process.env.API_URL || 'http://localhost:4000';
 const ts = Date.now();
-const email = `noplan${ts}@bismark.test`;
+const email = `noplan${ts}@riffast.test`;
 const slug = `np${ts}`;
 const pass = 'Demo1234!';
 

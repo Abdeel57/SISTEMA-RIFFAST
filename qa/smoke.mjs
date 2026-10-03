@@ -1,8 +1,8 @@
 // QA smoke — verifica la integración contra el API vivo (http://localhost:4000).
 // Solo lectura + auth (no muta datos). Uso: node qa/smoke.mjs
 const BASE = process.env.API_URL || 'http://localhost:4000';
-const RIFERO = { email: 'demo@bismark.com', password: 'Demo1234!' };
-const ADMIN = { email: 'admin@bismark.com', password: 'Admin1234!' };
+const RIFERO = { email: 'demo@riffast.com', password: 'Demo1234!' };
+const ADMIN = { email: 'admin@riffast.com', password: 'Admin1234!' };
 
 let pass = 0,
   fail = 0,
@@ -29,7 +29,7 @@ function sessionFrom(setCookie) {
 }
 
 async function main() {
-  console.log(`\n🔎 Bismark QA smoke → ${BASE}\n`);
+  console.log(`\n🔎 Riffast QA smoke → ${BASE}\n`);
 
   // ── Salud + público ──
   try {

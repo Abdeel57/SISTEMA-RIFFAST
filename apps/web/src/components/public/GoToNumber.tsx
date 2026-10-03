@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Delete, Search, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { TicketStatus, formatTicketNumber } from '@bismark/shared';
+import { TicketStatus, formatTicketNumber } from '@riffast/shared';
 import { statusOfNumber, type TicketMapData } from '@/lib/ticketMap';
 import { useT } from '@/store/site';
 import {

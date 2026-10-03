@@ -8,9 +8,9 @@
  * El comprador NO tiene cuenta ni notificaciones: esto es solo una comodidad
  * local en su propio dispositivo. Falla en silencio si no hay localStorage.
  */
-import type { BuyerInput } from '@bismark/shared';
+import type { BuyerInput } from '@riffast/shared';
 
-const KEY = 'bismark-buyer';
+const KEY = 'riffast-buyer';
 
 /** Lo que recordamos del comprador (mismos campos que el formulario). */
 export type RememberedBuyer = BuyerInput;

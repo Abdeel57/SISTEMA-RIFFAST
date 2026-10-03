@@ -1,5 +1,5 @@
 import { apiUpload, apiDownload } from '@/lib/api';
-import type { PaymentProofDTO } from '@bismark/shared';
+import type { PaymentProofDTO } from '@riffast/shared';
 
 export const paymentService = {
   uploadProof: (orderCode: string, file: File) =>

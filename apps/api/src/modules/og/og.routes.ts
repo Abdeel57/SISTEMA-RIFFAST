@@ -38,7 +38,7 @@ interface OgData {
   description: string;
   image: string | null;
   fallbackImage: string; // imagen de respaldo (og-default.png del sitio)
-  siteName: string; // nombre de la página de rifas (no "Bismark")
+  siteName: string; // nombre de la página de rifas (no "Riffast")
   url: string; // URL canónica a compartir (esta misma /s/...)
   redirectUrl: string; // a dónde mandar al humano (SPA)
 }
@@ -73,7 +73,7 @@ function renderOgHtml(d: OgData): string {
   <meta http-equiv="refresh" content="0; url=${redirect}" />
   <script>location.replace(${JSON.stringify(d.redirectUrl)});</script>
 </head>
-<body style="font-family:system-ui,sans-serif;background:#070b18;color:#fff;display:grid;place-items:center;height:100vh;margin:0;">
+<body style="font-family:system-ui,sans-serif;background:#03120C;color:#fff;display:grid;place-items:center;height:100vh;margin:0;">
   <p>Abriendo… Si no avanza, <a href="${redirect}" style="color:#7aa2ff;">toca aquí</a>.</p>
 </body>
 </html>`;

@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api';
-import type { OrderReceiptDTO, ReserveTicketsInput, TicketStatus } from '@bismark/shared';
+import type { OrderReceiptDTO, ReserveTicketsInput, TicketStatus } from '@riffast/shared';
 
 export const ticketService = {
   reserve: (raffleId: string, input: ReserveTicketsInput) =>

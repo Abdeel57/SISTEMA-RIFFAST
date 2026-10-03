@@ -6,7 +6,7 @@ import type {
   DashboardSummaryDTO,
   TicketMapDTO,
   BuyerDTO,
-} from '@bismark/shared';
+} from '@riffast/shared';
 
 // Detalle de UN boleto (se pide bajo demanda al tocarlo en la cuadrícula).
 export interface OwnerTicketDTO {

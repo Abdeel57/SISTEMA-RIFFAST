@@ -1,6 +1,6 @@
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
-import { formatMoney, formatDate, translate, BRAND, type Currency, type Locale } from '@bismark/shared';
+import { formatMoney, formatDate, translate, BRAND, type Currency, type Locale } from '@riffast/shared';
 
 export interface DigitalTicketPdfData {
   raffleTitle: string;
@@ -78,7 +78,7 @@ export async function renderDigitalTicketPdf(data: DigitalTicketPdfData): Promis
   const PAD = 34;
   const CONTENT_W = W - PAD * 2;
 
-  const accent = isHex6(data.primaryColor) ? data.primaryColor : '#1A4DFF';
+  const accent = isHex6(data.primaryColor) ? data.primaryColor : '#0A8F5A';
   const accentDeep = darken(accent, 0.3);
   const onAccent = readableOn(accent);
   const ink = '#0f172a';

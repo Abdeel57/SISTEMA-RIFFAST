@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileSpreadsheet, FileText, FileBarChart, Receipt, Ticket, Users } from 'lucide-react';
-import { RAFFLE_STATUS_LABELS } from '@bismark/shared';
-import type { RaffleDTO } from '@bismark/shared';
+import { RAFFLE_STATUS_LABELS } from '@riffast/shared';
+import type { RaffleDTO } from '@riffast/shared';
 import { raffleService } from '@/services/raffles';
 import { reportService, type ReportType, type ReportFormat } from '@/services/payments';
 import { ApiError } from '@/lib/api';

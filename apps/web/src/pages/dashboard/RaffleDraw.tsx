@@ -7,7 +7,7 @@ import {
   dialCodeForCountry,
   type WinnerDTO,
   type DrawInput,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import { raffleService } from '@/services/raffles';
 import { winnerService } from '@/services/winners';
 import { uploadService } from '@/services/uploads';

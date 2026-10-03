@@ -1,5 +1,5 @@
 import type { FastifyRequest } from 'fastify';
-import { isCurrency, isLocale } from '@bismark/shared';
+import { isCurrency, isLocale } from '@riffast/shared';
 import { prisma } from './prisma.js';
 import { env } from '../config/env.js';
 import { escapeHtml } from './mailer.js';
@@ -128,13 +128,13 @@ export function injectMeta(
   return html;
 }
 
-const ADMIN_TITLE = 'Bismark | ADMIN';
+const ADMIN_TITLE = 'Riffast | ADMIN';
 
-// El administrador (/admin, /login) es SIEMPRE la marca Bismark, nunca la del
+// El administrador (/admin, /login) es SIEMPRE la marca Riffast, nunca la del
 // rifero: el panel es del producto. Por eso NO le inyectamos el logo/nombre del
-// organizador. Le dejamos los íconos estáticos de Bismark, el título "Bismark |
-// ADMIN" y un manifest dedicado (abre directo en /admin con el ícono de Bismark),
-// para que al "Agregar a inicio" o compartir se vea Bismark, no el rifero.
+// organizador. Le dejamos los íconos estáticos de Riffast, el título "Riffast |
+// ADMIN" y un manifest dedicado (abre directo en /admin con el ícono de Riffast),
+// para que al "Agregar a inicio" o compartir se vea Riffast, no el rifero.
 function renderAdminIndex(rawHtml: string): string {
   let html = rawHtml;
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${ADMIN_TITLE}</title>`);
@@ -193,7 +193,7 @@ export async function renderBrandedIndex(rawHtml: string, request: FastifyReques
   // desvanecerse. Con este color la carga es continua, y al terminar RiferoTheme
   // cambia fondo y theme-color al color del rifero: aparece todo junto, con el
   // resto de la página. Debe coincidir con el fondo de BrandLoader.
-  const LOADER_BG = '#070b18';
+  const LOADER_BG = '#03120C';
   html = setName(html, 'theme-color', LOADER_BG);
   html = html.replace(/<body(\s[^>]*)?>/i, (_m, attrs: string | undefined) => {
     const a = (attrs ?? '').replace(/\sstyle\s*=\s*"[^"]*"/i, '');

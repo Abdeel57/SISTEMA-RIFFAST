@@ -1,11 +1,12 @@
 import { Download, X } from 'lucide-react';
-import { BRAND } from '@bismark/shared';
+import { BRAND } from '@riffast/shared';
 import { useInstallPrompt } from '@/lib/pwa/useInstallPrompt';
 import { useT } from '@/store/site';
 import { Button } from '@/components/ui/button';
+import { LogoMark } from '@/components/brand/LogoMark';
 
 /**
- * Banner "Instala Bismark" descartable (A2HS). Aparece abajo, al alcance del
+ * Banner "Instala Riffast" descartable (A2HS). Aparece abajo, al alcance del
  * pulgar, solo cuando el navegador ofrece la instalación y el usuario no la ha
  * descartado antes. El descarte se recuerda en localStorage (ver useInstallPrompt).
  */
@@ -17,8 +18,8 @@ export function InstallBanner() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-3 pb-3 safe-bottom">
       <div className="flex w-full max-w-md items-center gap-3 rounded-2xl border bg-card p-3 shadow-2xl">
-        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-brand text-lg font-black text-white">
-          B
+        <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand-electric to-brand">
+          <LogoMark variant="white" className="h-6 w-6" />
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold leading-tight">{tr('install.title', { name: BRAND.name })}</p>

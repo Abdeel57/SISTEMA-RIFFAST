@@ -1,5 +1,5 @@
 import type { FastifyReply } from 'fastify';
-import type { UserRole } from '@bismark/shared';
+import type { UserRole } from '@riffast/shared';
 import { SESSION_COOKIE } from './auth.js';
 import { env } from '../config/env.js';
 

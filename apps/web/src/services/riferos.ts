@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api';
-import type { RiferoProfileDTO, UpdateRiferoInput } from '@bismark/shared';
+import type { RiferoProfileDTO, UpdateRiferoInput } from '@riffast/shared';
 
 export const riferoService = {
   me: () => apiFetch<{ profile: RiferoProfileDTO }>('/riferos/me'),

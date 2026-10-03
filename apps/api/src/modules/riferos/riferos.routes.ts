@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { updateRiferoSchema } from '@bismark/shared';
+import { updateRiferoSchema } from '@riffast/shared';
 import { prisma } from '../../lib/prisma.js';
 import { validate } from '../../lib/http.js';
 import { notFound, badRequest } from '../../lib/errors.js';

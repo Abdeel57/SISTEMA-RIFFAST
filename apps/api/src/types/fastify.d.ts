@@ -1,5 +1,5 @@
 import '@fastify/jwt';
-import type { UserRole } from '@bismark/shared';
+import type { UserRole } from '@riffast/shared';
 
 declare module 'fastify' {
   interface FastifyRequest {

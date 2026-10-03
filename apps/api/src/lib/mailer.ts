@@ -18,7 +18,7 @@ export interface EmailMessage {
   replyTo?: string;
 }
 
-const BRAND = 'Bismark';
+const BRAND = 'Riffast';
 
 // ── Utilidades ──────────────────────────────────────────────
 // Escapa texto para insertarlo de forma segura en HTML (evita inyección).
@@ -58,7 +58,7 @@ export function renderBrandedEmail(opts: LayoutOptions): string {
   const button =
     ctaLabel && ctaUrl
       ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;">
-           <tr><td style="border-radius:12px;background:#2751fb;">
+           <tr><td style="border-radius:12px;background:#0A8F5A;">
              <a href="${escapeHtml(ctaUrl)}" target="_blank"
                 style="display:inline-block;padding:14px 28px;font-weight:700;font-size:15px;color:#ffffff;text-decoration:none;border-radius:12px;">
                ${escapeHtml(ctaLabel)}
@@ -70,11 +70,11 @@ export function renderBrandedEmail(opts: LayoutOptions): string {
   return `<!doctype html>
 <html lang="es">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#070b18;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#070b18;padding:32px 16px;">
+<body style="margin:0;padding:0;background:#03120C;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#03120C;padding:32px 16px;">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#ffffff;border-radius:20px;overflow:hidden;">
-        <tr><td style="background:#070b18;padding:22px 28px;">
+        <tr><td style="background:#03120C;padding:22px 28px;">
           <span style="font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#ffffff;">${BRAND}</span>
         </td></tr>
         <tr><td style="padding:28px 28px 8px;">
@@ -169,7 +169,7 @@ export async function sendPasswordResetEmail(params: {
     bodyHtml: `<p style="margin:0 0 4px;">Haz clic en el botón para crear una nueva contraseña. Este enlace vence en <strong>${params.ttlMin} minutos</strong>.</p>`,
     ctaLabel: 'Crear nueva contraseña',
     ctaUrl: params.resetUrl,
-    footnote: `Si el botón no funciona, copia y pega este enlace en tu navegador:<br><span style="color:#2751fb;word-break:break-all;">${escapeHtml(params.resetUrl)}</span><br><br>Si no solicitaste este cambio, ignora este correo: tu contraseña seguirá igual.`,
+    footnote: `Si el botón no funciona, copia y pega este enlace en tu navegador:<br><span style="color:#0A8F5A;word-break:break-all;">${escapeHtml(params.resetUrl)}</span><br><br>Si no solicitaste este cambio, ignora este correo: tu contraseña seguirá igual.`,
   });
   return sendEmail({ to: params.to, subject: `${BRAND} · Recupera tu acceso`, html });
 }

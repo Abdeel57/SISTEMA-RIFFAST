@@ -1,5 +1,5 @@
 import { MessageCircle } from 'lucide-react';
-import { buildWhatsappLink } from '@bismark/shared';
+import { buildWhatsappLink } from '@riffast/shared';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { cn } from '@/lib/cn';
 

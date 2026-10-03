@@ -44,17 +44,21 @@ export default {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
         },
-        // Paleta oficial Bismark (bismarkdigital.com): azul eléctrico sobre
-        // blanco/tinta, menta como acento de "suerte" y cielo para detalles.
+        // Paleta oficial Riffast (landing riffast): verde de la suerte sobre
+        // blanco/papel y "noche" (verde casi negro), menta como acento.
+        //   DEFAULT  → verde legible sobre blanco (texto, fondos con texto blanco).
+        //   electric → verde vivo de los CTA (lleva texto `ink`, no blanco).
         brand: {
-          DEFAULT: '#1A4DFF',
-          electric: '#4178FF',
-          deep: '#0E37D6',
-          ink: '#0A0A0A',
-          sky: '#6FA0FF',
-          mint: '#4DFFA3',
-          gold: '#F5A623', // ámbar puntual (premios); ya no es color de identidad
-          dark: '#0F1116',
+          DEFAULT: '#0A8F5A', // --verde-2
+          electric: '#10C65F', // --verde
+          clover: '#00B86B', // verde del trébol del logotipo
+          deep: '#0B3D2E', // --bosque
+          ink: '#03120C', // --noche
+          sky: '#8DF7BC', // --menta
+          mint: '#8DF7BC', // --menta
+          paper: '#F1F5F2', // --papel
+          gold: '#F5A623', // ámbar puntual (premios); no es color de identidad
+          dark: '#0B2219', // --noche-2
         },
         // Estados de boleto (TicketGrid)
         ticket: {

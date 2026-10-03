@@ -5,8 +5,8 @@
 // suspensión/reactivación. Crea datos con prefijo qa-e2e (no toca los demo).
 // Uso: node qa/e2e-write.mjs
 const BASE = process.env.API_URL || 'http://localhost:4000';
-const ADMIN = { email: 'admin@bismark.com', password: 'Admin1234!' };
-const DEMO = { email: 'demo@bismark.com', password: 'Demo1234!' };
+const ADMIN = { email: 'admin@riffast.com', password: 'Admin1234!' };
+const DEMO = { email: 'demo@riffast.com', password: 'Demo1234!' };
 
 const SUF = Date.now().toString(36).slice(-6);
 const EMAIL = `qa-e2e-${SUF}@test.local`;
@@ -41,7 +41,7 @@ const PNG = Buffer.from(
 );
 
 async function main() {
-  console.log(`\n🧪 Bismark E2E write → ${BASE}  (sufijo ${SUF})\n`);
+  console.log(`\n🧪 Riffast E2E write → ${BASE}  (sufijo ${SUF})\n`);
 
   // ── 1. Registro ──
   let cookie = '';

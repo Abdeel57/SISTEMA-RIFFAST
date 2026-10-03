@@ -13,7 +13,7 @@ import {
   Wallet,
   XCircle,
 } from 'lucide-react';
-import { formatDate, waProofMessage, waReserveMessage, dialCodeForCountry } from '@bismark/shared';
+import { formatDate, waProofMessage, waReserveMessage, dialCodeForCountry } from '@riffast/shared';
 import { t, useT, useMoney, useLocale } from '@/store/site';
 import { ApiError } from '@/lib/api';
 import { prepareProofFile, isValidProof, PROOF_ACCEPT } from '@/lib/proofFile';

@@ -7,8 +7,8 @@ import { loadAccessibleOrder } from '../../lib/ownership.js';
 import { toOrderDTO, type OrderWithRelations } from '../../lib/serializers.js';
 import { logActivity } from '../../lib/activity.js';
 import { newDigitalTicketCode } from '../../lib/codes.js';
-import { buyerSchema, normalizeCountryCode, markPaidSchema } from '@bismark/shared';
-import type { OrderStatus } from '@bismark/shared';
+import { buyerSchema, normalizeCountryCode, markPaidSchema } from '@riffast/shared';
+import type { OrderStatus } from '@riffast/shared';
 import type { FastifyRequest } from 'fastify';
 
 const ORDER_INCLUDE = {

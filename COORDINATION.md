@@ -41,7 +41,7 @@ Leyenda: ✅ hecho · 🟡 en curso · ⬜ pendiente · ⛔ bloqueado
 Backend ya disponible y probado:
 - `POST /auth/forgot-password` body `{ email }` → siempre `200 { ok: true }` (no revela si existe).
 - `POST /auth/reset-password` body `{ token, password, confirmPassword }` → `200 { ok: true }` o `400` si el token venció/ya se usó.
-- Schemas: `forgotPasswordSchema`, `resetPasswordSchema` (en `@bismark/shared`).
+- Schemas: `forgotPasswordSchema`, `resetPasswordSchema` (en `@riffast/shared`).
 - Servicios: `authService.forgotPassword`, `authService.resetPassword`.
 - Email: `mailer.ts`, driver `log` en dev (el enlace se imprime en la consola de la API). En prod usar `RESEND_API_KEY`.
 - Enlace del correo: `${PUBLIC_WEB_URL}/recuperar?token=...` → tu página `RecoverPassword` ya lo maneja. ✔️

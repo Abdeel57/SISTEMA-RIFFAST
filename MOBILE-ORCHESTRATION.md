@@ -40,7 +40,7 @@
 | Banner offline / network-aware | 🟧3 | ✅ **listo** (Claude) |
 
 ## ✅ Verificación del orquestador
-- **Carriles 🟦1, 🟩2 y 🟧3 integrados y verificados:** `npm run typecheck` (shared+api+web) → exit 0 · `npm run build --workspace=@bismark/web` → verde (SW `injectManifest` compila) · API en runtime probada (push, ticket-changes).
+- **Carriles 🟦1, 🟩2 y 🟧3 integrados y verificados:** `npm run typecheck` (shared+api+web) → exit 0 · `npm run build --workspace=@riffast/web` → verde (SW `injectManifest` compila) · API en runtime probada (push, ticket-changes).
 - **🟩2 QR offline (`lib/offline/qr.ts`):** revisado — base Project Nayuki, el campo de formato usa bits ECC estándar (corregido), round-trip v1/v3/v5 verificado por el implementador. **Recomendado: prueba de escaneo en un teléfono real antes de lanzar** (paso de confianza final estándar para QR).
 - **⚠️ Coordinación para 🟩2:** el Service Worker (🟧3) encola con **Background Sync** el `POST /public/orders/:code/proof` (subida de comprobante del comprador). Con red es **passthrough transparente** (no rompe nada); solo encola si está offline. **Si 🟩2 implementa su propia cola offline para ese endpoint, coordinar para no duplicar.** Nota: el replay de Background Sync con cuerpo multipart/File es best-effort; la subida normal (online) es la ruta principal y funciona igual.
 - **Pendiente real:** carril 🟩2 completo (comprador) · Web Share API (Cursor) · pulido táctil del panel (swipe/bottom-sheets/pull-to-refresh, diferido).
@@ -63,7 +63,7 @@
 
 ─── COPIAR · BRIEF 1 (🟦 Backend & tiempo real) ───────────────────────
 
-Trabajas en el monorepo **Bismark** (PWA de rifas, Node+Fastify+Prisma+PostgreSQL / React+Vite). Lee `COORDINATION.md`, `SECURITY-REVIEW.md` y `MOBILE-ORCHESTRATION.md` en la raíz antes de empezar.
+Trabajas en el monorepo **Riffast** (PWA de rifas, Node+Fastify+Prisma+PostgreSQL / React+Vite). Lee `COORDINATION.md`, `SECURITY-REVIEW.md` y `MOBILE-ORCHESTRATION.md` en la raíz antes de empezar.
 
 **Tu carril: Backend & tiempo real.** Eres dueño EXCLUSIVO de `apps/api/**`, `apps/api/prisma/**` y `packages/shared/**`. **No edites nada en `apps/web/**`.** Defines los contratos de API que consumen los otros dos carriles; documéntalos en `MOBILE-ORCHESTRATION.md` (sección Contratos) en cuanto los cierres.
 
@@ -74,7 +74,7 @@ Tareas:
    - Endpoints: `GET /push/public-key`, `POST /push/subscribe` (auth rifero), `POST /push/unsubscribe`.
    - Envía push al rifero en **nueva orden** (en el reserve de `tickets.routes.ts`, junto al correo ya existente) y en **comprobante subido** (`payments.routes.ts`). Centraliza en un helper `lib/push.ts`. Best-effort: nunca rompas el flujo del comprador; limpia suscripciones caducadas (410/404).
 2. **Tiempo real de la cuadrícula** (para que dos compradores no choquen por el mismo número). Implementa **SSE** `GET /public/raffles/:id/tickets/stream` (eventos `{ number, status }` al reservar/liberar/pagar) **o**, si es más simple/robusto, un poll incremental `GET /public/raffles/:id/tickets?since=<iso>`. Documenta cuál elegiste en C2.
-3. Cualquier schema nuevo va en `packages/shared`. Mantén `npm run typecheck --workspace=@bismark/api` limpio.
+3. Cualquier schema nuevo va en `packages/shared`. Mantén `npm run typecheck --workspace=@riffast/api` limpio.
 
 Restricciones: respeta CSRF/CORS existentes (mutaciones con cookie validan Origin). Migraciones Prisma en Windows: **detén la API antes de `prisma generate/migrate`** (el query-engine queda bloqueado), o pídeselo al orquestador. Marca tu avance en la tabla de estado. Pregunta en el tablero antes de tocar archivos fuera de tu carril.
 
@@ -84,7 +84,7 @@ Restricciones: respeta CSRF/CORS existentes (mutaciones con cookie validan Origi
 
 ─── COPIAR · BRIEF 2 (🟩 Comprador / público · SIMPLE) ────────────────
 
-Trabajas en el monorepo **Bismark** (PWA de rifas). Lee `COORDINATION.md` y `MOBILE-ORCHESTRATION.md` en la raíz antes de empezar.
+Trabajas en el monorepo **Riffast** (PWA de rifas). Lee `COORDINATION.md` y `MOBILE-ORCHESTRATION.md` en la raíz antes de empezar.
 
 **Tu carril: experiencia del comprador.** Eres dueño de `apps/web/src/pages/public/**` (PublicRaffle, PublicRifero, DigitalTicket, Validation), componentes exclusivos de comprador, y un store offline `apps/web/src/lib/offline/*`.
 
@@ -100,7 +100,7 @@ Tareas:
 5. **Accesibilidad tercera edad** en páginas públicas: tamaños, contraste, foco visible, mensajes de error simples, estados vacíos claros, skeletons.
 6. **Imágenes** en páginas públicas (portada/premio, **no** en TicketGrid): lazy-load + placeholder LQIP/blur-up + `width/height` para evitar saltos.
 
-Restricciones: `npm run typecheck --workspace=@bismark/web` limpio. No toques `apps/api`, `vite.config.ts`, `main.tsx`, `App.tsx`, `pages/dashboard`, ni TicketGrid. Marca avance en la tabla.
+Restricciones: `npm run typecheck --workspace=@riffast/web` limpio. No toques `apps/api`, `vite.config.ts`, `main.tsx`, `App.tsx`, `pages/dashboard`, ni TicketGrid. Marca avance en la tabla.
 
 ─── FIN BRIEF 2 ──────────────────────────────────────────────────────
 
@@ -108,7 +108,7 @@ Restricciones: `npm run typecheck --workspace=@bismark/web` limpio. No toques `a
 
 ─── COPIAR · BRIEF 3 (🟧 Shell PWA & panel rifero) ────────────────────
 
-Trabajas en el monorepo **Bismark** (PWA de rifas). Lee `COORDINATION.md` y `MOBILE-ORCHESTRATION.md` en la raíz antes de empezar.
+Trabajas en el monorepo **Riffast** (PWA de rifas). Lee `COORDINATION.md` y `MOBILE-ORCHESTRATION.md` en la raíz antes de empezar.
 
 **Tu carril: shell PWA + capacidades nativas + panel del rifero.** Eres dueño de `apps/web/src/main.tsx`, `App.tsx`, `vite.config.ts` (PWA/workbox/Service Worker), `apps/web/src/lib/pwa/*`, `pages/dashboard/**`, `components/owner/**`, `components/layout/**`.
 
@@ -116,21 +116,21 @@ Trabajas en el monorepo **Bismark** (PWA de rifas). Lee `COORDINATION.md` y `MOB
 
 Tareas:
 1. **Service Worker (vite-plugin-pwa/workbox):** ruta **cache-first para el boleto digital** (coordina IndexedDB con 🟩2), **Background Sync** para reintentar la subida de comprobante cuando vuelva la señal, y un **hook de estado de red** + **banner offline** global.
-2. **Install prompt A2HS** personalizado (capturar `beforeinstallprompt`, banner "Instala Bismark", recordar descarte).
+2. **Install prompt A2HS** personalizado (capturar `beforeinstallprompt`, banner "Instala Riffast", recordar descarte).
 3. **Web Push cliente — SOLO en el panel del rifero** (nunca en público): pide permiso, suscribe con `GET /push/public-key` + `POST /push/subscribe` (C1). **Badging API** en el ícono con `GET /notifications/summary` (C3) + badge visual en la tuerca/Órdenes.
 4. **Web Share API** (hoja nativa) para los botones de compartir, usando las URLs `GET /s/r/:slug(/e:n)` (C3). Si el chat de Cursor ya hizo botones de compartir, intégrate, no dupliques.
 5. **Panel rifero táctil:** **swipe** en órdenes (marcar pagado/rechazar), **bottom sheets** en lugar de modales centrados, **pull-to-refresh**, y **escáner QR** con la cámara para validar boletos en el evento (→ `/validar/:code`).
 6. **Tiempo real** en las vistas del rifero consumiendo C2.
 7. Si falta, init de **Sentry (`@sentry/react`) + PostHog** en `main.tsx`, gated por env (ya hay `VITE_SENTRY_DSN`, `VITE_POSTHOG_KEY`).
 
-Restricciones: `npm run typecheck --workspace=@bismark/web` limpio. `App.tsx`/`main.tsx`/`vite.config.ts` son tuyos: coordínate si Cursor sigue activo ahí. Marca avance en la tabla.
+Restricciones: `npm run typecheck --workspace=@riffast/web` limpio. `App.tsx`/`main.tsx`/`vite.config.ts` son tuyos: coordínate si Cursor sigue activo ahí. Marca avance en la tabla.
 
 ─── FIN BRIEF 3 ──────────────────────────────────────────────────────
 
 ---
 
 ## 📝 Bitácora (cada carril anota archivos tocados fuera de lo obvio)
-- **Orquestador (página de pago con marca del rifero).** Tras apartar, `PublicRaffle.tsx` ahora redirige a **`/r/:slug/pago/:folio`** (página `RiferoPayment.tsx`, NUEVA) con la marca del rifero (barra `RiferoTopBar` + `RiferoTheme`), no a `/boleto/:code` (Bismark). Botón **"SUBE TU PAGO AQUÍ"** → diálogo de folio → página de pago. *(El botón "MÉTODOS DE PAGO"/`payOpen` lo cableó el chat de la tabla; no lo toqué.)* `PaymentSection` extraído a `components/public/PaymentSection.tsx` (reutilizado por `DigitalTicket` y `RiferoPayment`). Backend: `GET /tickets/digital/:code` acepta **folio de orden o código de boleto** y devuelve la marca del rifero (`riferoSlug`, colores, logo, verified, logoScale/Glow). Rutas nuevas en `App.tsx`: `/pago/:code` y `/r/:slug/pago/:code`. Verificado: typecheck + build + captura.
+- **Orquestador (página de pago con marca del rifero).** Tras apartar, `PublicRaffle.tsx` ahora redirige a **`/r/:slug/pago/:folio`** (página `RiferoPayment.tsx`, NUEVA) con la marca del rifero (barra `RiferoTopBar` + `RiferoTheme`), no a `/boleto/:code` (Riffast). Botón **"SUBE TU PAGO AQUÍ"** → diálogo de folio → página de pago. *(El botón "MÉTODOS DE PAGO"/`payOpen` lo cableó el chat de la tabla; no lo toqué.)* `PaymentSection` extraído a `components/public/PaymentSection.tsx` (reutilizado por `DigitalTicket` y `RiferoPayment`). Backend: `GET /tickets/digital/:code` acepta **folio de orden o código de boleto** y devuelve la marca del rifero (`riferoSlug`, colores, logo, verified, logoScale/Glow). Rutas nuevas en `App.tsx`: `/pago/:code` y `/r/:slug/pago/:code`. Verificado: typecheck + build + captura.
 - **Orquestador (feature flujo de apartado).** Tras apartar, `PublicRaffle.tsx` (zona caliente) **redirige a `/boleto/:code`** — cambio mínimo/aditivo en `reserveMutation.onSuccess`; el diálogo de recibo quedó superseded (listo para limpiar por el dueño del archivo). `DigitalTicket.tsx` ahora muestra **resumen de pago + datos del rifero + subir comprobante**. Backend: `GET /tickets/digital/:code` devuelve `orderCode/ticketPrice/expiresAt/allowProofUpload/riferoWhatsapp/paymentProfile`; `DigitalTicketDTO` extendido; `publicService.uploadProof`. Verificado: typecheck + build + runtime.
 - **🟧3 (Claude) — Shell PWA & panel rifero.** Nuevos en `lib/pwa/`: `push.ts`, `badge.ts`, `useNotificationsSummary.ts`, `useNetworkStatus.ts`, `useInstallPrompt.ts`, `useTicketChanges.ts`, `barcode.ts`. SW personalizado `src/sw.ts` (estrategia `injectManifest`). Componentes nuevos: `components/layout/OfflineBanner.tsx`, `components/layout/InstallBanner.tsx`, `components/owner/PushToggle.tsx`, `components/owner/QrScanner.tsx`. Servicio nuevo `services/notifications.ts` (consume C3 `/notifications/summary`).
   - Ediciones **aditivas y mínimas** en archivos compartidos/propios:
@@ -142,7 +142,7 @@ Restricciones: `npm run typecheck --workspace=@bismark/web` limpio. `App.tsx`/`m
     - `pages/dashboard/Orders.tsx`: botón "Validar boleto" → `QrScanner`.
     - `pages/dashboard/RaffleTickets.tsx`: tiempo real C2 (refresca al cambiar boletos). **No** se tocó `TicketGrid`.
   - **Sentry + PostHog (Task 7):** ya estaban hechos en `main.tsx`/`lib/monitoring.ts`/`lib/analytics.ts`, gated por env. Sin cambios.
-  - **Verificado:** `npm run typecheck --workspace=@bismark/web` limpio + `npm run build` verde (SW compila a `dist/sw.js`, 101 entradas de precaché).
+  - **Verificado:** `npm run typecheck --workspace=@riffast/web` limpio + `npm run build` verde (SW compila a `dist/sw.js`, 101 entradas de precaché).
 - **🟩2 (Claude) — Comprador/público.** Nuevos archivos (nada fuera de mi carril; **no** se tocó TicketGrid/api/main/App/vite):
   - `lib/offline/ticketStore.ts` — IndexedDB best-effort para el boleto digital (save/load, falla en silencio).
   - `lib/offline/useOfflineTicket.ts` — hook offline-first: guarda con red, lee de IndexedDB sin señal.
@@ -158,7 +158,7 @@ Restricciones: `npm run typecheck --workspace=@bismark/web` limpio. `App.tsx`/`m
     - `pages/public/PublicRaffle.tsx` (**zona caliente, editada en paralelo**): integré de forma aditiva el botón "Ir a mi número" + `<GoToNumber/>`, y `openBuyer()` que pre-llena el diálogo con `recallBuyer()` + `rememberBuyer()` al enviar. **Sin conflictos** (otro chat reescribió la barra/logo; mis líneas sobrevivieron).
   - **Coordinación SW (🟧3):** mi cola offline NO duplica el Background Sync del comprobante; solo cacheo **datos** del boleto en IndexedDB (complementa el cache-first del HTML del SW). Sin solapamiento.
   - **Deps:** **ninguna nueva** (QR resuelto sin paquetes; no se ejecutó `npm install`).
-  - **Verificado:** `npm run typecheck --workspace=@bismark/web` limpio + `npm run build --workspace=@bismark/web` verde (100 entradas de precaché).
+  - **Verificado:** `npm run typecheck --workspace=@riffast/web` limpio + `npm run build --workspace=@riffast/web` verde (100 entradas de precaché).
 
 ## 🔄 Protocolo de integración (orquestador)
 1. Cada carril cierra una tarea → actualiza la tabla de Estado.

@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import type { UserRole } from '@bismark/shared';
+import type { UserRole } from '@riffast/shared';
 
 const SALT_ROUNDS = 12;
 

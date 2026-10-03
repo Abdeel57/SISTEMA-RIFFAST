@@ -59,7 +59,7 @@ async function readCountdown(eventNumber, label) {
 }
 
 try {
-  await api('/auth/login', { method: 'POST', body: { email: 'demo@bismark.com', password: 'Demo1234!' } });
+  await api('/auth/login', { method: 'POST', body: { email: 'demo@riffast.com', password: 'Demo1234!' } });
 
   const fut = await makeRaffle('Cronometro Futuro QA', 5 * 86400000 + 3 * 3600000 + 27 * 60000);
   console.log(`futuro  -> crear ${fut.create} · publicar ${fut.publish} ${fut.publish !== 200 ? JSON.stringify(fut.publishData)?.slice(0, 120) : '(E' + fut.raffle?.eventNumber + ')'}`);

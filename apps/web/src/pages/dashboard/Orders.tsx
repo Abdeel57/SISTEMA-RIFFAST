@@ -13,7 +13,7 @@ import {
   ORDER_PAYMENT_METHODS,
   type OrderPaymentMethod,
   type OrderDTO,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import { orderService, type OrderFilter } from '@/services/orders';
 import { ApiError, apiAssetUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';

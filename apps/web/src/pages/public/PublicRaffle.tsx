@@ -32,7 +32,7 @@ import {
   type BuyerInput,
   type OrderReceiptDTO,
   type MessageKey,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import { useT, useMoney, useLocale, useCurrency } from '@/store/site';
 import { ApiError, apiAssetUrl } from '@/lib/api';
 import { sanitizeHtml, isRichHtml } from '@/lib/sanitizeHtml';
@@ -62,7 +62,7 @@ import {
 import { RiferoTheme } from '@/components/brand/RiferoTheme';
 import { WhatsAppButton } from '@/components/brand/WhatsAppButton';
 import { PoweredBy } from '@/components/brand/PoweredBy';
-import { BismarkCta } from '@/components/brand/BismarkCta';
+import { RiffastCta } from '@/components/brand/RiffastCta';
 import { TicketGrid } from '@/components/TicketGrid';
 import { GoToNumber } from '@/components/public/GoToNumber';
 import { RaffleBrandBar, BAR_TOTAL } from '@/components/public/RaffleBrandBar';
@@ -961,7 +961,7 @@ export default function PublicRaffle({ subdomain }: Props) {
 
         {/* Cierre de marca: banda a todo el ancho. Pegada a la barra de WhatsApp (sin
             hueco); si el rifero no tiene WhatsApp, conserva separación con mt-10. */}
-        <BismarkCta className={rifero.whatsapp ? undefined : 'mt-10'} />
+        <RiffastCta className={rifero.whatsapp ? undefined : 'mt-10'} />
       </div>
 
       {/* ── Diálogo: métodos de pago del rifero ── */}

@@ -1,5 +1,5 @@
 import { prisma } from './prisma.js';
-import type { SellerStatsDTO } from '@bismark/shared';
+import type { SellerStatsDTO } from '@riffast/shared';
 
 // Métricas de ventas atribuidas a un vendedor. Las usa "Usuarios y Roles" (vista
 // del administrador) y el panel del propio vendedor.

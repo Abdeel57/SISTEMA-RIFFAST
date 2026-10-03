@@ -30,7 +30,7 @@ const browser = await puppeteer.launch({ executablePath: CHROME, headless: true,
 try {
   // Rifero demo (con plan + rifa)
   let page = await browser.newPage();
-  await login(page, 'demo@bismark.com', 'Demo1234!');
+  await login(page, 'demo@riffast.com', 'Demo1234!');
   await shot(page, '/panel', 'bsk-panel-demo.png');
   await shot(page, '/panel/admin/diseno', 'bsk-panel-diseno.png');
   await shot(page, '/panel/admin/inicio', 'bsk-panel-inicio.png');

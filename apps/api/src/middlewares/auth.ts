@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { unauthorized, forbidden } from '../lib/errors.js';
-import type { UserRole } from '@bismark/shared';
+import type { UserRole } from '@riffast/shared';
 
 // preHandler: intenta verificar el JWT (cookie o Bearer) y poblar request.auth.
 // No falla si no hay token (rutas mixtas público/privado lo manejan con requireAuth).

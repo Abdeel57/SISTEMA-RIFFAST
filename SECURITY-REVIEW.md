@@ -1,4 +1,4 @@
-# 🔐 Revisión de seguridad — Bismark (FASE 1, lanzamiento público)
+# 🔐 Revisión de seguridad — Riffast (FASE 1, lanzamiento público)
 
 > Revisión del estado de seguridad antes del lanzamiento. Cubre autenticación,
 > sesiones/cookies, CSRF, CORS, rate limiting, validación, archivos, secretos y
@@ -85,7 +85,7 @@ bloqueante para el lanzamiento.
 ## Checklist pre-lanzamiento
 
 - [ ] `JWT_SECRET` / `COOKIE_SECRET` largos y únicos en producción (R3).
-- [ ] `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=none`, `COOKIE_DOMAIN=.bismark.com` en prod.
+- [ ] `COOKIE_SECURE=true`, `COOKIE_SAME_SITE=none`, `COOKIE_DOMAIN=.riffast.com` en prod.
 - [ ] `CORS_ORIGINS` y `CORS_ROOT_DOMAIN` apuntando a los dominios reales.
 - [ ] `RESEND_API_KEY` + dominio verificado (SPF/DKIM) para que los correos no caigan en spam.
 - [ ] `SENTRY_DSN` (api) y `VITE_SENTRY_DSN` (web) configurados si se usa monitoreo.

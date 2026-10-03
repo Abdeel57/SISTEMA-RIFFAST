@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api';
-import type { OrderDTO, PaymentProofDTO, BuyerInput, MarkPaidInput } from '@bismark/shared';
+import type { OrderDTO, PaymentProofDTO, BuyerInput, MarkPaidInput } from '@riffast/shared';
 
 export type OrderFilter = 'pending' | 'paid' | 'all';
 

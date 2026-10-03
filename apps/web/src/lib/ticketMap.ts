@@ -1,7 +1,7 @@
 // Modelo en memoria del mapa compacto de boletos (hasta 1,000,000 por rifa).
 //
 // La API ya no manda un objeto por boleto: manda un string con un carácter por
-// boleto (ver TICKET_MAP_CHAR en @bismark/shared). Aquí lo convertimos a un
+// boleto (ver TICKET_MAP_CHAR en @riffast/shared). Aquí lo convertimos a un
 // Uint8Array (1 byte por boleto ≈ 1 MB para 1M) y todo lo demás —número,
 // displayNumber, filtros, búsqueda, maquinita— se deriva de índices, sin crear
 // jamás un array de 1M de objetos.
@@ -12,7 +12,7 @@ import {
   TICKET_STATUS_BY_CHAR,
   formatTicketNumber,
   type TicketMapDTO,
-} from '@bismark/shared';
+} from '@riffast/shared';
 
 export interface TicketMapData {
   start: number;

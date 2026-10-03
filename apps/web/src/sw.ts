@@ -1,6 +1,6 @@
 /// <reference lib="webworker" />
 //
-// Service Worker personalizado de Bismark (estrategia `injectManifest` de
+// Service Worker personalizado de Riffast (estrategia `injectManifest` de
 // vite-plugin-pwa). Responsable de:
 //  - Precaché del shell de la app (manifest inyectado por workbox).
 //  - Fallback de navegación offline a /offline.html.
@@ -65,7 +65,7 @@ registerRoute(
 // Subida de comprobante del comprador: POST /api/public/orders/:code/proof.
 // Cuando hay red, NetworkOnly es un passthrough transparente (igual que sin SW);
 // si falla por falta de red, workbox la encola y la reintenta al reconectar.
-const proofSyncPlugin = new BackgroundSyncPlugin('bismark-proof-uploads', {
+const proofSyncPlugin = new BackgroundSyncPlugin('riffast-proof-uploads', {
   maxRetentionTime: 24 * 60, // minutos (24 h)
 });
 registerRoute(
@@ -90,7 +90,7 @@ self.addEventListener('push', (event) => {
     payload = { body: event.data?.text() };
   }
 
-  const title = payload.title || 'Bismark';
+  const title = payload.title || 'Riffast';
   const options: NotificationOptions = {
     body: payload.body || '',
     icon: '/icon-192.png',

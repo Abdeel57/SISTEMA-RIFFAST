@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useParams, Link } from 'react-router-dom';
 import { Ticket as TicketIcon, AlertCircle, ShieldCheck, WifiOff, Home } from 'lucide-react';
-import { formatDateTime, buildWhatsappLink, dialCodeForCountry, waReserveMessage } from '@bismark/shared';
+import { formatDateTime, buildWhatsappLink, dialCodeForCountry, waReserveMessage } from '@riffast/shared';
 import { useT, useMoney, useLocale } from '@/store/site';
 import { publicService } from '@/services/publicSite';
 import { BrandLoader } from '@/components/brand/BrandLoader';
@@ -15,7 +15,7 @@ import { PaymentSection } from '@/components/public/PaymentSection';
 import { useOfflineTicket } from '@/lib/offline/useOfflineTicket';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
 
-// Página de pago CON LA MARCA DEL RIFERO (no la de Bismark). El comprador llega
+// Página de pago CON LA MARCA DEL RIFERO (no la de Riffast). El comprador llega
 // aquí tras apartar, y desde el botón "SUBE TU PAGO AQUÍ". Muestra arriba el
 // verificador del boleto, luego el resumen, MÉTODOS DE PAGO y SUBE TU PAGO AQUÍ.
 export default function RiferoPayment() {
@@ -114,7 +114,7 @@ export default function RiferoPayment() {
 
           {/* ── Verificador del boleto (con los colores del rifero) ── */}
           <div className="overflow-hidden rounded-3xl bg-card shadow-xl ring-1 ring-border">
-            <div className="bg-[var(--rifero-primary,#1A4DFF)] px-6 py-5 text-white">
+            <div className="bg-[var(--rifero-primary,#0A8F5A)] px-6 py-5 text-white">
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-2 text-sm font-semibold opacity-90">
                   <TicketIcon className="h-4 w-4" /> Boleto digital
@@ -137,7 +137,7 @@ export default function RiferoPayment() {
                 {ticket.ticketNumbers.map((n) => (
                   <span
                     key={n}
-                    className="rounded-lg bg-muted px-3 py-1.5 text-lg font-extrabold tabular-nums text-[var(--rifero-primary,#1A4DFF)]"
+                    className="rounded-lg bg-muted px-3 py-1.5 text-lg font-extrabold tabular-nums text-[var(--rifero-primary,#0A8F5A)]"
                   >
                     {n}
                   </span>
@@ -172,7 +172,7 @@ export default function RiferoPayment() {
           {/* ── Pago: resumen + MÉTODOS DE PAGO + SUBE TU PAGO AQUÍ ── */}
           <PaymentSection ticket={ticket} offline={fromCache} />
 
-          {/* Crédito discreto de Bismark (la página se siente del rifero) */}
+          {/* Crédito discreto de Riffast (la página se siente del rifero) */}
           <div className="mt-8">
             <PoweredBy />
           </div>

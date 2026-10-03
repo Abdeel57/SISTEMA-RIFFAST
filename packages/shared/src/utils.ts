@@ -280,7 +280,7 @@ export function waTicketReadyMessage(v: WaTicketReadyVars): string {
 
 // ── URLs / subdominios ──────────────────────────────────────
 export interface PublicUrlConfig {
-  rootDomain: string; // bismark.com
+  rootDomain: string; // riffast.com
   useSubdomains: boolean; // true en prod
   protocol?: string; // https
 }

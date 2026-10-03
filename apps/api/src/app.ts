@@ -155,7 +155,7 @@ export async function buildApp(): Promise<FastifyInstance> {
     }
     return {
       ok: true,
-      service: 'bismark-api',
+      service: 'riffast-api',
       storage: env.storage.driver,
       storedAssets,
       ts: new Date().toISOString(),

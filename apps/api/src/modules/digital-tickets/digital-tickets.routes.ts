@@ -9,7 +9,7 @@ import { readAssetBytes } from '../../lib/storage.js';
 import { getPlanContext } from '../../lib/plan.js';
 import { riferoPaymentMethods, riferoPaymentContact, siteLocale, siteCurrency } from '../../lib/serializers.js';
 import { env } from '../../config/env.js';
-import { ORDER_STATUS_LABELS, translate, type Locale } from '@bismark/shared';
+import { ORDER_STATUS_LABELS, translate, type Locale } from '@riffast/shared';
 
 // Etiqueta del estado en el idioma del sitio (el boleto lo ve el comprador).
 const STATUS_KEYS: Record<string, Parameters<typeof translate>[1]> = {
@@ -82,7 +82,7 @@ export default async function digitalTicketsRoutes(app: FastifyInstance): Promis
         createdAt: o.createdAt.toISOString(),
         pdfUrl: dt ? `/tickets/digital/${dt.code}/pdf` : null,
         verifyUrl: dt ? verifyUrl(dt.code, request) : '',
-        // Marca del rifero (para mostrar la página de pago con SU identidad, no la de Bismark).
+        // Marca del rifero (para mostrar la página de pago con SU identidad, no la de Riffast).
         riferoSlug: profile.slug,
         riferoLogoUrl: profile.logoUrl,
         riferoVerified: profile.verified,

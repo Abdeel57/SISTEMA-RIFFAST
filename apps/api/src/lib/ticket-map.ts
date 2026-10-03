@@ -1,4 +1,4 @@
-import { TICKET_MAP_CHAR, type TicketMapDTO } from '@bismark/shared';
+import { TICKET_MAP_CHAR, type TicketMapDTO } from '@riffast/shared';
 import type { TicketStatus } from '@prisma/client';
 import { prisma } from './prisma.js';
 

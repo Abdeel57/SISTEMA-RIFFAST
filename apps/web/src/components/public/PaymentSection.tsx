@@ -7,7 +7,7 @@ import {
   waProofMessage,
   dialCodeForCountry,
   type DigitalTicketDTO,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import { useT, useMoney, useLocale } from '@/store/site';
 import { prepareProofFile, isValidProof, PROOF_ACCEPT } from '@/lib/proofFile';
 import { ApiError } from '@/lib/api';
@@ -78,7 +78,7 @@ export function PaymentSection({
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {tr('receipt.totalToPay')}
             </p>
-            <p className="text-3xl font-extrabold text-[var(--rifero-primary,#1A4DFF)]">{fmt(ticket.totalAmount)}</p>
+            <p className="text-3xl font-extrabold text-[var(--rifero-primary,#0A8F5A)]">{fmt(ticket.totalAmount)}</p>
           </div>
         </div>
         {remaining && (
@@ -198,7 +198,7 @@ function ProofUpload({ ticket }: { ticket: DigitalTicketDTO }) {
   return (
     <div>
       <label
-        className={`flex w-full cursor-pointer items-center justify-center gap-3 rounded-2xl bg-[var(--rifero-primary,#1A4DFF)] px-5 py-4 text-lg font-extrabold text-white shadow-lg transition active:scale-[0.98] ${
+        className={`flex w-full cursor-pointer items-center justify-center gap-3 rounded-2xl bg-[var(--rifero-primary,#0A8F5A)] px-5 py-4 text-lg font-extrabold text-white shadow-lg transition active:scale-[0.98] ${
           mutation.isPending ? 'pointer-events-none opacity-70' : ''
         }`}
       >

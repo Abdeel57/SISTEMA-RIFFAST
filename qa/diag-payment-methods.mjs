@@ -13,7 +13,7 @@ async function req(path, { method = 'GET', body } = {}) {
 }
 
 (async () => {
-  await req('/auth/login', { method: 'POST', body: { email: 'demo@bismark.com', password: 'Demo1234!' } });
+  await req('/auth/login', { method: 'POST', body: { email: 'demo@riffast.com', password: 'Demo1234!' } });
 
   // 1) Guardar 3 métodos (PATCH como lo hace el panel)
   const methods = [

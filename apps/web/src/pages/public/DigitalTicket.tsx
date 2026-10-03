@@ -10,7 +10,7 @@ import {
   Trophy,
   CalendarDays,
 } from 'lucide-react';
-import { BRAND, formatDateTime, formatDate } from '@bismark/shared';
+import { BRAND, formatDateTime, formatDate } from '@riffast/shared';
 import { useT, useMoney, useLocale } from '@/store/site';
 import { apiAssetUrl } from '@/lib/api';
 import { publicService } from '@/services/publicSite';

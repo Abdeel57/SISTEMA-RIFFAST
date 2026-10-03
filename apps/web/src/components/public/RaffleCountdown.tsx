@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { formatDateTime, RaffleStatus } from '@bismark/shared';
+import { formatDateTime, RaffleStatus } from '@riffast/shared';
 import { useT, useLocale } from '@/store/site';
 
 // Cuenta regresiva al sorteo. Si la rifa sigue activa y la fecha es futura,

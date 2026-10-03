@@ -10,7 +10,7 @@ import {
   totalEmissions,
   type CreateRaffleInput,
   type RaffleDTO,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import { raffleService } from '@/services/raffles';
 import { riferoService } from '@/services/riferos';
 import { uploadService } from '@/services/uploads';

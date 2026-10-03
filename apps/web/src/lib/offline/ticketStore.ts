@@ -10,9 +10,9 @@
  * incógnito, navegador viejo— las funciones simplemente no guardan/leen y la
  * página sigue funcionando con red.
  */
-import type { DigitalTicketDTO } from '@bismark/shared';
+import type { DigitalTicketDTO } from '@riffast/shared';
 
-const DB_NAME = 'bismark-offline';
+const DB_NAME = 'riffast-offline';
 const DB_VERSION = 1;
 const STORE = 'tickets';
 

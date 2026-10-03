@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from 'react-router-dom';
 import { CheckCircle2, XCircle, Home } from 'lucide-react';
-import { formatMXN, formatDateMX } from '@bismark/shared';
+import { formatMXN, formatDateMX } from '@riffast/shared';
 import { publicService } from '@/services/publicSite';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

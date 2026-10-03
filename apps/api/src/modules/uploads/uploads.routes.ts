@@ -2,7 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { badRequest } from '../../lib/errors.js';
 import { requireAuth } from '../../middlewares/auth.js';
 import { storage } from '../../lib/storage.js';
-import { ALLOWED_IMAGE_MIME, ALLOWED_VIDEO_MIME, LIMITS } from '@bismark/shared';
+import { ALLOWED_IMAGE_MIME, ALLOWED_VIDEO_MIME, LIMITS } from '@riffast/shared';
 
 const IMAGE_FOLDERS = new Set(['logos', 'covers', 'prizes', 'misc']);
 const VIDEO_FOLDERS = new Set(['evidence', 'misc']);

@@ -24,7 +24,7 @@ page.on('response', async (res) => {
 try {
   await page.goto(`${WEB}/login`, { waitUntil: 'networkidle2' });
   await page.waitForSelector('#email');
-  await page.type('#email', 'demo@bismark.com');
+  await page.type('#email', 'demo@riffast.com');
   await page.type('#password', 'Demo1234!');
   await page.click('button[type=submit]');
   await page.waitForFunction(() => location.pathname.startsWith('/panel'), { timeout: 15000 }).catch(() => {});

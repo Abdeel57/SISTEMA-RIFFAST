@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import type { TicketStatus } from '@bismark/shared';
+import type { TicketStatus } from '@riffast/shared';
 import { apiFetch } from '@/lib/api';
 
 // Forma del cambio incremental devuelto por el contrato C2.

@@ -1,5 +1,5 @@
 import { apiFetch } from '@/lib/api';
-import type { WinnerDTO, DrawInput } from '@bismark/shared';
+import type { WinnerDTO, DrawInput } from '@riffast/shared';
 
 export const winnerService = {
   draw: (raffleId: string, input: DrawInput) =>

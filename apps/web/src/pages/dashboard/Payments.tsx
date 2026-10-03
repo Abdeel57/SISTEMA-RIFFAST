@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Info, Lock, Plus, Trash2 } from 'lucide-react';
-import { paymentMethodSchema, PHONE_COUNTRIES, type PaymentMethodInput } from '@bismark/shared';
+import { paymentMethodSchema, PHONE_COUNTRIES, type PaymentMethodInput } from '@riffast/shared';
 import { riferoService } from '@/services/riferos';
 import { ApiError } from '@/lib/api';
 import { PanelIntro } from '@/components/owner/PanelKit';
@@ -84,7 +84,7 @@ function MethodEditor({
             <Input
               id={`bank-${method.id}`}
               placeholder="BBVA, Banorte, OXXO, Nu…"
-              list="bismark-banks"
+              list="riffast-banks"
               value={method.bank}
               onChange={set('bank')}
             />
@@ -231,7 +231,7 @@ export default function Payments() {
       <PanelIntro description="Configura cómo te van a pagar tus compradores." />
 
       {/* Sugerencias de bancos para el autocompletado */}
-      <datalist id="bismark-banks">
+      <datalist id="riffast-banks">
         {BANKS.map((b) => (
           <option key={b.id} value={b.name} />
         ))}
@@ -243,7 +243,7 @@ export default function Payments() {
           <div className="text-sm">
             <p className="font-semibold text-blue-900 dark:text-blue-200">El pago es directo a ti</p>
             <p className="text-blue-800/90 dark:text-blue-300/90">
-              El comprador te paga directamente con estos datos. Bismark no cobra ni procesa el dinero en esta
+              El comprador te paga directamente con estos datos. Riffast no cobra ni procesa el dinero en esta
               versión: tú recibes el pago y confirmas la orden.
             </p>
           </div>

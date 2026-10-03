@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 import { resolve } from 'node:path';
 
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
-const FILE = pathToFileURL(resolve('qa/bismark-cta-preview.html')).href;
+const FILE = pathToFileURL(resolve('qa/riffast-cta-preview.html')).href;
 const OUT = process.env.TEMP || '.';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 

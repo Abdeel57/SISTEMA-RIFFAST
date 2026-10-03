@@ -5,7 +5,7 @@ import {
   type MessageKey,
   type OrderStatus,
   type TicketStatus,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import { useT } from '@/store/site';
 
 const ORDER_VARIANT: Record<OrderStatus, BadgeProps['variant']> = {

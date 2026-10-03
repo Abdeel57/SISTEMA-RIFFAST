@@ -5,7 +5,7 @@
 //   node scripts/local-db.mjs          -> inicia (idempotente). DB queda corriendo.
 //   node scripts/local-db.mjs stop     -> detiene el servidor.
 //
-// Cadena de conexión: postgresql://postgres:postgres@localhost:5433/bismark
+// Cadena de conexión: postgresql://postgres:postgres@localhost:5433/riffast
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -60,8 +60,8 @@ console.log(`[localdb] Iniciando Postgres en el puerto ${PORT}...`);
 const status = run(pgctl, ['-D', dataDir, '-l', logFile, '-o', `-p ${PORT}`, '-w', 'start']);
 
 if (status === 0) {
-  console.log('[localdb] ✅ Postgres listo en postgresql://postgres:postgres@localhost:5433/bismark');
-  console.log('[localdb]    (la base "bismark" la crea Prisma al migrar)');
+  console.log('[localdb] ✅ Postgres listo en postgresql://postgres:postgres@localhost:5433/riffast');
+  console.log('[localdb]    (la base "riffast" la crea Prisma al migrar)');
 } else {
   // pg_ctl devuelve !=0 si ya estaba corriendo; verificar el log.
   console.log('[localdb] Postgres ya estaba corriendo o revisa', logFile);

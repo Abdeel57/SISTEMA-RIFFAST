@@ -1,4 +1,4 @@
-// Mapean modelos Prisma -> DTOs de @bismark/shared. Mantener alineado con types.ts.
+// Mapean modelos Prisma -> DTOs de @riffast/shared. Mantener alineado con types.ts.
 import {
   eventLabel,
   formatTicketNumber,
@@ -21,7 +21,7 @@ import {
   type PaymentMethodDTO,
   type PriceTier,
   type PriceBundle,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import type {
   User,
   RiferoProfile,

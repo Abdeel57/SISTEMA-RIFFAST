@@ -10,7 +10,7 @@ import {
   DEFAULT_FAQS,
   DEFAULT_FAQS_EN,
   type PublicRaffleSummaryDTO,
-} from '@bismark/shared';
+} from '@riffast/shared';
 import { useT, useMoney, useLocale } from '@/store/site';
 import { apiAssetUrl } from '@/lib/api';
 import { publicService, type PublicRiferoWinner } from '@/services/publicSite';
@@ -24,7 +24,7 @@ import { RiferoTheme } from '@/components/brand/RiferoTheme';
 import { VerifiedBadge } from '@/components/brand/VerifiedBadge';
 import { FacebookIcon, InstagramIcon, TiktokIcon, WhatsappIcon } from '@/components/brand/SocialIcons';
 import { PoweredBy } from '@/components/brand/PoweredBy';
-import { BismarkCta } from '@/components/brand/BismarkCta';
+import { RiffastCta } from '@/components/brand/RiffastCta';
 import { LazyImage } from '@/components/public/LazyImage';
 import { SafeSeal } from '@/components/public/SafeSeal';
 import { rememberReferral } from '@/lib/referral';
@@ -652,7 +652,7 @@ export default function PublicRifero({ subdomain, previewData }: Props) {
         </div>
 
         {/* ── Cierre de marca: banda a todo el ancho que desconecta de la rifa ── */}
-        <BismarkCta />
+        <RiffastCta />
       </div>
       <SafeSeal />
     </RiferoTheme>

@@ -1,4 +1,4 @@
-// Bismark — Prisma schema
+// Riffast — Prisma schema
 // Plataforma SaaS multi-rifero. PostgreSQL.
 //
 // Convenciones:
@@ -182,7 +182,7 @@ model RiferoProfile {
   staff      User[] @relation("RiferoStaff")
 
   publicName String
-  slug       String  @unique // usado como subdominio: <slug>.bismark.com
+  slug       String  @unique // usado como subdominio: <slug>.riffast.com
   subdomain  String  @unique // normalmente == slug; separado por flexibilidad futura
   customDomain String? @unique // futuro: dominio propio
 
@@ -233,7 +233,7 @@ model RiferoProfile {
   // arriba quedan como compatibilidad (espejo del primer método).
   paymentMethods  Json?
   // Preguntas frecuentes personalizadas (lista JSON de {q, a}). Vacía = se
-  // muestran las DEFAULT_FAQS de @bismark/shared en la página pública.
+  // muestran las DEFAULT_FAQS de @riffast/shared en la página pública.
   faqs            Json    @default("[]")
 
   // Configuración operativa

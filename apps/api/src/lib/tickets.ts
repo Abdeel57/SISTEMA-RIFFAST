@@ -1,5 +1,5 @@
 import { prisma } from './prisma.js';
-import { giftTicketRange } from '@bismark/shared';
+import { giftTicketRange } from '@riffast/shared';
 
 // Genera las filas TicketNumber para una rifa directamente en PostgreSQL con
 // generate_series: una rifa de 1,000,000 de boletos se crea en segundos (en vez

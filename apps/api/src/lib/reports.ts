@@ -1,7 +1,7 @@
 import { PassThrough } from 'node:stream';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
-import { BRAND } from '@bismark/shared';
+import { BRAND } from '@riffast/shared';
 
 export interface ReportColumn {
   header: string;
@@ -33,7 +33,7 @@ export async function buildExcelStream(
   ws.columns = columns.map((c) => ({ header: c.header, key: c.key, width: c.width ?? 18 }));
   const headerRow = ws.getRow(1);
   headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
+  headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0A8F5A' } };
   headerRow.commit();
 
   for await (const row of rows) {
@@ -56,7 +56,7 @@ export async function buildExcel(
 
   ws.columns = columns.map((c) => ({ header: c.header, key: c.key, width: c.width ?? 18 }));
   ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1D4ED8' } };
+  ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0A8F5A' } };
   for (const row of rows) ws.addRow(row);
   ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: columns.length } };
 
@@ -77,7 +77,7 @@ export function buildPdfTable(
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    doc.fillColor('#1d4ed8').fontSize(18).font('Helvetica-Bold').text(title);
+    doc.fillColor('#0A8F5A').fontSize(18).font('Helvetica-Bold').text(title);
     doc.fillColor('#64748b').fontSize(10).font('Helvetica').text(subtitle);
     doc.moveDown(0.5);
 

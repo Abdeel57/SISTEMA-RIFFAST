@@ -4,7 +4,7 @@ import type {
   SellerStatsDTO,
   CreatePanelUserInput,
   UpdatePanelUserInput,
-} from '@bismark/shared';
+} from '@riffast/shared';
 
 export const userService = {
   // Staff del rifero (administradores + vendedores) con métricas por vendedor.
