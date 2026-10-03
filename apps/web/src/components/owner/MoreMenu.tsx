@@ -16,6 +16,8 @@ import { useAuthStore } from '@/store/auth';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ListGroup, ListRow } from '@/components/owner/List';
 import { useAssistant } from '@/components/owner/Assistant';
+import { InstallRow } from '@/components/owner/InstallApp';
+import { useAdminInstall } from '@/lib/pwa/installState';
 
 interface RowDef {
   title: string;
@@ -52,6 +54,8 @@ export function MoreMenu({ onPick }: { onPick: (to: string) => void }) {
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
   const { openAssistant } = useAssistant();
+  const { platform } = useAdminInstall();
+  const canInstall = platform === 'ios' || platform === 'prompt';
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -83,6 +87,7 @@ export function MoreMenu({ onPick }: { onPick: (to: string) => void }) {
           subtitle="Dudas y cambios en tu administrador"
           onClick={openAssistant}
         />
+        {canInstall && <InstallRow />}
       </ListGroup>
 
       <ListGroup header="Cuenta">

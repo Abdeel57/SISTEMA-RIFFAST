@@ -11,6 +11,7 @@ import { ErrorState, Skeleton } from '@/components/ui/misc';
 import { useIntroHold } from '@/lib/intro';
 import { PANEL_CARD } from '@/components/owner/PanelKit';
 import { ListGroup, ListRow } from '@/components/owner/List';
+import { InstallCard } from '@/components/owner/InstallApp';
 import { cn } from '@/lib/cn';
 import { toast } from 'sonner';
 
@@ -177,6 +178,9 @@ export default function Home() {
           </div>
         </div>
       )}
+
+      {/* Invitación a instalar la app (solo si se puede y no está instalada). */}
+      <InstallCard className="mt-4" />
 
       <div className="grid gap-x-6 lg:grid-cols-2">
         <div>

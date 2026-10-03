@@ -26,6 +26,28 @@ await png('maskable-icon.svg', 512, 'maskable-512.png');
 await png('apple-touch-icon.svg', 180, 'apple-touch-icon.png');
 await png('favicon.svg', 32, 'favicon-32.png');
 
+// Ícono pequeño de las notificaciones (badge de Android): silueta BLANCA del
+// trébol sobre transparente. Android lo pinta monocromo; uno a color se ve
+// como un cuadro blanco en la barra de estado.
+{
+  const svg = await readFile(join(dirname(fileURLToPath(import.meta.url)), '..', 'src', 'assets', 'riffast-clover.svg'));
+  const { data, info } = await sharp(svg, { density: 384 })
+    .resize(76, 76, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  for (let i = 0; i < data.length; i += 4) {
+    data[i] = 255;
+    data[i + 1] = 255;
+    data[i + 2] = 255;
+  }
+  await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } })
+    .extend({ top: 10, bottom: 10, left: 10, right: 10, background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png()
+    .toFile(join(PUBLIC, 'badge-96.png'));
+  console.log('  ✓', 'badge-96.png', '(96×96, monocromo)');
+}
+
 // Imagen por defecto para vista previa de enlaces (Open Graph) 1200×630:
 // fondo "noche" con el logotipo horizontal de Riffast (versión clara) centrado.
 // Es el fallback cuando una rifa no tiene imagen propia (la edge function usa

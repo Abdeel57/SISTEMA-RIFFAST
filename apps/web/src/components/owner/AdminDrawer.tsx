@@ -26,6 +26,7 @@ import { IntroHold } from '@/lib/intro';
 import { SurfaceProvider } from '@/components/ui/surface';
 import { HeaderSlotProvider } from '@/components/owner/AdminChrome';
 import { AssistantProvider, AssistantBubble } from '@/components/owner/Assistant';
+import { UpdatePrompt } from '@/components/owner/UpdatePrompt';
 
 function sectionTitle(pathname: string): string {
   if (pathname.startsWith('/admin/ordenes')) return 'Órdenes';
@@ -470,6 +471,9 @@ export function AdminDrawer() {
             {/* Asistencia 24 h: burbuja flotante y arrastrable, nunca sobre la barra. */}
             <AssistantBubble reserve={bubbleReserve} />
           </section>
+
+          {/* «Hay una versión nueva · Actualizar» (PWA). */}
+          <UpdatePrompt />
 
           <ConfirmDialog
             open={confirmLogout}

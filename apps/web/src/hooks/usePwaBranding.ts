@@ -46,6 +46,15 @@ function setAppleTitle(title: string): void {
   if (meta) meta.content = title;
 }
 
+// Barra de estado del iPhone con la app instalada. El administrador es claro
+// (fondo #F5F5F7): con «black-translucent» el reloj y la batería salen en blanco
+// sobre blanco y no se ven. Ahí va «default» (texto oscuro); lo público conserva
+// «black-translucent» (su cabecera es de color).
+function setAppleStatusBar(style: 'default' | 'black-translucent'): void {
+  const meta = document.head.querySelector<HTMLMetaElement>("meta[name='apple-mobile-web-app-status-bar-style']");
+  if (meta && meta.content !== style) meta.content = style;
+}
+
 // Aplica la marca de la PWA (favicon de la pestaña, ícono de A2HS, nombre y
 // manifest) según la sección, y la reafirma al navegar dentro de la SPA:
 //   - Administrador (/admin, /login): SIEMPRE Riffast. Logo de Riffast (nunca el
@@ -70,11 +79,13 @@ export function usePwaBranding(): void {
     if (isAdmin) {
       setManifest('/admin.webmanifest');
       setAppleTitle(ADMIN_TITLE);
+      setAppleStatusBar('default');
       setIcon('/favicon.svg');
       setAppleTouchIcon('/apple-touch-icon.png');
       return;
     }
     setManifest('/manifest.webmanifest');
+    setAppleStatusBar('black-translucent');
     if (publicName) setAppleTitle(publicName);
     if (logoUrl) {
       const href = apiAssetUrl(logoUrl);

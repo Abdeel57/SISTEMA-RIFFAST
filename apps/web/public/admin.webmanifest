@@ -2,18 +2,35 @@
   "id": "/admin",
   "name": "Riffast | ADMIN",
   "short_name": "Riffast ADMIN",
-  "description": "Panel de administración de Riffast.",
+  "description": "Administra tus rifas desde el celular: órdenes, pagos, boletos y avisos de cada apartado.",
   "start_url": "/admin",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
   "lang": "es-MX",
-  "theme_color": "#0A8F5A",
+  "dir": "ltr",
+  "theme_color": "#08804F",
   "background_color": "#008B5A",
+  "categories": ["business", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Órdenes pendientes",
+      "short_name": "Pendientes",
+      "url": "/admin/ordenes/pendientes",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Nueva rifa",
+      "short_name": "Nueva rifa",
+      "url": "/admin/rifas/nueva",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
   ]
 }

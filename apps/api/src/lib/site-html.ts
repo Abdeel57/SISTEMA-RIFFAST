@@ -129,6 +129,9 @@ export function injectMeta(
 }
 
 const ADMIN_TITLE = 'Riffast | ADMIN';
+// Mismo gris que el fondo del panel (debe coincidir con ADMIN_THEME_COLOR de
+// apps/web/src/store/theme.ts).
+const ADMIN_THEME_COLOR = '#F5F5F7';
 
 // El administrador (/admin, /login) es SIEMPRE la marca Riffast, nunca la del
 // rifero: el panel es del producto. Por eso NO le inyectamos el logo/nombre del
@@ -139,6 +142,11 @@ function renderAdminIndex(rawHtml: string): string {
   let html = rawHtml;
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${ADMIN_TITLE}</title>`);
   html = setName(html, 'apple-mobile-web-app-title', ADMIN_TITLE);
+  // El panel es claro (fondo #F5F5F7, estilo iOS). iOS lee la barra de estado
+  // del HTML al abrir la app instalada: con «black-translucent» el reloj y la
+  // batería salían en blanco sobre blanco. «default» = texto oscuro legible.
+  html = setName(html, 'apple-mobile-web-app-status-bar-style', 'default');
+  html = setName(html, 'theme-color', ADMIN_THEME_COLOR);
   html = html.replace('href="/manifest.webmanifest"', 'href="/admin.webmanifest"');
   return html;
 }

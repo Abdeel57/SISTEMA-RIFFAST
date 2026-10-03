@@ -3,10 +3,11 @@
 //   - Administrador (/admin, /login): siempre claro.
 //   - Páginas públicas: lo elige el rifero (publicDarkMode); por defecto claro.
 // La clase `dark` activa los tokens de color oscuros de index.css (darkMode:'class').
-const LIGHT_THEME_COLOR = '#0A8F5A';
-
-// Color de la barra del navegador para el PANEL (siempre la marca del producto).
-export const ADMIN_THEME_COLOR = LIGHT_THEME_COLOR;
+// Color de la barra del navegador / barra de estado para el PANEL: el mismo gris
+// del fondo (#F5F5F7), así la barra superior se funde con el título grande como
+// en las apps de iOS. El verde de la marca queda en el manifest (pantalla de
+// arranque e ícono).
+export const ADMIN_THEME_COLOR = '#F5F5F7';
 
 // `themeColor` es opcional a propósito: en las páginas públicas lo fija el color
 // del rifero (ver RiferoTheme) y aquí NO se toca, para no pisarlo al navegar.

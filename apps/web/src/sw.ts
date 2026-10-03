@@ -22,12 +22,17 @@ declare const self: ServiceWorkerGlobalScope & {
 };
 
 // ── Precaché del shell (inyectado por vite-plugin-pwa) ──────────────────────
+// Solo el esqueleto de la app y los archivos estáticos (JS, CSS, íconos,
+// fuentes). Los DATOS nunca se cachean: la API va siempre a la red, así el
+// tiempo real (órdenes, boletos, avisos) no se rompe.
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST || []);
 
-// Activación inmediata de la nueva versión.
-self.addEventListener('install', () => {
-  void self.skipWaiting();
+// Nueva versión: espera a que el usuario toque «Actualizar» (la app envía
+// SKIP_WAITING). Activarla sola a media sesión podía dejar a una pestaña
+// abierta pidiendo archivos de la versión anterior que ya no existen.
+self.addEventListener('message', (event) => {
+  if ((event.data as { type?: string } | null)?.type === 'SKIP_WAITING') void self.skipWaiting();
 });
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
@@ -94,7 +99,8 @@ self.addEventListener('push', (event) => {
   const options: NotificationOptions = {
     body: payload.body || '',
     icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    // Ícono de la barra de estado (Android): silueta monocroma.
+    badge: '/badge-96.png',
     data: { url: payload.url || '/admin/ordenes' },
     // Vibración corta en móvil (donde esté soportada).
     vibrate: [80, 40, 80],

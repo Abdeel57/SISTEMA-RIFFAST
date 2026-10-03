@@ -7,7 +7,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // La nueva versión espera al usuario: en el administrador aparece
+      // «Actualizar» (ver lib/pwa/swUpdate.ts). El registro lo hace la app.
+      registerType: 'prompt',
+      injectRegister: false,
       // SW personalizado (push + notificationclick + caché del boleto + bg-sync).
       strategies: 'injectManifest',
       srcDir: 'src',
@@ -24,6 +27,7 @@ export default defineConfig({
         'icon-512.png',
         'maskable-512.png',
         'apple-touch-icon.png',
+        'badge-96.png',
         'og-default.png',
         'offline.html',
         // Manifest dedicado del administrador (marca Riffast, abre directo en /admin).

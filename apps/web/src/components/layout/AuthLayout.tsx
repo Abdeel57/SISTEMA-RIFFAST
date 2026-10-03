@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { Logo } from '@/components/brand/Logo';
 import { SurfaceProvider, ADMIN_SURFACE } from '@/components/ui/surface';
+import { UpdatePrompt } from '@/components/owner/UpdatePrompt';
 
 // Layout de autenticación del administrador (estética Apple, pensado para
 // celular): fondo gris claro, columna centrada y contenido arriba para que el
@@ -33,6 +34,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         <footer className="pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-caption text-rf-tertiary">
           Riffast · Panel del rifero
         </footer>
+        <UpdatePrompt />
       </div>
     </SurfaceProvider>
   );

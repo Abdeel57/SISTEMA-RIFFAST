@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom';
 import { Download, X } from 'lucide-react';
 import { BRAND } from '@riffast/shared';
 import { useInstallPrompt } from '@/lib/pwa/useInstallPrompt';
@@ -12,8 +13,12 @@ import { LogoMark } from '@/components/brand/LogoMark';
  */
 export function InstallBanner() {
   const tr = useT();
+  const { pathname } = useLocation();
   const { canInstall, promptInstall, dismiss } = useInstallPrompt();
-  if (!canInstall) return null;
+  // El administrador tiene su propia invitación (tarjeta en Inicio y fila en
+  // Más) que no tapa la barra de pestañas; aquí solo páginas públicas.
+  const isAdmin = pathname === '/login' || pathname === '/admin' || pathname.startsWith('/admin/');
+  if (!canInstall || isAdmin) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-3 pb-3 safe-bottom">
