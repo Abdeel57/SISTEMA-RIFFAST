@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 // Aplica los colores de marca del rifero como variables CSS en un contenedor.
 // Las páginas públicas del rifero usan estos colores para sentirse "propias".
@@ -11,6 +12,12 @@ export function RiferoTheme({
   secondaryColor?: string | null;
   children: React.ReactNode;
 }) {
+  // Dentro del administrador (la página detrás del panel, la vista previa de
+  // Apariencia) la franja del teléfono la pone el panel (ThemeController): aquí
+  // solo se aplican las variables de color.
+  const { pathname } = useLocation();
+  const inAdmin = pathname === '/login' || pathname === '/admin' || pathname.startsWith('/admin/');
+
   useEffect(() => {
     const root = document.documentElement;
     if (primaryColor) root.style.setProperty('--rifero-primary', primaryColor);
@@ -28,7 +35,7 @@ export function RiferoTheme({
     const prevTheme = meta?.getAttribute('content') ?? null;
     const prevRootBg = root.style.backgroundColor;
     const prevBodyBg = document.body.style.backgroundColor;
-    if (primaryColor) {
+    if (primaryColor && !inAdmin) {
       meta?.setAttribute('content', primaryColor);
       root.style.backgroundColor = primaryColor;
       document.body.style.backgroundColor = primaryColor;
@@ -37,11 +44,12 @@ export function RiferoTheme({
     return () => {
       root.style.removeProperty('--rifero-primary');
       root.style.removeProperty('--rifero-secondary');
+      if (inAdmin) return;
       if (prevTheme !== null) meta?.setAttribute('content', prevTheme);
       root.style.backgroundColor = prevRootBg;
       document.body.style.backgroundColor = prevBodyBg;
     };
-  }, [primaryColor, secondaryColor]);
+  }, [primaryColor, secondaryColor, inAdmin]);
 
   return (
     <div

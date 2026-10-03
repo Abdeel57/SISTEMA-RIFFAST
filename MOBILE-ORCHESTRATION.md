@@ -160,6 +160,14 @@ Restricciones: `npm run typecheck --workspace=@riffast/web` limpio. `App.tsx`/`m
   - **Deps:** **ninguna nueva** (QR resuelto sin paquetes; no se ejecutó `npm install`).
   - **Verificado:** `npm run typecheck --workspace=@riffast/web` limpio + `npm run build --workspace=@riffast/web` verde (100 entradas de precaché).
 
+- **Rediseño del administrador (Claude, rama `rediseno-admin`, fases 1–7).** Estética Apple + PWA **solo en el admin** (`/admin`, `/login`): tokens `rf-*` (tailwind.config.ts + index.css), alcance `.rf-admin` y contexto `components/ui/surface.tsx` → los componentes de `ui/` solo cambian dentro del panel; **páginas públicas sin cambios**. Archivos fuera de lo obvio:
+  - `apps/api/src/lib/site-html.ts` (carril 🟦1): `renderAdminIndex` pone `apple-mobile-web-app-status-bar-style=default` y `theme-color=#F5F5F7` en el HTML del admin (en iPhone instalado el reloj salía blanco sobre blanco). Sin lógica ni endpoints nuevos.
+  - `sw.ts` + `vite.config.ts`: el registro lo hace la app al cargar (`lib/pwa/swUpdate.ts`, `injectRegister: false`). Al instalarse, el SW nuevo entra solo si en el dispositivo **no** hay un admin abierto (el comprador recibe lo último, como antes); con el admin abierto espera `SKIP_WAITING` (botón «Actualizar») y nunca recarga de sorpresa. Badge monocromo `public/badge-96.png`.
+  - `components/brand/RiferoTheme.tsx`: dentro de `/admin` ya no pinta `theme-color` ni el fondo de `<html>/<body>` (la página detrás del panel y la vista previa de Apariencia pisaban el color del admin). En público, igual que antes.
+  - `components/layout/InstallBanner.tsx`: se oculta en `/admin` y `/login` (el admin tiene su propia invitación: `components/owner/InstallApp.tsx`). `lib/pwa/useInstallPrompt.ts`: si el admin ya usó el mismo `beforeinstallprompt`, el botón público ya no falla en silencio.
+  - Burbuja **Asistencia 24 h** (`components/owner/Assistant.tsx`): carga `VITE_SUPPORT_CHAT_URL` dentro del panel; sin ella ofrece WhatsApp (`VITE_RIFFAST_WHATSAPP`).
+  - **No** se tocó `TicketGrid.tsx` ni `pages/public/**`.
+
 ## 🔄 Protocolo de integración (orquestador)
 1. Cada carril cierra una tarea → actualiza la tabla de Estado.
 2. El orquestador corre `npm run typecheck` (monorepo) y prueba en runtime los endpoints/flujos.

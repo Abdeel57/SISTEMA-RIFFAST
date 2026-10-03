@@ -7,8 +7,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      // La nueva versión espera al usuario: en el administrador aparece
-      // «Actualizar» (ver lib/pwa/swUpdate.ts). El registro lo hace la app.
+      // El registro lo hace la app (lib/pwa/swUpdate.ts). La versión nueva entra
+      // sola salvo que el rifero tenga el administrador abierto: ahí espera a
+      // que toque «Actualizar» (ver sw.ts).
       registerType: 'prompt',
       injectRegister: false,
       // SW personalizado (push + notificationclick + caché del boleto + bg-sync).

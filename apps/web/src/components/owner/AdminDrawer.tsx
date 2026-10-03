@@ -344,9 +344,10 @@ export function AdminDrawer() {
   const onRifas = location.pathname.startsWith('/admin/rifas');
   const masActive = !onInicio && !onOrdenes && !onRifas;
 
-  // Espacio que la burbuja de Asistencia deja libre abajo: la barra de
-  // pestañas (49 px) o la barra de guardar de las sub-pantallas.
-  const bubbleReserve = isDesktop ? 24 : isSubScreen ? 96 : 49 + 12;
+  // Espacio que la burbuja de Asistencia deja libre abajo: la barra de guardar
+  // de las sub-pantallas (también en escritorio, donde ocupa todo el ancho de la
+  // columna) o la barra de pestañas (49 px).
+  const bubbleReserve = isSubScreen ? 96 : isDesktop ? 24 : 49 + 12;
 
   const backButton = raffleBack ? (
     <BackButton label="Rifas" onClick={() => navigate(raffleBack)} />
@@ -389,30 +390,35 @@ export function AdminDrawer() {
                 collapsed ? 'border-rf-separator bg-rf-bg/95' : 'border-transparent bg-rf-bg',
               )}
             >
-              <div className="relative mx-auto flex h-navbar max-w-[960px] items-center gap-2 px-2 lg:px-6">
-                <div className="flex min-w-0 flex-1 items-center">{backButton}</div>
+              {/* Tres columnas: atrás · título compacto · acción. Los lados nunca
+                  se encogen por debajo de su contenido y el título se recorta, así
+                  no se enciman en teléfonos angostos («Reservar varios»…). */}
+              <div className="mx-auto grid h-navbar max-w-[960px] grid-cols-[minmax(max-content,1fr)_minmax(0,auto)_minmax(max-content,1fr)] items-center gap-2 px-2 lg:px-6">
+                <div className="flex items-center">{backButton}</div>
                 <p
                   aria-hidden={!collapsed}
                   className={cn(
-                    'pointer-events-none absolute left-1/2 max-w-[52%] -translate-x-1/2 truncate text-body font-semibold text-rf-label transition-opacity duration-base',
+                    'pointer-events-none truncate text-center text-body font-semibold text-rf-label transition-opacity duration-base',
                     collapsed ? 'opacity-100' : 'opacity-0',
                   )}
                 >
                   {title}
                 </p>
-                <div ref={setActionSlot} className="flex min-w-0 flex-1 items-center justify-end gap-1" />
-                {/* Vendedores: no tienen «Más», así que salen desde aquí (en
-                    escritorio está en el sidebar). */}
-                {isSeller && (
-                  <button
-                    type="button"
-                    onClick={() => setConfirmLogout(true)}
-                    className="flex h-11 shrink-0 items-center gap-1.5 rounded-full px-2 text-body font-semibold text-rf-danger outline-none active:opacity-50 focus-visible:ring-2 focus-visible:ring-rf-accent/45 lg:hidden"
-                  >
-                    <LogOut className="h-5 w-5" />
-                    Salir
-                  </button>
-                )}
+                <div className="flex items-center justify-end gap-1">
+                  <div ref={setActionSlot} className="flex items-center gap-1" />
+                  {/* Vendedores: no tienen «Más», así que salen desde aquí (en
+                      escritorio está en el sidebar). */}
+                  {isSeller && (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmLogout(true)}
+                      className="flex h-11 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2 text-body font-semibold text-rf-danger outline-none active:opacity-50 focus-visible:ring-2 focus-visible:ring-rf-accent/45 lg:hidden"
+                    >
+                      <LogOut className="h-5 w-5" />
+                      Salir
+                    </button>
+                  )}
+                </div>
               </div>
             </header>
 

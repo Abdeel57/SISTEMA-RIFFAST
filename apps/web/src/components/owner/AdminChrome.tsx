@@ -33,7 +33,7 @@ export function HeaderAction({
       aria-label={iconOnly ? label : undefined}
       title={label}
       className={cn(
-        'flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full text-body font-semibold text-rf-accent outline-none transition-opacity active:opacity-50 focus-visible:ring-2 focus-visible:ring-rf-accent/45 disabled:opacity-40',
+        'flex h-11 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full text-body font-semibold text-rf-accent outline-none transition-opacity active:opacity-50 focus-visible:ring-2 focus-visible:ring-rf-accent/45 disabled:opacity-40',
         iconOnly ? 'w-11' : 'px-2',
       )}
     >

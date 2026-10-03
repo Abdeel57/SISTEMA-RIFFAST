@@ -94,13 +94,12 @@ export default function SellerHome() {
         </ListGroup>
       )}
 
-      {s && (
-        <ListGroup header="Tus órdenes">
-          <ListRow title="Órdenes" value={s.ordersTotal.toLocaleString('es-MX')} />
-          <ListRow title="Canceladas" value={s.cancelledOrders.toLocaleString('es-MX')} />
-          <ListRow icon={Receipt} title="Ver mis ventas" onClick={() => navigate('/admin/ordenes')} />
-        </ListGroup>
-      )}
+      {/* «Ver mis ventas» siempre a la mano, aunque las métricas no carguen. */}
+      <ListGroup header="Tus órdenes">
+        {s && <ListRow title="Órdenes" value={s.ordersTotal.toLocaleString('es-MX')} />}
+        {s && <ListRow title="Canceladas" value={s.cancelledOrders.toLocaleString('es-MX')} />}
+        <ListRow icon={Receipt} title="Ver mis ventas" onClick={() => navigate('/admin/ordenes')} />
+      </ListGroup>
     </div>
   );
 }

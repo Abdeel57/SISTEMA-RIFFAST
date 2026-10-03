@@ -65,11 +65,17 @@ export function useAdminInstall(): { platform: InstallPlatform; promptInstall: (
   const promptInstall = async (): Promise<boolean> => {
     if (!deferred) return false;
     const ev = deferred;
-    await ev.prompt();
-    const choice = await ev.userChoice;
-    deferred = null; // cada evento sirve una sola vez
-    notify();
-    return choice.outcome === 'accepted';
+    try {
+      await ev.prompt();
+      const choice = await ev.userChoice;
+      return choice.outcome === 'accepted';
+    } catch {
+      // El aviso público ya usó este mismo evento y el navegador no deja repetirlo.
+      return false;
+    } finally {
+      if (deferred === ev) deferred = null; // cada evento sirve una sola vez
+      notify();
+    }
   };
 
   return { platform, promptInstall };

@@ -68,7 +68,13 @@ export function useInstallPrompt(): InstallPromptState {
 
   const promptInstall = useCallback(async () => {
     if (!deferred) return;
-    await deferred.prompt();
+    try {
+      await deferred.prompt();
+    } catch {
+      // El administrador ya usó este mismo evento y el navegador no deja repetirlo.
+      setDeferred(null);
+      return;
+    }
     const choice = await deferred.userChoice;
     setDeferred(null);
     if (choice.outcome === 'dismissed') {

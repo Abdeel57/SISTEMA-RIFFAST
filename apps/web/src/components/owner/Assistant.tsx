@@ -94,6 +94,9 @@ export function AssistantBubble({ reserve }: { reserve: number }) {
   const ref = useRef<HTMLButtonElement>(null);
   const [pos, setPos] = useState<BubblePos>(readPos);
   const [drag, setDrag] = useState<{ dx: number; lift: number } | null>(null);
+  // Copia síncrona de `drag`: un arrastre muy rápido puede soltarse antes de
+  // que React pinte el primer movimiento.
+  const dragRef = useRef<{ dx: number; lift: number } | null>(null);
   const [box, setBox] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
   const [typing, setTyping] = useState(false);
   const safe = useRef({ top: 0, bottom: 0 });
@@ -138,6 +141,7 @@ export function AssistantBubble({ reserve }: { reserve: number }) {
     // Tras un arrastre algunos navegadores no disparan `click`: el bloqueo se
     // reinicia en cada toque nuevo para no tragarse el siguiente.
     suppressClick.current = false;
+    dragRef.current = null;
     gesture.current = { id: e.pointerId, x: e.clientX, y: e.clientY, lift: clampLift(pos.lift), moved: false };
   };
   const onPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -150,17 +154,21 @@ export function AssistantBubble({ reserve }: { reserve: number }) {
       g.moved = true;
       ref.current?.setPointerCapture(e.pointerId);
     }
-    setDrag({ dx, lift: clampLift(g.lift - dy) });
+    const next = { dx, lift: clampLift(g.lift - dy) };
+    dragRef.current = next;
+    setDrag(next);
   };
   const endGesture = (e: React.PointerEvent<HTMLButtonElement>) => {
     const g = gesture.current;
     if (!g || g.id !== e.pointerId) return;
     gesture.current = null;
-    if (!g.moved || !drag) return;
+    const d = dragRef.current;
+    dragRef.current = null;
+    if (!g.moved || !d) return;
     suppressClick.current = true;
     // Se pega al borde más cercano (izquierdo o derecho).
-    const center = baseX + drag.dx + SIZE / 2;
-    const next: BubblePos = { side: center < box.w / 2 ? 'left' : 'right', lift: drag.lift };
+    const center = baseX + d.dx + SIZE / 2;
+    const next: BubblePos = { side: center < box.w / 2 ? 'left' : 'right', lift: d.lift };
     setPos(next);
     savePos(next);
     setDrag(null);

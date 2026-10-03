@@ -28,9 +28,21 @@ declare const self: ServiceWorkerGlobalScope & {
 cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST || []);
 
-// Nueva versión: espera a que el usuario toque «Actualizar» (la app envía
-// SKIP_WAITING). Activarla sola a media sesión podía dejar a una pestaña
-// abierta pidiendo archivos de la versión anterior que ya no existen.
+// Versión nueva: si en este dispositivo no hay un administrador abierto, entra
+// sola, como siempre (el comprador recibe lo último sin avisos). Si el rifero
+// tiene el administrador abierto, espera a que toque «Actualizar» (la app envía
+// SKIP_WAITING): así no se le recarga la pantalla a media tarea.
+const isAdminPath = (pathname: string) =>
+  pathname === '/login' || pathname === '/admin' || pathname.startsWith('/admin/');
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      const adminOpen = windows.some((c) => isAdminPath(new URL(c.url).pathname));
+      return adminOpen ? undefined : self.skipWaiting();
+    }),
+  );
+});
 self.addEventListener('message', (event) => {
   if ((event.data as { type?: string } | null)?.type === 'SKIP_WAITING') void self.skipWaiting();
 });

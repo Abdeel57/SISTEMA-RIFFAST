@@ -31,7 +31,7 @@ function urlBase64ToBuffer(base64String: string): ArrayBuffer {
 
 async function getRegistration(): Promise<ServiceWorkerRegistration | null> {
   if (!isPushSupported()) return null;
-  // vite-plugin-pwa registra el SW (autoUpdate). Esperamos a que esté listo.
+  // La app registra el SW al cargar (lib/pwa/swUpdate.ts). Esperamos a que esté listo.
   return navigator.serviceWorker.ready;
 }
 

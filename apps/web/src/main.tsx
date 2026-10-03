@@ -18,7 +18,7 @@ import './index.css';
 void initMonitoring();
 void initAnalytics();
 
-// Service Worker (PWA). La versión nueva espera a «Actualizar» en el admin.
+// Service Worker (PWA): modo app, avisos y «Actualizar» en el administrador.
 initServiceWorker();
 
 // Red de seguridad tras un despliegue: si una pestaña vieja pide un archivo de
@@ -28,7 +28,9 @@ window.addEventListener('vite:preloadError', (event) => {
     if (sessionStorage.getItem('riffast:chunk-reload') === '1') return;
     sessionStorage.setItem('riffast:chunk-reload', '1');
   } catch {
-    /* sin almacenamiento: recargar igual */
+    // Sin almacenamiento no hay cómo evitar un ciclo de recargas: se deja el
+    // error a la vista, como antes.
+    return;
   }
   event.preventDefault();
   window.location.reload();

@@ -1,6 +1,6 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import type { LucideIcon } from 'lucide-react';
-import { useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { cn } from '@/lib/cn';
 import { usePortalContainer } from '@/components/ui/surface';
 
@@ -38,10 +38,13 @@ export function ActionSheet({
   cancelLabel?: string;
 }) {
   const container = usePortalContainer();
-  // Si se eligió una acción que abre otra hoja/diálogo, no devolver el foco al
-  // botón «⋯» (se lo robaría a la confirmación que se acaba de abrir).
-  const picked = useRef(false);
   const visible = actions.filter((a) => !a.hidden);
+  // Radix solo devuelve el foco a su propio Trigger; esta hoja se abre desde un
+  // botón externo («⋯»), así que se recuerda quién tenía el foco al abrirla.
+  const opener = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    if (open) opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }, [open]);
 
   const rowClass = (a: SheetAction) =>
     cn(
@@ -50,19 +53,16 @@ export function ActionSheet({
     );
 
   return (
-    <DialogPrimitive.Root
-      open={open}
-      onOpenChange={(o) => {
-        if (o) picked.current = false;
-        onOpenChange(o);
-      }}
-    >
+    <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
       <DialogPrimitive.Portal container={container}>
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-rf-fade-in data-[state=closed]:animate-rf-fade-out" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
           onCloseAutoFocus={(e) => {
-            if (picked.current) e.preventDefault();
+            e.preventDefault();
+            // Si la acción abrió otro diálogo (confirmación, comprobante…), el
+            // foco se queda en él; si no, vuelve al botón «⋯».
+            if (!document.querySelector('[role="dialog"]')) opener.current?.focus();
           }}
           className="fixed inset-x-0 bottom-0 z-50 space-y-2 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] outline-none data-[state=open]:animate-rf-sheet-in data-[state=closed]:animate-rf-sheet-out sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-sm sm:-translate-x-1/2 sm:-translate-y-1/2 sm:px-0 sm:pb-0 sm:data-[state=open]:animate-rf-pop-in sm:data-[state=closed]:animate-rf-pop-out"
         >
@@ -112,7 +112,6 @@ export function ActionSheet({
                     disabled={a.disabled}
                     className={rowClass(a)}
                     onClick={() => {
-                      picked.current = true;
                       // Primero la acción (dentro del gesto del toque), luego cerrar.
                       a.onSelect?.();
                       onOpenChange(false);

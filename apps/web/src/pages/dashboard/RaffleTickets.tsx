@@ -271,8 +271,10 @@ export default function RaffleTickets() {
               value={bulkText}
               onChange={(e) => setBulkText(e.target.value)}
               placeholder="Ej. 1, 2, 3, 10-25"
-              inputMode="numeric"
+              // Teclado normal a propósito: el numérico de iPhone no tiene coma
+              // ni guion y no dejaría escribir listas ni rangos.
               autoComplete="off"
+              spellCheck={false}
               className="tabular-nums"
             />
             <p className="mt-1.5 text-caption text-rf-secondary" aria-live="polite">
