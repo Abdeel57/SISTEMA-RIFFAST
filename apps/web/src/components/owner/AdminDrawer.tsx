@@ -1,4 +1,4 @@
-import { useEffect, useRef, Suspense } from 'react';
+import { useEffect, useMemo, useRef, useState, Suspense } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -22,6 +22,7 @@ import { useNotificationsSummary } from '@/lib/pwa/useNotificationsSummary';
 import { useAuthStore } from '@/store/auth';
 import { LogoMark } from '@/components/brand/LogoMark';
 import { IntroHold } from '@/lib/intro';
+import { SurfaceProvider } from '@/components/ui/surface';
 
 function sectionTitle(pathname: string): string {
   if (pathname.startsWith('/admin/ordenes')) return 'Órdenes';
@@ -251,6 +252,9 @@ export function AdminDrawer() {
   const logout = useAuthStore((s) => s.logout);
   const role = useAuthStore((s) => s.user?.role);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Raíz del panel: los diálogos y hojas se montan aquí para heredar sus tokens.
+  const [root, setRoot] = useState<HTMLDivElement | null>(null);
+  const surface = useMemo(() => ({ kind: 'admin' as const, container: root }), [root]);
 
   // Los vendedores ven un panel reducido (solo su panel y sus ventas).
   const isSeller = role === 'SELLER';
@@ -292,7 +296,8 @@ export function AdminDrawer() {
   const masActive = !onInicio && !onOrdenes && !onRifas;
 
   return (
-    <div className="fixed inset-0 z-50 flex bg-background">
+    <SurfaceProvider value={surface}>
+    <div ref={setRoot} className="rf-admin fixed inset-0 z-50 flex">
       {/* Backdrop sólo en tablet (sm–md): deja ver la página detrás, click cierra.
           En escritorio (lg+) hay sidebar, así que no aplica. */}
       <button
@@ -418,5 +423,6 @@ export function AdminDrawer() {
         )}
       </aside>
     </div>
+    </SurfaceProvider>
   );
 }

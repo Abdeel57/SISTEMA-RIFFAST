@@ -21,6 +21,12 @@ export function ThemeController(): null {
     staleTime: 5 * 60_000,
   });
 
+  // Marca el documento en las rutas del administrador: el fondo de la página
+  // (rebote del scroll en iOS, áreas fuera del panel) toma el gris del panel.
+  useEffect(() => {
+    document.documentElement.classList.toggle('rf-admin-route', isAdmin);
+  }, [isAdmin]);
+
   useEffect(() => {
     if (isAdmin) {
       // El panel impone su color; en público lo decide el rifero (RiferoTheme).

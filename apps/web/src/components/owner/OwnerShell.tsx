@@ -8,6 +8,7 @@ import { PageLoader } from '@/components/ui/misc';
 import { IntroHold } from '@/lib/intro';
 import { Button } from '@/components/ui/button';
 import PublicRifero from '@/pages/public/PublicRifero';
+import { SurfaceProvider, ADMIN_SURFACE } from '@/components/ui/surface';
 
 // Shell del administrador (/admin): renderiza la página pública del dueño como
 // fondo (visible en escritorio detrás del drawer) y el administrador encima.
@@ -77,18 +78,21 @@ export function OwnerShell() {
 
   if (profileQ.isLoading) {
     return (
-      <div className="grid min-h-[100dvh] place-items-center">
+      <SurfaceProvider value={ADMIN_SURFACE}>
+      <div className="rf-admin grid min-h-[100dvh] place-items-center">
         {/* Al abrir el panel (o al entrar tras iniciar sesión) la intro de Riffast
             sigue en pantalla hasta que el perfil está listo. */}
         <IntroHold />
         <PageLoader label="Cargando tu página..." />
       </div>
+      </SurfaceProvider>
     );
   }
 
   if (profileQ.isError || !profile || !previewData) {
     return (
-      <div className="grid min-h-[100dvh] place-items-center px-6 text-center">
+      <SurfaceProvider value={ADMIN_SURFACE}>
+      <div className="rf-admin grid min-h-[100dvh] place-items-center px-6 text-center">
         <div className="w-full max-w-sm">
           <h1 className="text-xl font-bold">No pudimos cargar tu página</h1>
           <p className="mt-2 text-muted-foreground">
@@ -107,6 +111,7 @@ export function OwnerShell() {
           </Button>
         </div>
       </div>
+      </SurfaceProvider>
     );
   }
 

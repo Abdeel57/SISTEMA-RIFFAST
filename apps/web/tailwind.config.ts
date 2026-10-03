@@ -60,6 +60,25 @@ export default {
           gold: '#F5A623', // ámbar puntual (premios); no es color de identidad
           dark: '#0B2219', // --noche-2
         },
+        // ── Administrador (estética Apple) ──────────────────────────
+        // Tokens del panel del rifero, definidos como canales RGB en index.css
+        // (:root) para admitir opacidad (`bg-rf-accent/10`). Solo los usa el
+        // administrador; las páginas públicas siguen con su paleta.
+        rf: {
+          bg: 'rgb(var(--rf-bg) / <alpha-value>)', // fondo agrupado #F5F5F7
+          surface: 'rgb(var(--rf-surface) / <alpha-value>)', // tarjetas
+          label: 'rgb(var(--rf-label) / <alpha-value>)', // texto principal
+          secondary: 'rgb(var(--rf-secondary) / <alpha-value>)', // texto secundario
+          tertiary: 'rgb(var(--rf-tertiary) / <alpha-value>)', // marcadores, chevrons
+          separator: 'rgb(var(--rf-separator) / <alpha-value>)', // líneas finas
+          fill: 'rgb(var(--rf-fill) / <alpha-value>)', // campos sobre tarjeta
+          'fill-strong': 'rgb(var(--rf-fill-strong) / <alpha-value>)', // campos sobre fondo
+          accent: 'rgb(var(--rf-accent) / <alpha-value>)', // verde de marca (único acento)
+          'accent-pressed': 'rgb(var(--rf-accent-pressed) / <alpha-value>)',
+          danger: 'rgb(var(--rf-danger) / <alpha-value>)',
+          warning: 'rgb(var(--rf-warning) / <alpha-value>)',
+          info: 'rgb(var(--rf-info) / <alpha-value>)',
+        },
         // Estados de boleto (TicketGrid)
         ticket: {
           available: '#22c55e',
@@ -75,6 +94,39 @@ export default {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        // Administrador: controles 12, tarjetas 16, hojas 20.
+        control: '12px',
+        card: '16px',
+        sheet: '20px',
+      },
+      // Escala tipográfica fija del administrador (una sola familia, Inter).
+      fontSize: {
+        title: ['34px', { lineHeight: '41px', letterSpacing: '-0.022em', fontWeight: '700' }],
+        heading: ['22px', { lineHeight: '28px', letterSpacing: '-0.016em', fontWeight: '700' }],
+        body: ['17px', { lineHeight: '24px', letterSpacing: '-0.011em' }],
+        callout: ['15px', { lineHeight: '20px', letterSpacing: '-0.006em' }],
+        caption: ['13px', { lineHeight: '18px', letterSpacing: '0' }],
+      },
+      spacing: {
+        // Márgenes y medidas fijas del administrador.
+        gutter: '16px', // margen lateral en celular
+        navbar: '44px', // barra superior compacta
+        tabbar: '49px', // barra de pestañas (sin la zona segura)
+      },
+      boxShadow: {
+        // Sombras mínimas: la tarjeta se separa del fondo por color, no por sombra.
+        card: '0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 1px rgba(0, 0, 0, 0.02)',
+        raised: '0 4px 16px -6px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.04)',
+        float: '0 10px 28px -8px rgba(0, 0, 0, 0.28), 0 2px 6px rgba(0, 0, 0, 0.10)',
+        sheet: '0 -6px 28px rgba(0, 0, 0, 0.10)',
+      },
+      transitionDuration: {
+        fast: '150ms',
+        base: '200ms',
+        slow: '250ms',
+      },
+      transitionTimingFunction: {
+        ios: 'cubic-bezier(0.32, 0.72, 0, 1)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'Segoe UI', 'Roboto', 'sans-serif'],
@@ -101,6 +153,20 @@ export default {
           '0%': { transform: 'translateX(-100%)' },
           '60%, 100%': { transform: 'translateX(100%)' },
         },
+        // Administrador: hojas que suben desde abajo, diálogos y fundidos.
+        'rf-sheet-in': { from: { transform: 'translateY(100%)' }, to: { transform: 'translateY(0)' } },
+        'rf-sheet-out': { from: { transform: 'translateY(0)' }, to: { transform: 'translateY(100%)' } },
+        'rf-pop-in': {
+          from: { opacity: '0', transform: 'translate(-50%, -48%) scale(0.97)' },
+          to: { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
+        },
+        'rf-pop-out': {
+          from: { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
+          to: { opacity: '0', transform: 'translate(-50%, -48%) scale(0.97)' },
+        },
+        'rf-fade-in': { from: { opacity: '0' }, to: { opacity: '1' } },
+        'rf-fade-out': { from: { opacity: '1' }, to: { opacity: '0' } },
+        'rf-rise': { from: { opacity: '0', transform: 'translateY(6px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out',
@@ -115,6 +181,13 @@ export default {
         'slide-in-right': 'slide-in-right 0.3s cubic-bezier(0.16,1,0.3,1)',
         'fade-in-fast': 'fade-in-fast 0.2s ease-out',
         shine: 'shine 3.8s ease-in-out infinite',
+        'rf-sheet-in': 'rf-sheet-in 250ms cubic-bezier(0.32, 0.72, 0, 1)',
+        'rf-sheet-out': 'rf-sheet-out 200ms cubic-bezier(0.32, 0.72, 0, 1)',
+        'rf-pop-in': 'rf-pop-in 200ms cubic-bezier(0.32, 0.72, 0, 1)',
+        'rf-pop-out': 'rf-pop-out 150ms ease-in',
+        'rf-fade-in': 'rf-fade-in 200ms ease-out',
+        'rf-fade-out': 'rf-fade-out 150ms ease-in',
+        'rf-rise': 'rf-rise 250ms cubic-bezier(0.32, 0.72, 0, 1) both',
       },
     },
   },

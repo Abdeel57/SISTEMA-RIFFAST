@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, ArrowLeft, Ticket, Star, BadgeCheck } from 'lucide-react';
 import { Logo } from '@/components/brand/Logo';
+import { SurfaceProvider, ADMIN_SURFACE } from '@/components/ui/surface';
 
 interface Props {
   children: ReactNode;
@@ -17,7 +18,8 @@ interface Props {
 // (izq, desktop) y el formulario dentro de un boleto troquelado sobre papel verde suave.
 export function AuthLayout({ children, badge, sideTitle, sideSubtitle, bullets, ticketLabel = 'Acceso Riffast' }: Props) {
   return (
-    <div className="min-h-screen font-body lg:grid lg:grid-cols-[1.05fr_1fr]">
+    <SurfaceProvider value={ADMIN_SURFACE}>
+    <div className="rf-admin min-h-screen font-body lg:grid lg:grid-cols-[1.05fr_1fr]">
       {/* ── Panel de marca ── */}
       <aside className="relative hidden overflow-hidden bg-brand-ink p-12 text-white lg:flex lg:flex-col lg:justify-between">
         {/* Atmósfera */}
@@ -132,5 +134,6 @@ export function AuthLayout({ children, badge, sideTitle, sideSubtitle, bullets, 
         </div>
       </main>
     </div>
+    </SurfaceProvider>
   );
 }
