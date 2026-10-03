@@ -1,139 +1,39 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, ArrowLeft, Ticket, Star, BadgeCheck } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { Logo } from '@/components/brand/Logo';
 import { SurfaceProvider, ADMIN_SURFACE } from '@/components/ui/surface';
 
-interface Props {
-  children: ReactNode;
-  badge: string;
-  sideTitle: ReactNode;
-  sideSubtitle: string;
-  bullets: string[];
-  /** Microetiqueta del boleto del formulario (ej. "Boleto de acceso"). */
-  ticketLabel?: string;
-}
-
-// Layout de autenticación — concepto "Boleto Riffast": panel de marca en noche
-// (izq, desktop) y el formulario dentro de un boleto troquelado sobre papel verde suave.
-export function AuthLayout({ children, badge, sideTitle, sideSubtitle, bullets, ticketLabel = 'Acceso Riffast' }: Props) {
+// Layout de autenticación del administrador (estética Apple, pensado para
+// celular): fondo gris claro, columna centrada y contenido arriba para que el
+// botón siga a la vista con el teclado abierto. Respeta las zonas seguras.
+export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <SurfaceProvider value={ADMIN_SURFACE}>
-    <div className="rf-admin min-h-screen font-body lg:grid lg:grid-cols-[1.05fr_1fr]">
-      {/* ── Panel de marca ── */}
-      <aside className="relative hidden overflow-hidden bg-brand-ink p-12 text-white lg:flex lg:flex-col lg:justify-between">
-        {/* Atmósfera */}
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -left-32 -top-24 h-[28rem] w-[28rem] rounded-full bg-brand-electric/25 blur-[120px]" />
-          <div className="absolute -bottom-32 right-0 h-96 w-96 rounded-full bg-brand-deep/40 blur-[110px]" />
-          <div className="absolute bottom-1/3 left-1/4 h-60 w-60 rounded-full bg-brand-mint/10 blur-[90px]" />
-        </div>
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-            backgroundSize: '44px 44px',
-          }}
-        />
-        <div className="grain pointer-events-none absolute inset-0 opacity-[0.15]" />
-        {/* Serial decorativo */}
-        <p className="pointer-events-none absolute -bottom-6 -right-4 select-none font-ticket text-[8rem] font-bold leading-none text-white/[0.04]" aria-hidden>
-          Nº001
-        </p>
-
-        {/* Logo */}
-        <Link to="/" className="relative z-10 flex w-fit items-center" aria-label="Riffast">
-          <Logo tone="light" className="h-9" />
-        </Link>
-
-        {/* Mensaje */}
-        <div className="relative z-10 max-w-md">
-          <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3.5 py-1.5 text-xs font-semibold text-white/80 backdrop-blur">
-            <span className="h-2 w-2 rounded-full bg-brand-mint" />
-            {badge}
-          </span>
-          <h2 className="font-display text-4xl font-extrabold leading-[1.05] tracking-tight">{sideTitle}</h2>
-          <p className="mt-4 text-white/70">{sideSubtitle}</p>
-
-          <ul className="mt-8 space-y-3">
-            {bullets.map((b) => (
-              <li key={b} className="flex items-center gap-3 text-sm text-white/85">
-                <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-brand-mint/15 text-brand-mint">
-                  <Check className="h-3 w-3" />
-                </span>
-                {b}
-              </li>
-            ))}
-          </ul>
-
-          {/* Boleto decorativo (verde Riffast) */}
-          <div className="mt-10 w-fit rotate-[-3deg] animate-float-slow">
-            <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-br from-brand-electric via-brand to-brand-deep px-4 py-3 text-white shadow-[0_14px_40px_-12px_rgba(16,198,95,0.55)]">
-              <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/15">
-                <Ticket className="h-5 w-5" />
-              </div>
-              <div className="border-l-2 border-dashed border-white/30 pl-3">
-                <p className="font-ticket text-[10px] font-bold uppercase tracking-widest text-white/65">Boleto digital</p>
-                <p className="font-ticket text-base font-bold">E1 · 0427</p>
-              </div>
-              <BadgeCheck className="ml-1 h-4 w-4 text-brand-mint" />
-            </div>
-          </div>
-        </div>
-
-        {/* Pie */}
-        <p className="relative z-10 flex items-center gap-2 text-xs text-white/40">
-          <Star className="h-3 w-3 text-brand-mint" /> Hecho en México · Sin comisión por boleto
-        </p>
-      </aside>
-
-      {/* ── Área del formulario (papel) ── */}
-      <main className="relative flex min-h-screen flex-col bg-[#F1F5F2] dark:bg-background">
-        <div className="flex items-center justify-between p-4 lg:p-5">
-          <Link to="/" className="flex items-center lg:hidden" aria-label="Riffast">
-            <Logo className="h-7" />
-          </Link>
-          <div className="flex items-center gap-1">
+      <div className="rf-admin flex min-h-[100dvh] flex-col">
+        <header className="pt-safe">
+          <div className="mx-auto flex h-navbar w-full max-w-[440px] items-center px-2 sm:max-w-none sm:px-4">
             <Link
               to="/"
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="flex h-11 items-center rounded-full pr-2 text-body text-rf-accent outline-none transition-opacity active:opacity-50 focus-visible:ring-2 focus-visible:ring-rf-accent/45"
             >
-              <ArrowLeft className="h-4 w-4" /> Inicio
+              <ChevronLeft className="h-7 w-7" strokeWidth={2.2} />
+              Ver mi página
             </Link>
           </div>
-        </div>
+        </header>
 
-        <div className="flex flex-1 items-start justify-center px-4 pb-12 pt-2 sm:items-center sm:px-6">
-          {/* Boleto del formulario */}
-          <div className="w-full max-w-md animate-reveal">
-            <div className="relative overflow-hidden rounded-3xl border border-[#DCE7E0] bg-white shadow-[0_24px_60px_-24px_rgba(3,18,12,0.22)] dark:border-border dark:bg-card">
-              {/* Cabecera del boleto */}
-              <div className="flex items-center justify-between px-6 pt-5 sm:px-8">
-                <p className="inline-flex items-center gap-2 font-ticket text-[10px] font-bold uppercase tracking-[0.28em] text-muted-foreground">
-                  <Star className="h-3 w-3 text-brand-electric" />
-                  {ticketLabel}
-                </p>
-                <p className="font-ticket text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground/50">
-                  Nº 000001
-                </p>
-              </div>
-              {/* Perforación con muescas */}
-              <div className="relative mt-4">
-                <div className="border-t-2 border-dashed border-[#DCE7E0] dark:border-border" />
-                <span className="absolute -left-3.5 -top-3.5 h-7 w-7 rounded-full bg-[#F1F5F2] dark:bg-background" aria-hidden />
-                <span className="absolute -right-3.5 -top-3.5 h-7 w-7 rounded-full bg-[#F1F5F2] dark:bg-background" aria-hidden />
-              </div>
-
-              <div className="px-6 py-7 sm:px-8 sm:py-8">{children}</div>
-            </div>
-
-            <p className="mt-5 text-center font-ticket text-[10px] font-bold uppercase tracking-[0.3em] text-muted-foreground/50">
-              ★ Datos protegidos · Sin tarjeta ★
-            </p>
+        <main className="flex flex-1 justify-center px-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,5vh)] sm:items-center sm:pt-0">
+          <div className="w-full max-w-[400px] animate-rf-rise sm:-mt-16">
+            <Logo tone="dark" className="h-10" />
+            {children}
           </div>
-        </div>
-      </main>
-    </div>
+        </main>
+
+        <footer className="pb-[max(1rem,env(safe-area-inset-bottom))] text-center text-caption text-rf-tertiary">
+          Riffast · Panel del rifero
+        </footer>
+      </div>
     </SurfaceProvider>
   );
 }

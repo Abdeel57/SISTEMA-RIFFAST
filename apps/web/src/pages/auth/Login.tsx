@@ -1,8 +1,9 @@
+import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { User, Lock, ArrowRight } from 'lucide-react';
+import { CircleAlert } from 'lucide-react';
 import { loginSchema, type LoginInput } from '@riffast/shared';
 import { authService } from '@/services/auth';
 import { useAuthStore } from '@/store/auth';
@@ -12,19 +13,27 @@ import { playIntro, afterIntro } from '@/lib/intro';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { PasswordInput } from '@/components/ui/password-input';
-import { TicketField, ticketInputClass } from '@/components/ui/ticket-field';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { useDocumentTitle } from '@/hooks/useDocumentTitle';
+
+// Campos blancos sobre el fondo gris de la pantalla.
+const FIELD = 'bg-rf-surface shadow-card focus:shadow-none';
 
 export default function Login() {
   useDocumentTitle('Inicia sesión');
   const navigate = useNavigate();
   const setUser = useAuthStore((s) => s.setUser);
+  // Error del servidor (usuario o contraseña incorrectos, sin conexión…):
+  // se muestra junto al formulario, no en un aviso flotante que se pierde.
+  const [serverError, setServerError] = useState<string | null>(null);
+  const submitRef = useRef<HTMLButtonElement>(null);
 
   const {
     register,
     handleSubmit,
+    setFocus,
     formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -40,60 +49,116 @@ export default function Login() {
       setUser(user);
       identify(user.id, { role: user.role });
       track('login_completed');
-      afterIntro(() => toast.success(`¡Bienvenido de nuevo, ${user.name.split(' ')[0]}!`));
+      afterIntro(() => toast.success(`¡Hola de nuevo, ${user.name.split(' ')[0]}!`));
       navigate('/admin/inicio', { replace: true });
     },
     onError: (err) => {
-      toast.error(err instanceof ApiError ? err.message : 'No pudimos iniciar sesión. Inténtalo de nuevo.');
+      setServerError(err instanceof ApiError ? err.message : 'No pudimos iniciar sesión. Revisa tu conexión e inténtalo de nuevo.');
     },
   });
 
-  return (
-    <AuthLayout
-      ticketLabel="Boleto de acceso"
-      badge="Administrador"
-      sideTitle={
-        <>
-          Tus rifas, <span className="text-brand-mint">bajo control</span>
-        </>
+  // Con el teclado abierto, mantener el botón «Iniciar sesión» a la vista: al
+  // encogerse la ventana visible, se desplaza lo justo para mostrarlo.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      const active = document.activeElement;
+      if (active instanceof HTMLInputElement && active.form) {
+        submitRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
-      sideSubtitle="Administra boletos, órdenes, pagos y sorteos desde un solo panel, directo en tu celular."
-      bullets={[
-        'Órdenes y pagos en tiempo real',
-        'Boletos digitales con QR',
-        'Sorteos con tómbola digital',
-        'Reportes en Excel y PDF',
-      ]}
-    >
-      <div className="mb-7">
-        <h1 className="font-display text-3xl font-extrabold tracking-tight">Inicia sesión</h1>
-        <p className="mt-1.5 text-muted-foreground">Entra al administrador de tu página de rifas.</p>
-      </div>
+    };
+    vv.addEventListener('resize', onResize);
+    return () => vv.removeEventListener('resize', onResize);
+  }, []);
 
-      <form onSubmit={handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4" noValidate>
-        <TicketField label="Usuario" htmlFor="usuario" icon={User} error={errors.usuario?.message}>
+  const usuarioField = register('usuario', { onChange: () => setServerError(null) });
+  const passwordField = register('password', { onChange: () => setServerError(null) });
+
+  return (
+    <AuthLayout>
+      <h1 className="mt-8 text-title text-rf-label">Inicia sesión</h1>
+      <p className="mt-1 text-body text-rf-secondary">Entra al administrador de tu página de rifas.</p>
+
+      <form
+        onSubmit={handleSubmit((data) => {
+          setServerError(null);
+          loginMutation.mutate(data);
+        })}
+        className="mt-8 space-y-5"
+        noValidate
+      >
+        <div>
+          <Label htmlFor="usuario">Usuario</Label>
           <Input
             id="usuario"
             type="text"
             autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="next"
             placeholder="Tu usuario"
-            className={ticketInputClass}
-            {...register('usuario')}
+            className={FIELD}
+            aria-invalid={!!errors.usuario}
+            aria-describedby={errors.usuario ? 'usuario-error' : undefined}
+            {...usuarioField}
+            onKeyDown={(e) => {
+              // «Siguiente» del teclado: pasar a la contraseña en vez de enviar.
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                setFocus('password');
+              }
+            }}
           />
-        </TicketField>
+          {errors.usuario && (
+            <p id="usuario-error" role="alert" className="mt-1.5 text-callout text-rf-danger">
+              {errors.usuario.message}
+            </p>
+          )}
+        </div>
 
-        <TicketField label="Contraseña" htmlFor="password" icon={Lock} error={errors.password?.message}>
+        <div>
+          <Label htmlFor="password">Contraseña</Label>
           <PasswordInput
             id="password"
             autoComplete="current-password"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="go"
             placeholder="Tu contraseña"
-            className={ticketInputClass}
-            {...register('password')}
+            className={FIELD}
+            aria-invalid={!!errors.password || !!serverError}
+            aria-describedby={errors.password ? 'password-error' : serverError ? 'login-error' : undefined}
+            {...passwordField}
           />
-        </TicketField>
+          {errors.password && (
+            <p id="password-error" role="alert" className="mt-1.5 text-callout text-rf-danger">
+              {errors.password.message}
+            </p>
+          )}
+        </div>
 
-        <Button type="submit" variant="brand" size="lg" className="w-full rounded-full" loading={loginMutation.isPending}>
-          Entrar <ArrowRight className="h-5 w-5" />
+        {serverError && (
+          <p
+            id="login-error"
+            role="alert"
+            className="flex items-start gap-2 rounded-control bg-rf-danger/[0.08] px-3.5 py-3 text-callout text-rf-danger"
+          >
+            <CircleAlert className="mt-px h-5 w-5 shrink-0" />
+            {serverError}
+          </p>
+        )}
+
+        <Button
+          ref={submitRef}
+          type="submit"
+          className="w-full scroll-mb-6"
+          loading={loginMutation.isPending}
+          loadingText="Iniciando sesión…"
+        >
+          Iniciar sesión
         </Button>
       </form>
     </AuthLayout>
