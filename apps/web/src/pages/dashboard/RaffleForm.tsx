@@ -17,13 +17,16 @@ import { uploadService } from '@/services/uploads';
 import { useAuthStore } from '@/store/auth';
 import { buildRaffleUrl, buildRaffleShareUrl } from '@/lib/site';
 import { ApiError, apiAssetUrl } from '@/lib/api';
+import { ImagePlus, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { PageLoader } from '@/components/ui/misc';
+import { Label } from '@/components/ui/label';
+import { PageLoader, ErrorState } from '@/components/ui/misc';
 import { FormSection, Field } from '@/components/ui/form-section';
 import { RichTextEditor } from '@/components/ui/rich-text';
+import { StickyBar, ChoiceChips } from '@/components/owner/PanelKit';
+import { ToggleRow } from '@/components/owner/List';
 import { cn } from '@/lib/cn';
 import { toast } from 'sonner';
 
@@ -121,7 +124,13 @@ export default function RaffleForm() {
     },
   });
 
-  const { data: existing, isLoading: loadingRaffle } = useQuery({
+  const {
+    data: existing,
+    isLoading: loadingRaffle,
+    isError: raffleError,
+    refetch: refetchRaffle,
+    isFetching: fetchingRaffle,
+  } = useQuery({
     queryKey: ['raffle', id],
     queryFn: () => raffleService.get(id as string),
     enabled: isEdit,
@@ -168,7 +177,12 @@ export default function RaffleForm() {
     setDrawLocal(isoToLocal(r.drawDate));
   }, [existing, reset]);
 
+  // Al cambiar de paso, volver al inicio del asistente. En el primer render no:
+  // la pantalla ya abre arriba, con su título grande a la vista.
+  const prevStep = useRef(step);
   useEffect(() => {
+    if (prevStep.current === step) return;
+    prevStep.current = step;
     topRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }, [step]);
 
@@ -300,6 +314,15 @@ export default function RaffleForm() {
   }
 
   if (isEdit && loadingRaffle) return <PageLoader label="Cargando rifa..." />;
+  if (isEdit && raffleError && !existing) {
+    return (
+      <ErrorState
+        title="No pudimos cargar la rifa"
+        onRetry={() => void refetchRaffle()}
+        retrying={fetchingRaffle}
+      />
+    );
+  }
 
   // ── Pantalla de éxito tras crear: conecta crear → publicar → compartir ──
   if (created) {
@@ -315,38 +338,35 @@ export default function RaffleForm() {
               : 'Se guardó como borrador. Publícala cuando quieras que tus compradores la vean.'
           }
         >
-          <div className="rounded-xl border bg-muted/40 px-4 py-3">
-            <p className="font-ticket text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              {created.eventLabel}
-            </p>
-            <p className="font-display text-lg font-extrabold leading-tight">{created.title}</p>
+          <div className="rounded-control bg-rf-fill px-4 py-3">
+            <p className="text-caption font-semibold tabular-nums text-rf-secondary">{created.eventLabel}</p>
+            <p className="text-body font-semibold text-rf-label">{created.title}</p>
           </div>
 
           <div className="space-y-2.5">
             {!isLive && (
               <Button
-                variant="brand"
-                size="lg"
-                className="w-full rounded-xl"
+                className="w-full"
                 loading={publishNow.isPending}
+                loadingText="Publicando…"
                 onClick={() => publishNow.mutate(created.id)}
               >
                 Publicar ahora
               </Button>
             )}
             {isLive && (
-              <Button variant="brand" size="lg" className="w-full rounded-xl" onClick={shareCreated}>
+              <Button className="w-full" onClick={shareCreated}>
                 Compartir mi rifa
               </Button>
             )}
             {publicUrl && isLive && (
-              <Button asChild variant="outline" size="lg" className="w-full rounded-xl">
+              <Button asChild variant="secondary" className="w-full">
                 <a href={publicUrl} target="_blank" rel="noopener noreferrer">
                   Ver cómo se ve
                 </a>
               </Button>
             )}
-            <Button variant="ghost" size="lg" className="w-full rounded-xl" onClick={() => navigate('/admin/rifas')}>
+            <Button variant="ghost" className="w-full" onClick={() => navigate('/admin/rifas')}>
               Ir a mis rifas
             </Button>
           </div>
@@ -363,10 +383,17 @@ export default function RaffleForm() {
       {/* Progreso del asistente (el título de pantalla ya está en el header del
           panel y el del paso lo pone la tarjeta de abajo). */}
       <div className="mb-4 flex items-center gap-3">
-        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-brand transition-all" style={{ width: `${progress}%` }} />
+        <div
+          className="h-1.5 flex-1 overflow-hidden rounded-full bg-rf-fill-strong"
+          role="progressbar"
+          aria-valuenow={step + 1}
+          aria-valuemin={1}
+          aria-valuemax={STEPS.length}
+          aria-label="Progreso de la rifa"
+        >
+          <div className="h-full rounded-full bg-rf-accent transition-[width] duration-slow ease-ios" style={{ width: `${progress}%` }} />
         </div>
-        <span className="shrink-0 text-xs font-semibold text-muted-foreground">
+        <span className="shrink-0 text-caption font-semibold tabular-nums text-rf-secondary">
           Paso {step + 1} de {STEPS.length}
         </span>
       </div>
@@ -380,10 +407,24 @@ export default function RaffleForm() {
           {step === 0 && (
             <>
               <Field label="Título de la rifa" htmlFor="title" error={errors.title?.message}>
-                <Input id="title" placeholder="Ej. Gran rifa de la camioneta" {...register('title')} />
+                <Input
+                  id="title"
+                  placeholder="Ej. Gran rifa de la camioneta"
+                  autoCapitalize="sentences"
+                  enterKeyHint="next"
+                  aria-invalid={!!errors.title}
+                  {...register('title')}
+                />
               </Field>
               <Field label="Premio" htmlFor="prize" error={errors.prize?.message}>
-                <Input id="prize" placeholder="Ej. Camioneta 2024 0 km" {...register('prize')} />
+                <Input
+                  id="prize"
+                  placeholder="Ej. Camioneta 2024 0 km"
+                  autoCapitalize="sentences"
+                  enterKeyHint="next"
+                  aria-invalid={!!errors.prize}
+                  {...register('prize')}
+                />
               </Field>
               <Field
                 label="Descripción"
@@ -453,9 +494,9 @@ export default function RaffleForm() {
                   {...register('maxTicketsPerOrder', { setValueAs: (v) => (v === '' || v === null ? undefined : Number(v)) })}
                 />
               </Field>
-              <div className="rounded-xl border bg-muted/40 px-4 py-3 text-sm">
-                <span className="text-muted-foreground">Así se verá un boleto: </span>
-                <span className="font-mono font-bold tabular-nums">{exampleTicket}</span>
+              <div className="rounded-control bg-rf-fill px-4 py-3 text-callout">
+                <span className="text-rf-secondary">Así se verá un boleto: </span>
+                <span className="font-semibold tabular-nums text-rf-label">{exampleTicket}</span>
               </div>
 
               {/* Oportunidades por boleto */}
@@ -485,15 +526,13 @@ export default function RaffleForm() {
               {/* Explicación dinámica de emisiones y rangos */}
               <div
                 className={cn(
-                  'rounded-xl border px-4 py-3 text-sm',
-                  opportunities > 1
-                    ? 'border-primary/30 bg-primary/5'
-                    : 'border-border bg-muted/40 text-muted-foreground',
+                  'rounded-control px-4 py-3 text-callout',
+                  opportunities > 1 ? 'bg-rf-accent/[0.08]' : 'bg-rf-fill text-rf-secondary',
                 )}
               >
                 {opportunities > 1 ? (
                   <>
-                    <p className="font-medium text-foreground">
+                    <p className="text-rf-label">
                       Esta rifa tendrá{' '}
                       <strong>{totalTicketsW.toLocaleString('es-MX')}</strong> boletos seleccionables y{' '}
                       <strong>{emissions.toLocaleString('es-MX')}</strong> emisiones totales. Cada boleto comprado
@@ -503,14 +542,14 @@ export default function RaffleForm() {
                       </strong>{' '}
                       de regalo.
                     </p>
-                    <div className="mt-2 grid gap-1 font-mono text-xs">
+                    <div className="mt-2 grid gap-1 text-caption tabular-nums">
                       <span>
-                        <span className="text-muted-foreground">Rango manual:</span>{' '}
-                        <strong>{manualRangeText}</strong>
+                        <span className="text-rf-secondary">Rango manual:</span>{' '}
+                        <strong className="font-semibold">{manualRangeText}</strong>
                       </span>
                       <span>
-                        <span className="text-muted-foreground">Rango de regalo:</span>{' '}
-                        <strong>{giftRangeText}</strong>
+                        <span className="text-rf-secondary">Rango de regalo:</span>{' '}
+                        <strong className="font-semibold">{giftRangeText}</strong>
                       </span>
                     </div>
                   </>
@@ -525,26 +564,38 @@ export default function RaffleForm() {
           {step === 2 && (
             <>
               <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
-                {images.map((url) => (
-                  <div key={url} className="relative aspect-square overflow-hidden rounded-xl border bg-muted">
-                    <img src={apiAssetUrl(url)} alt="Premio" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                {images.map((url, i) => (
+                  <div key={url} className="relative aspect-square overflow-hidden rounded-control bg-rf-fill">
+                    <img src={apiAssetUrl(url)} alt={`Foto ${i + 1} del premio`} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                    {i === 0 && (
+                      <span className="absolute bottom-1.5 left-1.5 rounded-full bg-black/60 px-2 py-0.5 text-caption font-semibold text-white">
+                        Principal
+                      </span>
+                    )}
                     <button
                       type="button"
                       onClick={() => removeImage(url)}
-                      aria-label="Quitar imagen"
-                      className="absolute right-1 top-1 grid h-8 w-8 place-items-center rounded-full bg-black/60 text-lg leading-none text-white transition-colors active:bg-black/80"
+                      aria-label={`Quitar foto ${i + 1}`}
+                      className="absolute right-0 top-0 grid h-11 w-11 place-items-center outline-none"
                     >
-                      ×
+                      <span className="grid h-7 w-7 place-items-center rounded-full bg-black/60 text-white transition-transform active:scale-90">
+                        <X className="h-4 w-4" strokeWidth={2.5} />
+                      </span>
                     </button>
                   </div>
                 ))}
                 {images.length < MAX_IMAGES && (
                   <label
                     className={cn(
-                      'grid aspect-square cursor-pointer place-items-center rounded-xl border border-dashed px-1 text-center text-xs font-semibold text-muted-foreground transition-colors hover:bg-accent active:bg-accent',
+                      'rf-row grid aspect-square cursor-pointer place-items-center content-center gap-1 rounded-control bg-rf-fill px-1 text-center text-caption font-semibold text-rf-accent',
                       uploading && 'pointer-events-none opacity-60',
                     )}
                   >
+                    {uploadProgress ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-rf-secondary" />
+                    ) : (
+                      <ImagePlus className="h-6 w-6" />
+                    )}
                     {uploadProgress ? `Subiendo ${Math.min(uploadProgress.done + 1, uploadProgress.total)} de ${uploadProgress.total}…` : 'Agregar foto'}
                     <input
                       type="file"
@@ -559,8 +610,8 @@ export default function RaffleForm() {
                   </label>
                 )}
               </div>
-              {errors.images && <p className="mt-2 text-sm text-destructive">{errors.images.message}</p>}
-              <p className="text-xs text-muted-foreground">Puedes continuar sin fotos y agregarlas después.</p>
+              {errors.images && <p role="alert" className="mt-2 text-callout text-rf-danger">{errors.images.message}</p>}
+              <p className="text-caption text-rf-secondary">Puedes continuar sin fotos y agregarlas después.</p>
             </>
           )}
 
@@ -583,93 +634,70 @@ export default function RaffleForm() {
                   }}
                 />
               </Field>
-              {/* Mostrar/ocultar la cuenta regresiva al sorteo en la rifa pública. */}
-              <div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/40 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">Mostrar cuenta regresiva</p>
-                  <p className="text-xs text-muted-foreground">
-                    Un contador de días, horas y minutos hasta el sorteo, visible para tus compradores.
-                  </p>
-                </div>
-                <Switch
+              {/* Opciones de la rifa pública, agrupadas como en Ajustes. */}
+              <div className="overflow-hidden rounded-control ring-1 ring-inset ring-rf-separator [&>*+*]:border-t [&>*+*]:border-rf-separator">
+                {/* Mostrar/ocultar la cuenta regresiva al sorteo en la rifa pública. */}
+                <ToggleRow
+                  id="showCountdown"
+                  title="Mostrar cuenta regresiva"
+                  description="Un contador de días, horas y minutos hasta el sorteo, visible para tus compradores."
                   checked={watch('showCountdown') ?? true}
                   onCheckedChange={(v) => setValue('showCountdown', v)}
                 />
-              </div>
-              {/* "Próximamente": la rifa se anuncia en la página (foto, premio y
-                  fecha) pero todavía no se pueden apartar boletos. */}
-              <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-900 dark:bg-amber-950/40">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">Próximamente (aún no se vende)</p>
-                  <p className="text-xs text-muted-foreground">
-                    La rifa se anuncia en tu página con su foto, premio y fecha, pero nadie puede apartar boletos
-                    todavía. Úsalo para crear expectativa antes de abrir la venta.
-                  </p>
-                </div>
-                <Switch
+                {/* "Próximamente": la rifa se anuncia en la página (foto, premio y
+                    fecha) pero todavía no se pueden apartar boletos. */}
+                <ToggleRow
+                  id="comingSoon"
+                  title="Próximamente (aún no se vende)"
+                  description="La rifa se anuncia en tu página con su foto, premio y fecha, pero nadie puede apartar boletos todavía. Úsalo para crear expectativa antes de abrir la venta."
+                  note={watch('comingSoon') ? 'Mientras esté activo, nadie podrá apartar boletos.' : undefined}
                   checked={watch('comingSoon') ?? false}
                   onCheckedChange={(v) => setValue('comingSoon', v)}
                 />
-              </div>
-              {/* Selección manual: apagada = la cuadrícula se oculta y el comprador
-                  solo puede elegir boletos con la maquinita de la suerte. */}
-              <div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/40 px-4 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">Selección manual de boletos</p>
-                  <p className="text-xs text-muted-foreground">
-                    Activada: el comprador elige sus números en la cuadrícula. Desactivada: la cuadrícula se
-                    oculta y solo puede usar la maquinita de la suerte.
-                  </p>
-                </div>
-                <Switch
+                {/* Selección manual: apagada = la cuadrícula se oculta y el comprador
+                    solo puede elegir boletos con la maquinita de la suerte. */}
+                <ToggleRow
+                  id="manualSelection"
+                  title="Selección manual de boletos"
+                  description="Activada: el comprador elige sus números en la cuadrícula. Desactivada: la cuadrícula se oculta y solo puede usar la maquinita de la suerte."
                   checked={watch('manualSelection') ?? true}
                   onCheckedChange={(v) => setValue('manualSelection', v)}
                 />
               </div>
               {/* Tiempo de apartado: cuánto tiene el comprador para pagar antes de
                   que su apartado expire y los boletos se liberen. Editable por rifa. */}
-              <div className="rounded-xl border bg-muted/40 px-4 py-3">
-                <p className="text-sm font-semibold">Tiempo para apartar (pagar)</p>
-                <p className="mb-2 text-xs text-muted-foreground">
+              <div>
+                <Label htmlFor="reserveMinutes">Tiempo para apartar (pagar)</Label>
+                <p className="-mt-1 mb-3 text-caption text-rf-secondary">
                   Cuánto tiempo tiene el comprador para pagar antes de que su apartado expire y los boletos vuelvan a estar disponibles.
                 </p>
-                <div className="mb-2 flex flex-wrap gap-2">
-                  {RESERVE_PRESETS.map((p) => {
-                    const active = Number(watch('reserveMinutes')) === p.minutes;
-                    return (
-                      <button
-                        key={p.minutes}
-                        type="button"
-                        onClick={() => setValue('reserveMinutes', p.minutes, { shouldDirty: true })}
-                        className={
-                          active
-                            ? 'rounded-full bg-brand px-3.5 py-2 text-sm font-bold text-white'
-                            : 'rounded-full border px-3.5 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent'
-                        }
-                      >
-                        {p.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <ChoiceChips
+                  label="Tiempos rápidos"
+                  options={RESERVE_PRESETS.map((p) => ({ label: p.label, value: p.minutes }))}
+                  value={Number(watch('reserveMinutes'))}
+                  onChange={(v) => setValue('reserveMinutes', v, { shouldDirty: true })}
+                />
                 <Input
                   id="reserveMinutes"
                   type="number"
                   inputMode="numeric"
                   min={5}
                   max={10080}
+                  enterKeyHint="next"
+                  className="mt-3"
+                  aria-invalid={!!errors.reserveMinutes}
                   {...register('reserveMinutes', { valueAsNumber: true })}
                 />
                 {(() => {
                   const eq = humanReserve(Number(watch('reserveMinutes')));
                   return eq ? (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Ahora: <span className="font-semibold text-foreground">{eq}</span>.
+                    <p className="mt-1.5 text-caption text-rf-secondary">
+                      Ahora: <span className="font-semibold text-rf-label">{eq}</span>.
                     </p>
                   ) : null;
                 })()}
                 {errors.reserveMinutes && (
-                  <p className="mt-1 text-sm text-destructive">{errors.reserveMinutes.message}</p>
+                  <p role="alert" className="mt-1.5 text-callout text-rf-danger">{errors.reserveMinutes.message}</p>
                 )}
               </div>
               <Field
@@ -707,35 +735,36 @@ export default function RaffleForm() {
           )}
         </FormSection>
 
-        {/* Navegación del asistente: sticky para que Siguiente/Guardar siempre
+        {/* Navegación del asistente: fija para que Siguiente/Guardar siempre
             estén a la mano (en móvil, sin perseguirlos con el scroll). */}
-        <div className="sticky bottom-0 z-10 -mx-4 -mb-[max(1.25rem,env(safe-area-inset-bottom))] mt-4 flex items-center gap-3 border-t bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:-mx-5 sm:px-5">
-          <Button type="button" variant="ghost" size="lg" onClick={back}>
-            {step === 0 ? 'Cancelar' : 'Atrás'}
-          </Button>
-          <div className="flex-1" />
-          {step < STEPS.length - 1 ? (
-            <Button key="nav-next" type="button" variant="brand" size="lg" className="min-w-[40%]" onClick={() => void next()}>
-              Siguiente
+        <StickyBar className="mt-4">
+          <div className="flex items-center gap-3">
+            <Button type="button" variant="ghost" onClick={back}>
+              {step === 0 ? 'Cancelar' : 'Atrás'}
             </Button>
-          ) : (
-            // type="button" + onClick (no submit): guarda solo con un toque
-            // deliberado. La key distinta fuerza a React a montar un botón nuevo,
-            // así el toque de "Siguiente" no se hereda en "Guardar".
-            <Button
-              key="nav-save"
-              type="button"
-              variant="brand"
-              size="lg"
-              className="min-w-[40%]"
-              loading={save.isPending}
-              disabled={uploading}
-              onClick={() => void submitForm()}
-            >
-              {isEdit ? 'Guardar cambios' : 'Crear rifa'}
-            </Button>
-          )}
-        </div>
+            <div className="flex-1" />
+            {step < STEPS.length - 1 ? (
+              <Button key="nav-next" type="button" className="min-w-[45%]" onClick={() => void next()}>
+                Siguiente
+              </Button>
+            ) : (
+              // type="button" + onClick (no submit): guarda solo con un toque
+              // deliberado. La key distinta fuerza a React a montar un botón nuevo,
+              // así el toque de "Siguiente" no se hereda en "Guardar".
+              <Button
+                key="nav-save"
+                type="button"
+                className="min-w-[45%]"
+                loading={save.isPending}
+                loadingText={isEdit ? 'Guardando…' : 'Creando…'}
+                disabled={uploading}
+                onClick={() => void submitForm()}
+              >
+                {isEdit ? 'Guardar cambios' : 'Crear rifa'}
+              </Button>
+            )}
+          </div>
+        </StickyBar>
       </form>
     </div>
   );

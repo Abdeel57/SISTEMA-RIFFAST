@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Plus, Copy, Pencil, ShieldCheck, Store, Link2, KeyRound } from 'lucide-react';
+import { Plus, Copy, Pencil, ShieldCheck, Store, KeyRound, Users as UsersIcon } from 'lucide-react';
 import {
   createPanelUserSchema,
   STAFF_ROLE_LABELS,
@@ -15,13 +15,14 @@ import { userService } from '@/services/users';
 import { ApiError } from '@/lib/api';
 import { buildSellerHomeUrl } from '@/lib/site';
 import { copyToClipboard } from '@/lib/clipboard';
-import { PanelIntro, PANEL_CARD } from '@/components/owner/PanelKit';
+import { PanelIntro, PANEL_CARD, IconButton } from '@/components/owner/PanelKit';
+import { HeaderAction } from '@/components/owner/AdminChrome';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
-import { PageLoader, EmptyState } from '@/components/ui/misc';
+import { PageLoader, EmptyState, ErrorState } from '@/components/ui/misc';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Dialog,
@@ -38,23 +39,33 @@ function RoleBadge({ role }: { role: PanelUserDTO['role'] }) {
   if (role === 'SELLER') {
     return (
       <Badge variant="info">
-        <Store className="h-3 w-3" /> Vendedor
+        <Store /> Vendedor
       </Badge>
     );
   }
   return (
     <Badge variant="secondary">
-      <ShieldCheck className="h-3 w-3" /> Administrador
+      <ShieldCheck /> Administrador
     </Badge>
   );
 }
 
-// Métrica compacta (etiqueta + valor) para la cuadrícula de estadísticas.
-function Stat({ label, value, accent }: { label: string; value: string; accent?: string }) {
+// Métrica compacta (valor + etiqueta) para la cuadrícula de estadísticas.
+function Stat({ label, value, tone }: { label: string; value: string; tone?: 'accent' | 'warning' | 'info' }) {
   return (
-    <div className="rounded-xl border bg-background p-2.5 text-center">
-      <p className={cn('text-lg font-extrabold leading-none tabular-nums', accent)}>{value}</p>
-      <p className="mt-1 text-[11px] font-medium text-muted-foreground">{label}</p>
+    <div className="min-w-0 px-2 py-2.5 text-center">
+      <p
+        className={cn(
+          'truncate text-body font-semibold tabular-nums',
+          tone === 'accent' && 'text-rf-accent',
+          tone === 'warning' && 'text-rf-warning',
+          tone === 'info' && 'text-rf-info',
+          !tone && 'text-rf-label',
+        )}
+      >
+        {value}
+      </p>
+      <p className="mt-0.5 truncate text-caption text-rf-secondary">{label}</p>
     </div>
   );
 }
@@ -79,60 +90,58 @@ function UserCard({ user, onEdit }: { user: PanelUserDTO; onEdit: (u: PanelUserD
   const s = user.stats;
 
   return (
-    <div className={cn(PANEL_CARD, 'p-4')}>
+    <article className={cn(PANEL_CARD, 'p-4')}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="truncate text-base font-extrabold leading-tight">{user.name}</h3>
+            <h3 className="truncate text-body font-semibold text-rf-label">{user.name}</h3>
             {user.isOwner && <Badge variant="warning">Dueño</Badge>}
           </div>
-          <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+          <p className="truncate text-callout text-rf-secondary">{user.email}</p>
         </div>
         <RoleBadge role={user.role} />
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <Badge variant={isActive ? 'success' : 'muted'}>{isActive ? 'Activo' : 'Inactivo'}</Badge>
-        {user.sellerCode && (
-          <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 font-mono text-xs font-bold">
-            {user.sellerCode}
-          </span>
-        )}
+        {user.sellerCode && <Badge variant="outline" className="tabular-nums">{user.sellerCode}</Badge>}
       </div>
 
       {/* Link de venta del vendedor */}
       {link && (
-        <div className="mt-3 flex items-center gap-2 rounded-xl border bg-muted/40 px-3 py-2">
-          <Link2 className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">{link}</span>
-          <Button variant="outline" size="sm" className="shrink-0" onClick={() => void copyToClipboard(link, 'Link copiado')}>
-            <Copy className="h-3.5 w-3.5" /> Copiar
-          </Button>
+        <div className="mt-3 flex items-center gap-2 rounded-control bg-rf-fill py-1 pl-3 pr-1">
+          <span className="min-w-0 flex-1 truncate text-callout text-rf-secondary">{link}</span>
+          <IconButton
+            icon={Copy}
+            label="Copiar link de venta"
+            tone="accent"
+            onClick={() => void copyToClipboard(link, 'Link copiado')}
+          />
         </div>
       )}
 
       {/* Métricas del vendedor */}
       {user.role === 'SELLER' && s && (
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="mt-3 grid grid-cols-3 divide-x divide-y divide-rf-separator overflow-hidden rounded-control ring-1 ring-inset ring-rf-separator [&>*:nth-child(-n+3)]:border-t-0 [&>*:nth-child(3n+1)]:border-l-0">
           <Stat label="Órdenes" value={s.ordersTotal.toLocaleString('es-MX')} />
           <Stat label="Boletos" value={s.ticketsSold.toLocaleString('es-MX')} />
-          <Stat label="Vendido" value={formatMXN(s.revenue)} accent="text-emerald-600 dark:text-emerald-400" />
-          <Stat label="Pendientes" value={s.pendingOrders.toLocaleString('es-MX')} accent="text-amber-600 dark:text-amber-400" />
-          <Stat label="Pagadas" value={s.paidOrders.toLocaleString('es-MX')} accent="text-blue-600 dark:text-blue-400" />
+          <Stat label="Vendido" value={formatMXN(s.revenue)} tone="accent" />
+          <Stat label="Pendientes" value={s.pendingOrders.toLocaleString('es-MX')} tone="warning" />
+          <Stat label="Pagadas" value={s.paidOrders.toLocaleString('es-MX')} tone="info" />
           <Stat label="Canceladas" value={s.cancelledOrders.toLocaleString('es-MX')} />
         </div>
       )}
 
       {/* Acciones */}
       <div className="mt-4 flex items-center gap-2">
-        <Button variant="outline" size="sm" onClick={() => onEdit(user)}>
-          <Pencil className="h-3.5 w-3.5" /> Editar
+        <Button variant="secondary" size="sm" className="flex-1" onClick={() => onEdit(user)}>
+          <Pencil className="h-[18px] w-[18px]" /> Editar
         </Button>
         {!user.isOwner && (
           <Button
             variant="ghost"
             size="sm"
-            className={isActive ? 'text-destructive hover:text-destructive' : 'text-emerald-600 hover:text-emerald-600'}
+            className={isActive ? 'text-rf-danger active:bg-rf-danger/10' : undefined}
             onClick={() => setConfirmToggle(true)}
           >
             {isActive ? 'Desactivar' : 'Activar'}
@@ -147,12 +156,13 @@ function UserCard({ user, onEdit }: { user: PanelUserDTO; onEdit: (u: PanelUserD
         description={
           isActive ? (
             <>
-              <span className="font-semibold">{user.name}</span> ya no podrá iniciar sesión hasta que lo vuelvas a
-              activar. Sus ventas anteriores se conservan.
+              <span className="font-semibold text-rf-label">{user.name}</span> ya no podrá iniciar sesión hasta que lo
+              vuelvas a activar. Sus ventas anteriores se conservan.
             </>
           ) : (
             <>
-              <span className="font-semibold">{user.name}</span> podrá volver a iniciar sesión en el panel.
+              <span className="font-semibold text-rf-label">{user.name}</span> podrá volver a iniciar sesión en el
+              panel.
             </>
           )
         }
@@ -161,11 +171,11 @@ function UserCard({ user, onEdit }: { user: PanelUserDTO; onEdit: (u: PanelUserD
         loading={toggleStatus.isPending}
         onConfirm={() => toggleStatus.mutate()}
       />
-    </div>
+    </article>
   );
 }
 
-// ── Modal de crear/editar usuario ───────────────────────────
+// ── Hoja de crear/editar usuario ───────────────────────────
 type FormValues = CreatePanelUserInput;
 
 function UserFormDialog({
@@ -253,7 +263,7 @@ function UserFormDialog({
     onError: (e) => toast.error(e instanceof ApiError ? e.message : 'No se pudo actualizar'),
   });
 
-  // Cierre del modal (limpia la contraseña temporal mostrada).
+  // Cierre (limpia la contraseña temporal mostrada).
   const onOpenChangeWrapped = (o: boolean) => {
     if (!o) setTempPassword(null);
     onOpenChange(o);
@@ -280,24 +290,26 @@ function UserFormDialog({
         </DialogHeader>
 
         {tempPassword ? (
-          // Pantalla de éxito: contraseña temporal (se muestra una sola vez).
+          // Éxito: contraseña temporal (se muestra una sola vez).
           <div className="space-y-4">
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/40">
-              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+            <div className="rounded-control bg-rf-accent/[0.08] p-4">
+              <p className="text-callout font-medium text-rf-label">
                 Usuario creado. Comparte esta contraseña temporal (no se volverá a mostrar):
               </p>
-              <div className="mt-2 flex items-center gap-2">
-                <code className="flex-1 rounded-lg border bg-background px-3 py-2 font-mono text-lg font-bold tracking-wide">
+              <div className="mt-3 flex items-center gap-2">
+                <code className="flex-1 rounded-control bg-rf-surface px-3 py-2.5 text-heading tabular-nums tracking-wide">
                   {tempPassword}
                 </code>
-                <Button variant="outline" size="sm" onClick={() => void copyToClipboard(tempPassword, 'Contraseña copiada')}>
-                  <Copy className="h-4 w-4" />
-                </Button>
+                <IconButton
+                  icon={Copy}
+                  label="Copiar contraseña"
+                  tone="accent"
+                  onClick={() => void copyToClipboard(tempPassword, 'Contraseña copiada')}
+                />
               </div>
             </div>
             <DialogFooter>
               <Button
-                variant="brand"
                 onClick={() => {
                   onOpenChangeWrapped(false);
                   reset();
@@ -308,29 +320,50 @@ function UserFormDialog({
             </DialogFooter>
           </div>
         ) : (
-          <form onSubmit={handleSubmit(submit)} className="space-y-3.5">
+          <form onSubmit={handleSubmit(submit)} className="space-y-4">
             <div>
               <Label htmlFor="u-name">Nombre completo</Label>
-              <Input id="u-name" {...register('name')} placeholder="Juan Pérez" />
-              {errors.name && <p className="mt-1 text-sm text-destructive">{errors.name.message}</p>}
+              <Input
+                id="u-name"
+                placeholder="Juan Pérez"
+                autoComplete="off"
+                autoCapitalize="words"
+                enterKeyHint="next"
+                aria-invalid={!!errors.name}
+                {...register('name')}
+              />
+              {errors.name && <p role="alert" className="mt-1.5 text-callout text-rf-danger">{errors.name.message}</p>}
             </div>
 
             <div>
               <Label htmlFor="u-email">Usuario o correo</Label>
               <Input
                 id="u-email"
-                {...register('email')}
                 placeholder="juan@correo.com o juanventas"
                 disabled={!!editing}
                 autoComplete="off"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                enterKeyHint="next"
+                aria-invalid={!!errors.email}
+                {...register('email')}
               />
-              {editing && <p className="mt-1 text-xs text-muted-foreground">El usuario de acceso no se puede cambiar.</p>}
-              {errors.email && <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>}
+              {editing && <p className="mt-1.5 text-caption text-rf-secondary">El usuario de acceso no se puede cambiar.</p>}
+              {errors.email && <p role="alert" className="mt-1.5 text-callout text-rf-danger">{errors.email.message}</p>}
             </div>
 
             <div>
               <Label htmlFor="u-phone">Teléfono (opcional)</Label>
-              <Input id="u-phone" {...register('phone')} placeholder="55 1234 5678" />
+              <Input
+                id="u-phone"
+                type="tel"
+                inputMode="tel"
+                placeholder="55 1234 5678"
+                autoComplete="off"
+                enterKeyHint="next"
+                {...register('phone')}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -344,35 +377,52 @@ function UserFormDialog({
               {role === 'SELLER' && (
                 <div>
                   <Label htmlFor="u-code">Código (opcional)</Label>
-                  <Input id="u-code" {...register('sellerCode')} placeholder="VEN01" className="font-mono uppercase" />
+                  <Input
+                    id="u-code"
+                    placeholder="VEN01"
+                    className="uppercase"
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    enterKeyHint="next"
+                    {...register('sellerCode')}
+                  />
                 </div>
               )}
             </div>
             {role === 'SELLER' && (
-              <p className="-mt-1 text-xs text-muted-foreground">
-                Si lo dejas vacío se genera automáticamente (VEN01, VEN02…).
-              </p>
+              <p className="-mt-2 text-caption text-rf-secondary">Si lo dejas vacío se genera automáticamente (VEN01, VEN02…).</p>
             )}
 
             <div>
               <Label htmlFor="u-pass" className="flex items-center gap-1.5">
-                <KeyRound className="h-3.5 w-3.5" />
+                <KeyRound className="h-4 w-4 text-rf-secondary" />
                 {editing ? 'Nueva contraseña (opcional)' : 'Contraseña (opcional)'}
               </Label>
-              <Input id="u-pass" type="text" {...register('password')} placeholder="Mínimo 6 caracteres" autoComplete="new-password" />
-              <p className="mt-1 text-xs text-muted-foreground">
-                {editing
-                  ? 'Déjala vacía para no cambiarla.'
-                  : 'Déjala vacía y el sistema generará una contraseña temporal.'}
+              <Input
+                id="u-pass"
+                type="text"
+                placeholder="Mínimo 6 caracteres"
+                autoComplete="new-password"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                enterKeyHint="done"
+                aria-invalid={!!errors.password}
+                {...register('password')}
+              />
+              <p className="mt-1.5 text-caption text-rf-secondary">
+                {editing ? 'Déjala vacía para no cambiarla.' : 'Déjala vacía y el sistema generará una contraseña temporal.'}
               </p>
-              {errors.password && <p className="mt-1 text-sm text-destructive">{errors.password.message}</p>}
+              {errors.password && <p role="alert" className="mt-1.5 text-callout text-rf-danger">{errors.password.message}</p>}
             </div>
 
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => onOpenChangeWrapped(false)} disabled={pending}>
                 Cancelar
               </Button>
-              <Button type="submit" variant="brand" loading={pending}>
+              <Button type="submit" loading={pending} loadingText={editing ? 'Guardando…' : 'Creando…'}>
                 {editing ? 'Guardar cambios' : 'Crear usuario'}
               </Button>
             </DialogFooter>
@@ -387,7 +437,7 @@ export default function Users() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<PanelUserDTO | null>(null);
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['panel-users'],
     queryFn: () => userService.list(),
   });
@@ -404,34 +454,31 @@ export default function Users() {
 
   return (
     <div>
-      <PanelIntro
-        description="Da acceso al panel a administradores y vendedores. Cada vendedor tiene su propio link de venta."
-        action={
-          <Button variant="brand" size="sm" onClick={openCreate}>
-            <Plus className="h-4 w-4" /> Nuevo usuario
-          </Button>
-        }
-      />
+      <HeaderAction label="Nuevo usuario" icon={Plus} onClick={openCreate} />
+      <PanelIntro description="Da acceso al panel a administradores y vendedores. Cada vendedor tiene su propio link de venta." />
 
       {isLoading ? (
         <PageLoader label="Cargando usuarios..." />
       ) : isError ? (
-        <EmptyState
+        <ErrorState
           title="No pudimos cargar los usuarios"
-          description={error instanceof ApiError ? error.message : 'Intenta de nuevo.'}
+          description={error instanceof ApiError ? error.message : undefined}
+          onRetry={() => void refetch()}
+          retrying={isFetching}
         />
       ) : users.length === 0 ? (
         <EmptyState
+          icon={<UsersIcon />}
           title="Aún no hay usuarios"
           description="Crea tu primer vendedor para empezar a repartir links de venta."
           action={
-            <Button variant="brand" onClick={openCreate}>
-              <Plus className="h-4 w-4" /> Crear usuario
+            <Button onClick={openCreate}>
+              <Plus className="h-5 w-5" /> Crear usuario
             </Button>
           }
         />
       ) : (
-        <div className="grid gap-3 xl:grid-cols-2">
+        <div className="grid items-start gap-3 lg:grid-cols-2">
           {users.map((u) => (
             <UserCard key={u.id} user={u} onEdit={openEdit} />
           ))}

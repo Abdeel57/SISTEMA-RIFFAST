@@ -8,11 +8,12 @@ import { ticketService } from '@/services/tickets';
 import { ApiError } from '@/lib/api';
 import { decodeTicketMap, applyTicketChanges, type TicketMapData } from '@/lib/ticketMap';
 import { useTicketChanges } from '@/lib/pwa/useTicketChanges';
-import { PanelIntro } from '@/components/owner/PanelKit';
+import { PanelIntro, PANEL_CARD } from '@/components/owner/PanelKit';
+import { HeaderAction } from '@/components/owner/AdminChrome';
 import { TicketGrid } from '@/components/TicketGrid';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/input';
+import { cn } from '@/lib/cn';
 import { Label } from '@/components/ui/label';
 import { TicketStatusBadge } from '@/lib/statusBadges';
 import {
@@ -23,7 +24,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { PageLoader, EmptyState, Separator } from '@/components/ui/misc';
+import { PageLoader, ErrorState } from '@/components/ui/misc';
 import { toast } from 'sonner';
 
 // Parsea "1,2,3" y rangos "10-15" a una lista de números únicos ordenados.
@@ -137,48 +138,33 @@ export default function RaffleTickets() {
   }
 
   if (mapQuery.isError || !raffle || !ticketMap) {
-    return <EmptyState title="No pudimos cargar los boletos" description="Intenta de nuevo más tarde." />;
+    return (
+      <ErrorState
+        title="No pudimos cargar los boletos"
+        onRetry={invalidate}
+        retrying={mapQuery.isFetching}
+      />
+    );
   }
 
   return (
     <div>
-      {/* El título y el regreso viven en el header del panel. */}
-      <PanelIntro
-        description={`${raffle.eventLabel} · ${raffle.title}`}
-        action={
-          <Button variant="outline" size="sm" onClick={() => setBulkOpen(true)}>
-            <ListPlus className="h-4 w-4" />
-            Reservar varios
-          </Button>
-        }
-      />
+      <HeaderAction label="Reservar varios" icon={ListPlus} onClick={() => setBulkOpen(true)} />
+      {/* El título y el regreso viven en la barra del panel. */}
+      <PanelIntro description={`${raffle.eventLabel} · ${raffle.title}`} />
 
-      {/* Resumen de conteos */}
-      <div className="mb-4 grid grid-cols-3 gap-2">
-        <Card>
-          <CardContent className="p-3 text-center">
-            <p className="text-2xl font-extrabold text-blue-600 dark:text-blue-400">
-              {raffle.soldCount.toLocaleString('es-MX')}
-            </p>
-            <p className="text-xs text-muted-foreground">Vendidos</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <p className="text-2xl font-extrabold text-amber-600 dark:text-amber-400">
-              {raffle.reservedCount.toLocaleString('es-MX')}
-            </p>
-            <p className="text-xs text-muted-foreground">Apartados</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 text-center">
-            <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
-              {raffle.availableCount.toLocaleString('es-MX')}
-            </p>
-            <p className="text-xs text-muted-foreground">Disponibles</p>
-          </CardContent>
-        </Card>
+      {/* Resumen de conteos: los números clave, grandes. Se actualizan en vivo. */}
+      <div className={cn(PANEL_CARD, 'mb-4 grid grid-cols-3 divide-x divide-rf-separator py-2')}>
+        {[
+          { label: 'Vendidos', value: raffle.soldCount, tone: 'text-rf-info' },
+          { label: 'Apartados', value: raffle.reservedCount, tone: 'text-rf-warning' },
+          { label: 'Disponibles', value: raffle.availableCount, tone: 'text-rf-accent' },
+        ].map((c) => (
+          <div key={c.label} className="min-w-0 px-2 py-1.5 text-center">
+            <p className={cn('truncate text-heading tabular-nums', c.tone)}>{c.value.toLocaleString('es-MX')}</p>
+            <p className="mt-0.5 text-caption text-rf-secondary">{c.label}</p>
+          </div>
+        ))}
       </div>
 
       <TicketGrid map={ticketMap} onTicketClick={(t) => setSelectedNumber(t.number)} />
@@ -190,51 +176,46 @@ export default function RaffleTickets() {
           {selected && (
             <>
               <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Hash className="h-4 w-4 text-muted-foreground" />
+                <DialogTitle className="flex items-center gap-2 tabular-nums">
+                  <Hash className="h-5 w-5 text-rf-secondary" />
                   Boleto {selected.displayNumber}
                 </DialogTitle>
                 <DialogDescription>Información y acciones del boleto.</DialogDescription>
               </DialogHeader>
 
-              <div className="grid gap-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Estado</span>
+              <div className="overflow-hidden rounded-control ring-1 ring-inset ring-rf-separator [&>*+*]:border-t [&>*+*]:border-rf-separator">
+                <div className="flex min-h-[48px] items-center justify-between gap-3 px-4 py-2">
+                  <span className="text-body text-rf-label">Estado</span>
                   <TicketStatusBadge status={selected.status as TicketStatus} />
                 </div>
 
                 {/* Oportunidades: marca de regalo + boleto manual que lo generó */}
                 {selected.isGift && (
-                  <div className="flex items-center justify-between rounded-lg bg-primary/5 px-3 py-2">
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
-                      <Gift className="h-4 w-4" /> Boleto de regalo
+                  <div className="flex min-h-[48px] items-center justify-between gap-3 px-4 py-2">
+                    <span className="inline-flex items-center gap-1.5 text-body font-medium text-rf-accent">
+                      <Gift className="h-5 w-5" /> Boleto de regalo
                     </span>
                     {selected.parentDisplayNumber && (
-                      <span className="text-xs text-muted-foreground">
-                        de <span className="font-mono font-semibold">{selected.parentDisplayNumber}</span>
+                      <span className="text-callout text-rf-secondary">
+                        de <span className="font-semibold tabular-nums text-rf-label">{selected.parentDisplayNumber}</span>
                       </span>
                     )}
                   </div>
                 )}
 
                 {selected.buyer ? (
-                  <>
-                    <Separator />
-                    <div className="grid gap-1">
-                      <p className="inline-flex items-center gap-1.5 text-sm font-semibold">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        {selected.buyer.fullName}
-                      </p>
-                      <p className="text-sm text-muted-foreground tabular-nums">
-                        +{dialCodeForCountry(selected.buyer.country)} {selected.buyer.phone}
-                      </p>
-                      {selected.buyer.state && (
-                        <p className="text-sm text-muted-foreground">{selected.buyer.state}</p>
-                      )}
-                    </div>
-                  </>
+                  <div className="grid gap-0.5 px-4 py-3">
+                    <p className="inline-flex items-center gap-1.5 text-body font-semibold text-rf-label">
+                      <User className="h-5 w-5 text-rf-secondary" />
+                      {selected.buyer.fullName}
+                    </p>
+                    <p className="text-callout tabular-nums text-rf-secondary">
+                      +{dialCodeForCountry(selected.buyer.country)} {selected.buyer.phone}
+                    </p>
+                    {selected.buyer.state && <p className="text-callout text-rf-secondary">{selected.buyer.state}</p>}
+                  </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="px-4 py-3 text-callout text-rf-secondary">
                     Este boleto está {TICKET_STATUS_LABELS[selected.status as TicketStatus].toLowerCase()} y no
                     tiene comprador asignado.
                   </p>
@@ -246,6 +227,7 @@ export default function RaffleTickets() {
                   <Button
                     variant="default"
                     loading={setStatus.isPending}
+                    loadingText="Reservando…"
                     onClick={() =>
                       setStatus.mutate({ ticketId: selected.id, status: 'RIFERO_RESERVED' })
                     }
@@ -255,8 +237,9 @@ export default function RaffleTickets() {
                 )}
                 {selected.status === 'RIFERO_RESERVED' && (
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     loading={setStatus.isPending}
+                    loadingText="Liberando…"
                     onClick={() => setStatus.mutate({ ticketId: selected.id, status: 'AVAILABLE' })}
                   >
                     Liberar boleto
@@ -288,9 +271,11 @@ export default function RaffleTickets() {
               value={bulkText}
               onChange={(e) => setBulkText(e.target.value)}
               placeholder="Ej. 1, 2, 3, 10-25"
-              className="font-mono"
+              inputMode="numeric"
+              autoComplete="off"
+              className="tabular-nums"
             />
-            <p className="mt-1.5 text-xs text-muted-foreground">
+            <p className="mt-1.5 text-caption text-rf-secondary" aria-live="polite">
               {parsedPreview.length > 0
                 ? `Se reservarán ${parsedPreview.length} boleto(s) disponibles para ti.`
                 : 'Aún no hay números válidos.'}
@@ -302,8 +287,8 @@ export default function RaffleTickets() {
               Cancelar
             </Button>
             <Button
-              variant="brand"
               loading={reserveManual.isPending}
+              loadingText="Reservando…"
               disabled={parsedPreview.length === 0}
               onClick={handleBulkSubmit}
             >

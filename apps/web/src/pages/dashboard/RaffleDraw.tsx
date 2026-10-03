@@ -12,13 +12,14 @@ import { raffleService } from '@/services/raffles';
 import { winnerService } from '@/services/winners';
 import { uploadService } from '@/services/uploads';
 import { ApiError, apiAssetUrl } from '@/lib/api';
-import { PanelIntro } from '@/components/owner/PanelKit';
+import { PanelIntro, IconButton } from '@/components/owner/PanelKit';
+import { ToggleRow } from '@/components/owner/List';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { PageLoader, EmptyState, Separator } from '@/components/ui/misc';
+import { PageLoader, ErrorState } from '@/components/ui/misc';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { toast } from 'sonner';
 
@@ -39,41 +40,30 @@ function WinnerCard({ winner, raffleId }: { winner: WinnerDTO; raffleId: string 
   });
 
   return (
-    <Card className="overflow-hidden border-amber-200 dark:border-amber-900">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-2 py-0.5 text-xs font-extrabold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-              <Award className="h-3.5 w-3.5" />
-              Lugar #{winner.position}
-            </span>
-            <p className="mt-2 font-mono text-2xl font-extrabold tabular-nums">{winner.ticketDisplayNumber}</p>
-            {winner.prizeDescription && (
-              <p className="mt-0.5 text-sm text-muted-foreground">{winner.prizeDescription}</p>
-            )}
-            <p className="mt-2 text-sm font-semibold">{winner.buyer?.fullName ?? 'Sin comprador asignado'}</p>
-            {winner.buyer?.phone && (
-              <p className="text-xs text-muted-foreground tabular-nums">
-                +{dialCodeForCountry(winner.buyer.country)} {winner.buyer.phone}
-              </p>
-            )}
-          </div>
-        </div>
-
-        <Separator className="my-3" />
-
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium">Publicar ganador</p>
-            <p className="text-xs text-muted-foreground">Visible en tu página pública.</p>
-          </div>
-          <Switch
-            checked={winner.published}
-            disabled={setPublished.isPending}
-            onCheckedChange={(v) => setPublished.mutate(v)}
-          />
-        </div>
-      </CardContent>
+    <Card className="overflow-hidden">
+      <div className="p-4">
+        <Badge variant="warning">
+          <Award /> Lugar #{winner.position}
+        </Badge>
+        <p className="mt-2 text-title tabular-nums text-rf-label">{winner.ticketDisplayNumber}</p>
+        {winner.prizeDescription && <p className="mt-0.5 text-callout text-rf-secondary">{winner.prizeDescription}</p>}
+        <p className="mt-2 text-body font-semibold text-rf-label">{winner.buyer?.fullName ?? 'Sin comprador asignado'}</p>
+        {winner.buyer?.phone && (
+          <p className="text-callout tabular-nums text-rf-secondary">
+            +{dialCodeForCountry(winner.buyer.country)} {winner.buyer.phone}
+          </p>
+        )}
+      </div>
+      <div className="border-t border-rf-separator">
+        <ToggleRow
+          id={`publish-${winner.id}`}
+          title="Publicar ganador"
+          description="Visible en tu página pública."
+          checked={winner.published}
+          disabled={setPublished.isPending}
+          onCheckedChange={(v) => setPublished.mutate(v)}
+        />
+      </div>
     </Card>
   );
 }
@@ -114,27 +104,41 @@ function DrawEvidence({ raffleId, currentUrl }: { raffleId: string; currentUrl: 
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Video className="h-5 w-5 text-primary" /> Video del sorteo
+          <Video className="h-5 w-5 text-rf-accent" /> Video del sorteo
         </CardTitle>
         <CardDescription>Opcional. Sube la transmisión o evidencia para dar confianza a tus compradores.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {currentUrl && (
-          <video src={apiAssetUrl(currentUrl)} controls playsInline className="w-full rounded-xl border bg-black" />
+          <video src={apiAssetUrl(currentUrl)} controls playsInline className="w-full rounded-control bg-black" />
         )}
         <div className="flex gap-2">
-          <Button type="button" variant="outline" className="flex-1" disabled={uploading} loading={uploading} onClick={() => inputRef.current?.click()}>
-            <Upload className="h-4 w-4" />
+          <Button
+            type="button"
+            variant="secondary"
+            className="flex-1"
+            disabled={uploading}
+            loading={uploading}
+            loadingText="Subiendo video…"
+            onClick={() => inputRef.current?.click()}
+          >
+            <Upload className="h-5 w-5" />
             {currentUrl ? 'Cambiar video' : 'Subir video'}
           </Button>
           {currentUrl && (
-            <Button type="button" variant="ghost" disabled={uploading || save.isPending} onClick={() => save.mutate('')}>
-              <Trash2 className="h-4 w-4" />
+            <Button
+              type="button"
+              variant="ghost"
+              className="text-rf-danger active:bg-rf-danger/10"
+              disabled={uploading || save.isPending}
+              onClick={() => save.mutate('')}
+            >
+              <Trash2 className="h-5 w-5" />
               Quitar
             </Button>
           )}
         </div>
-        <p className="text-xs text-muted-foreground">Máximo 50 MB · MP4, WEBM o MOV.</p>
+        <p className="text-caption text-rf-secondary">Máximo 50 MB · MP4, WEBM o MOV.</p>
         <input
           ref={inputRef}
           type="file"
@@ -265,22 +269,27 @@ export default function RaffleDraw() {
   }
 
   if (!raffle) {
-    return <EmptyState title="No pudimos cargar la rifa" description="Intenta de nuevo más tarde." />;
+    return (
+      <ErrorState
+        title="No pudimos cargar la rifa"
+        onRetry={() => void queryClient.invalidateQueries({ queryKey: ['raffle', raffleId] })}
+      />
+    );
   }
 
   return (
     <div>
-      {/* El título y el regreso viven en el header del panel. */}
+      {/* El título y el regreso viven en la barra del panel. */}
       <PanelIntro description={`${raffle.eventLabel} · ${raffle.title}`} />
 
       {/* Aviso: solo boletos pagados */}
-      <Card className="mb-4 border-blue-200 bg-blue-50/60 dark:border-blue-900 dark:bg-blue-950/30">
+      <Card className="mb-4">
         <CardContent className="flex items-start gap-3 p-4">
-          <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
-          <div className="text-sm">
-            <p className="font-semibold">En el sorteo solo participan boletos pagados.</p>
-            <p className="text-muted-foreground">
-              Tienes <strong className="text-foreground">{raffle.soldCount.toLocaleString('es-MX')}</strong>{' '}
+          <Info className="mt-0.5 h-5 w-5 shrink-0 text-rf-accent" />
+          <div>
+            <p className="text-body font-semibold text-rf-label">En el sorteo solo participan boletos pagados.</p>
+            <p className="mt-0.5 text-callout text-rf-secondary">
+              Tienes <strong className="font-semibold tabular-nums text-rf-label">{raffle.soldCount.toLocaleString('es-MX')}</strong>{' '}
               boleto(s) pagado(s) que participan.
             </p>
           </div>
@@ -289,15 +298,15 @@ export default function RaffleDraw() {
 
       {/* Animación tómbola */}
       {spinning && (
-        <Card className="mb-4 border-amber-300 bg-gradient-to-b from-amber-50 to-background dark:border-amber-900 dark:from-amber-950/40">
-          <CardContent className="grid place-items-center gap-2 py-6 sm:py-8">
-            <Trophy className="h-8 w-8 animate-bounce text-amber-500" />
-            <p className="text-sm font-semibold text-muted-foreground">Sorteando...</p>
-            <p className="font-mono text-4xl font-extrabold tabular-nums text-amber-600 dark:text-amber-400 sm:text-5xl">
+        <Card className="mb-4 animate-rf-rise">
+          <CardContent className="grid place-items-center gap-2 py-8" aria-live="polite">
+            <Trophy className="h-8 w-8 animate-bounce text-rf-warning" />
+            <p className="text-callout font-semibold text-rf-secondary">Sorteando…</p>
+            <p className="text-title tabular-nums text-rf-label">
               {spinValue || '---'}
             </p>
             {pendingWinners && pendingWinners.length > 1 && (
-              <p className="text-xs text-muted-foreground">{pendingWinners.length} ganadores en juego</p>
+              <p className="text-caption text-rf-secondary">{pendingWinners.length} ganadores en juego</p>
             )}
           </CardContent>
         </Card>
@@ -306,8 +315,8 @@ export default function RaffleDraw() {
       {alreadyDrawn ? (
         /* Resultados existentes */
         <div className="grid gap-3">
-          <div className="flex items-center gap-2 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="h-4 w-4" />
+          <div className="flex items-center gap-2 px-1 text-callout font-semibold text-rf-accent">
+            <CheckCircle2 className="h-5 w-5" />
             Este sorteo ya se realizó.
           </div>
           {existingWinners
@@ -320,23 +329,23 @@ export default function RaffleDraw() {
 
           {/* Va al final y en tono discreto: deshacer es una corrección, no un
               paso normal del flujo. */}
-          <Card className="border-dashed">
+          <Card>
             <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium">¿Sorteaste por error?</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-body font-medium text-rf-label">¿Sorteaste por error?</p>
+                <p className="mt-0.5 text-caption text-rf-secondary">
                   Borra {existingWinners.length === 1 ? 'al ganador' : `a los ${existingWinners.length} ganadores`}, devuelve
                   sus boletos a "pagado" y reabre la rifa para seguir vendiendo.
                 </p>
               </div>
               <Button
                 type="button"
-                variant="outline"
-                className="shrink-0"
+                variant="ghost"
+                className="shrink-0 text-rf-danger active:bg-rf-danger/10"
                 loading={undo.isPending}
                 onClick={() => setUndoOpen(true)}
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-5 w-5" />
                 Deshacer sorteo
               </Button>
             </CardContent>
@@ -353,56 +362,53 @@ export default function RaffleDraw() {
             <div className="grid gap-2">
               {prizes.map((p, i) => (
                 <div key={i} className="flex items-end gap-2">
-                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 font-extrabold text-primary">
+                  <div className="grid h-[50px] w-12 shrink-0 place-items-center rounded-control bg-rf-accent/10 text-body font-semibold tabular-nums text-rf-accent">
                     #{p.position}
                   </div>
-                  <div className="flex-1">
+                  <div className="min-w-0 flex-1">
                     {i === 0 && <Label htmlFor={`prize-${i}`}>Descripción del premio (opcional)</Label>}
                     <Input
                       id={`prize-${i}`}
                       value={p.prizeDescription}
                       onChange={(e) => updatePrize(i, e.target.value)}
                       placeholder={i === 0 ? 'Ej. Premio mayor: la camioneta' : 'Ej. 2do premio: $5,000'}
+                      enterKeyHint="next"
+                      aria-label={i === 0 ? undefined : `Premio del lugar ${p.position}`}
                     />
                   </div>
                   {prizes.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
+                    <IconButton
+                      icon={X}
+                      label={`Quitar premio #${p.position}`}
+                      tone="accent"
+                      className="mb-[3px] text-rf-danger active:bg-rf-danger/10"
                       onClick={() => removePrize(i)}
-                      aria-label="Quitar premio"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    />
                   )}
                 </div>
               ))}
             </div>
 
-            <Button type="button" variant="outline" onClick={addPrize} disabled={prizes.length >= 100}>
-              <Plus className="h-4 w-4" />
+            <Button type="button" variant="secondary" onClick={addPrize} disabled={prizes.length >= 100}>
+              <Plus className="h-5 w-5" />
               Agregar premio
             </Button>
 
-            <Separator />
-
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium">Permitir que un boleto gane más de una vez</p>
-                <p className="text-xs text-muted-foreground">
-                  Si lo activas, un mismo número podría salir en varias posiciones.
-                </p>
-              </div>
-              <Switch checked={allowRepeatWinner} onCheckedChange={setAllowRepeatWinner} />
+            <div className="-mx-4 border-y border-rf-separator">
+              <ToggleRow
+                id="allowRepeatWinner"
+                title="Permitir que un boleto gane más de una vez"
+                description="Si lo activas, un mismo número podría salir en varias posiciones."
+                checked={allowRepeatWinner}
+                onCheckedChange={setAllowRepeatWinner}
+              />
             </div>
 
             <Button
               type="button"
-              variant="brand"
-              size="xl"
               className="w-full"
               loading={draw.isPending || spinning}
+              loadingText="Sorteando…"
               disabled={raffle.soldCount === 0}
               onClick={() => setConfirmOpen(true)}
             >
@@ -410,7 +416,7 @@ export default function RaffleDraw() {
               Iniciar sorteo
             </Button>
             {raffle.soldCount === 0 && (
-              <p className="text-center text-sm text-destructive">
+              <p role="alert" className="text-center text-callout text-rf-danger">
                 No hay boletos pagados. No se puede realizar el sorteo todavía.
               </p>
             )}

@@ -1,19 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Info, Lock, Plus, Trash2 } from 'lucide-react';
+import { Info, Plus, Trash2, Upload } from 'lucide-react';
 import { paymentMethodSchema, PHONE_COUNTRIES, type PaymentMethodInput } from '@riffast/shared';
 import { riferoService } from '@/services/riferos';
 import { ApiError } from '@/lib/api';
-import { PanelIntro } from '@/components/owner/PanelKit';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { PanelIntro, PANEL_CARD, StickyBar } from '@/components/owner/PanelKit';
+import { ListGroup, ToggleRow } from '@/components/owner/List';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { PageLoader } from '@/components/ui/misc';
+import { PageLoader, ErrorState } from '@/components/ui/misc';
 import { BankCard } from '@/components/public/BankCard';
 import { BANKS, detectBank } from '@/lib/banks';
+import { cn } from '@/lib/cn';
 import { toast } from 'sonner';
 
 const MAX_METHODS = 6;
@@ -29,7 +29,7 @@ const emptyMethod = (): PaymentMethodInput => ({
   instructions: '',
 });
 
-// Editor de UN método: inputs + vista previa en vivo de la tarjeta del banco.
+// Editor de UN método: vista previa en vivo de la tarjeta del banco + campos.
 function MethodEditor({
   method,
   index,
@@ -49,101 +49,134 @@ function MethodEditor({
   // el método que escriba el rifero.
   const theme = detectBank(method.bank);
   const wallet = theme.handleLabel;
+  const id = (k: string) => `${k}-${method.id}`;
 
   return (
-    <Card>
-      <CardContent className="p-4 sm:p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <p className="font-ticket text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground">
-            Método {String(index + 1).padStart(2, '0')}
-          </p>
-          <button
-            type="button"
-            onClick={onRemove}
-            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10"
-          >
-            <Trash2 className="h-3.5 w-3.5" /> Quitar
-          </button>
-        </div>
+    <section className={cn(PANEL_CARD, 'p-4 sm:p-5')} aria-label={`Método de pago ${index + 1}`}>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-callout font-semibold text-rf-secondary">Método {index + 1}</p>
+        <button
+          type="button"
+          onClick={onRemove}
+          className="-mr-2 inline-flex h-11 items-center gap-1.5 rounded-full px-3 text-callout font-semibold text-rf-danger outline-none transition-opacity active:opacity-50 focus-visible:ring-2 focus-visible:ring-rf-accent/45"
+        >
+          <Trash2 className="h-4 w-4" /> Quitar
+        </button>
+      </div>
 
-        {/* Vista previa en vivo */}
-        <div className="mx-auto mb-5 max-w-sm">
-          <BankCard
-            method={{
-              ...method,
-              bank: method.bank || 'Tu banco',
-              holderName: method.holderName || 'NOMBRE DEL TITULAR',
-              instructions: null, // las instrucciones van abajo, no en la preview
-            }}
+      {/* Vista previa en vivo */}
+      <div className="mx-auto mb-5 max-w-sm">
+        <BankCard
+          method={{
+            ...method,
+            bank: method.bank || 'Tu banco',
+            holderName: method.holderName || 'NOMBRE DEL TITULAR',
+            instructions: null, // las instrucciones van abajo, no en la preview
+          }}
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <Label htmlFor={id('bank')}>Banco o método</Label>
+          <Input
+            id={id('bank')}
+            placeholder="BBVA, Banorte, OXXO, Nu…"
+            list="riffast-banks"
+            value={method.bank}
+            onChange={set('bank')}
+            autoComplete="off"
+            enterKeyHint="next"
+          />
+          <p className="mt-1.5 text-caption text-rf-secondary">La tarjeta toma los colores del banco automáticamente.</p>
+        </div>
+        <div>
+          <Label htmlFor={id('holder')}>Titular de la cuenta</Label>
+          <Input
+            id={id('holder')}
+            placeholder="José Pérez García"
+            value={method.holderName ?? ''}
+            onChange={set('holderName')}
+            autoComplete="off"
+            autoCapitalize="words"
+            enterKeyHint="next"
           />
         </div>
-
-        <div className="grid gap-3.5 sm:grid-cols-2">
-          <div>
-            <Label htmlFor={`bank-${method.id}`}>Banco o método</Label>
+        {wallet ? (
+          <div className="sm:col-span-2">
+            <Label htmlFor={id('handle')}>{wallet.es}</Label>
             <Input
-              id={`bank-${method.id}`}
-              placeholder="BBVA, Banorte, OXXO, Nu…"
-              list="riffast-banks"
-              value={method.bank}
-              onChange={set('bank')}
+              id={id('handle')}
+              placeholder={theme.handlePlaceholder}
+              value={method.handle ?? ''}
+              onChange={set('handle')}
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="next"
             />
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              La tarjeta toma los colores del banco automáticamente.
-            </p>
+            <p className="mt-1.5 text-caption text-rf-secondary">Es a donde te van a enviar el dinero en {theme.name}.</p>
           </div>
-          <div>
-            <Label htmlFor={`holder-${method.id}`}>Titular de la cuenta</Label>
-            <Input id={`holder-${method.id}`} placeholder="José Pérez García" value={method.holderName ?? ''} onChange={set('holderName')} />
-          </div>
-          {wallet ? (
-            <div className="sm:col-span-2">
-              <Label htmlFor={`handle-${method.id}`}>{wallet.es}</Label>
+        ) : (
+          <>
+            <div>
+              <Label htmlFor={id('clabe')}>CLABE interbancaria</Label>
               <Input
-                id={`handle-${method.id}`}
-                placeholder={theme.handlePlaceholder}
-                value={method.handle ?? ''}
-                onChange={set('handle')}
+                id={id('clabe')}
+                inputMode="numeric"
+                placeholder="18 dígitos"
+                value={method.clabe ?? ''}
+                onChange={set('clabe')}
+                autoComplete="off"
+                enterKeyHint="next"
               />
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Es a donde te van a enviar el dinero en {theme.name}.
-              </p>
             </div>
-          ) : (
-            <>
-              <div>
-                <Label htmlFor={`clabe-${method.id}`}>CLABE interbancaria</Label>
-                <Input id={`clabe-${method.id}`} inputMode="numeric" placeholder="18 dígitos" value={method.clabe ?? ''} onChange={set('clabe')} />
-              </div>
-              <div>
-                <Label htmlFor={`card-${method.id}`}>Número de tarjeta</Label>
-                <Input id={`card-${method.id}`} inputMode="numeric" placeholder="16 dígitos" value={method.cardNumber ?? ''} onChange={set('cardNumber')} />
-              </div>
-            </>
-          )}
-          <div>
-            <Label htmlFor={`concept-${method.id}`}>Concepto / referencia</Label>
-            <Input id={`concept-${method.id}`} placeholder="Ej. Rifa + tu folio" value={method.concept ?? ''} onChange={set('concept')} />
-          </div>
-          <div>
-            <Label htmlFor={`instr-${method.id}`}>Nota de este método (opcional)</Label>
-            <Input
-              id={`instr-${method.id}`}
-              placeholder="Ej. Solo depósitos en efectivo"
-              value={method.instructions ?? ''}
-              onChange={set('instructions')}
-            />
-          </div>
+            <div>
+              <Label htmlFor={id('card')}>Número de tarjeta</Label>
+              <Input
+                id={id('card')}
+                inputMode="numeric"
+                placeholder="16 dígitos"
+                value={method.cardNumber ?? ''}
+                onChange={set('cardNumber')}
+                autoComplete="off"
+                enterKeyHint="next"
+              />
+            </div>
+          </>
+        )}
+        <div>
+          <Label htmlFor={id('concept')}>Concepto / referencia</Label>
+          <Input
+            id={id('concept')}
+            placeholder="Ej. Rifa + tu folio"
+            value={method.concept ?? ''}
+            onChange={set('concept')}
+            autoComplete="off"
+            enterKeyHint="next"
+          />
         </div>
-      </CardContent>
-    </Card>
+        <div>
+          <Label htmlFor={id('instr')}>Nota de este método (opcional)</Label>
+          <Input
+            id={id('instr')}
+            placeholder="Ej. Solo depósitos en efectivo"
+            value={method.instructions ?? ''}
+            onChange={set('instructions')}
+            autoComplete="off"
+            enterKeyHint="done"
+          />
+        </div>
+      </div>
+    </section>
   );
 }
 
 export default function Payments() {
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['rifero', 'me'],
     queryFn: () => riferoService.me(),
   });
@@ -225,6 +258,11 @@ export default function Payments() {
   };
 
   if (isLoading) return <PageLoader label="Cargando tus datos de pago..." />;
+  if (isError && !profile) {
+    return (
+      <ErrorState title="No pudimos cargar tus datos de pago" onRetry={() => void refetch()} retrying={isFetching} />
+    );
+  }
 
   return (
     <div>
@@ -237,21 +275,20 @@ export default function Payments() {
         ))}
       </datalist>
 
-      <Card className="mb-5 border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/40">
-        <CardContent className="flex gap-3 p-4">
-          <Info className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
-          <div className="text-sm">
-            <p className="font-semibold text-blue-900 dark:text-blue-200">El pago es directo a ti</p>
-            <p className="text-blue-800/90 dark:text-blue-300/90">
-              El comprador te paga directamente con estos datos. Riffast no cobra ni procesa el dinero en esta
-              versión: tú recibes el pago y confirmas la orden.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className={cn(PANEL_CARD, 'mb-6 flex gap-3 p-4')}>
+        <Info className="mt-0.5 h-5 w-5 shrink-0 text-rf-accent" />
+        <div>
+          <p className="text-body font-semibold text-rf-label">El pago es directo a ti</p>
+          <p className="mt-0.5 text-callout text-rf-secondary">
+            El comprador te paga directamente con estos datos. Riffast no cobra ni procesa el dinero en esta versión: tú
+            recibes el pago y confirmas la orden.
+          </p>
+        </div>
+      </div>
 
       {/* ── Métodos de pago (tarjetas) ── */}
-      <div className="mb-5 space-y-4">
+      <h2 className="mb-2 px-4 text-caption font-medium uppercase tracking-[0.02em] text-rf-secondary">Métodos de pago</h2>
+      <div className="space-y-3">
         {methods.map((m, i) => (
           <MethodEditor
             key={m.id}
@@ -269,32 +306,28 @@ export default function Payments() {
         ))}
 
         {methods.length < MAX_METHODS && (
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            className="w-full"
             onClick={() => {
               setMethods((arr) => [...arr, emptyMethod()]);
               touch();
             }}
-            className="grid w-full place-items-center gap-1 rounded-2xl border-2 border-dashed px-4 py-6 text-sm font-semibold text-muted-foreground transition-colors hover:border-brand/50 hover:text-brand"
           >
             <Plus className="h-5 w-5" />
-            {methods.length === 0 ? 'Agregar mi primer método de pago' : 'Agregar otro método (banco, OXXO, etc.)'}
-          </button>
+            {methods.length === 0 ? 'Agregar mi primer método de pago' : 'Agregar otro método'}
+          </Button>
         )}
       </div>
 
       {/* ── Generales ── */}
-      <Card className="mb-5">
-        <CardHeader>
-          <CardTitle>Para todos los métodos</CardTitle>
-          <CardDescription>Estos datos aplican sin importar a qué cuenta te paguen.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <ListGroup header="Para todos los métodos" footer="Estos datos aplican sin importar a qué cuenta te paguen.">
+        <div className="space-y-5 px-4 py-4">
           <div>
             <Label htmlFor="payWhatsapp">WhatsApp para enviar comprobantes</Label>
             {/* País + número: la bandera define la lada (+52/+1) del enlace de WhatsApp. */}
             <div className="flex gap-2">
-              <div className="w-28 shrink-0">
+              <div className="w-[124px] shrink-0">
                 <Select
                   aria-label="País del número"
                   value={payWhatsappCountry}
@@ -313,8 +346,11 @@ export default function Payments() {
               <div className="flex-1">
                 <Input
                   id="payWhatsapp"
+                  type="tel"
                   inputMode="tel"
+                  autoComplete="tel-national"
                   placeholder="55 1234 5678"
+                  enterKeyHint="next"
                   value={payWhatsapp}
                   onChange={(e) => {
                     setPayWhatsapp(e.target.value);
@@ -323,27 +359,26 @@ export default function Payments() {
                 />
               </div>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Si lo dejas vacío, se usa tu WhatsApp de contacto (Perfil).
-            </p>
+            <p className="mt-1.5 text-caption text-rf-secondary">Si lo dejas vacío, se usa tu WhatsApp de contacto (Perfil).</p>
           </div>
           <div>
             <Label htmlFor="payWhatsappName">
-              ¿Quién recibe los comprobantes? <span className="font-normal text-muted-foreground">(opcional)</span>
+              ¿Quién recibe los comprobantes? <span className="font-normal text-rf-secondary">(opcional)</span>
             </Label>
             <Input
               id="payWhatsappName"
               maxLength={60}
               placeholder="Ej. Karen"
+              autoComplete="off"
+              autoCapitalize="words"
+              enterKeyHint="next"
               value={payWhatsappName}
               onChange={(e) => {
                 setPayWhatsappName(e.target.value);
                 touch();
               }}
             />
-            <p className="mt-1 text-xs text-muted-foreground">
-              El comprador verá a quién le está escribiendo al enviar su pago.
-            </p>
+            <p className="mt-1.5 text-caption text-rf-secondary">El comprador verá a quién le está escribiendo al enviar su pago.</p>
           </div>
           <div>
             <Label htmlFor="payInstructions">Instrucciones generales de pago</Label>
@@ -358,63 +393,46 @@ export default function Payments() {
               }}
             />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </ListGroup>
 
       {/* Comprobantes en la plataforma */}
-      <Card className="mb-5">
-        <CardHeader>
-          <CardTitle>Comprobantes en la plataforma</CardTitle>
-          <CardDescription>Permite que el comprador suba su comprobante de pago directo en su orden.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/30 px-4 py-3">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">Subir comprobante en su orden</p>
-              <p className="text-xs text-muted-foreground">
-                {planAllowsProof
-                  ? 'Si lo activas, el comprador podrá adjuntar la foto de su pago.'
-                  : 'Tu plan actual no incluye esta función.'}
-              </p>
-            </div>
-            <Switch
-              checked={allowProofUpload}
-              onCheckedChange={(v) => {
-                setAllowProofUpload(v);
-                touch();
-              }}
-              disabled={!planAllowsProof}
-              aria-label="Permitir subir comprobante"
-            />
-          </div>
-          {!planAllowsProof && (
-            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-              <Lock className="h-3.5 w-3.5" />
-              Mejora tu plan para que tus compradores suban su comprobante en la plataforma.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <ListGroup
+        header="Comprobantes en la plataforma"
+        footer={!planAllowsProof ? 'Mejora tu plan para que tus compradores suban su comprobante en la plataforma.' : undefined}
+      >
+        <ToggleRow
+          id="allowProofUploadPay"
+          icon={Upload}
+          title="Subir comprobante en su orden"
+          description={
+            planAllowsProof
+              ? 'Si lo activas, el comprador podrá adjuntar la foto de su pago.'
+              : 'Tu plan actual no incluye esta función.'
+          }
+          checked={allowProofUpload}
+          onCheckedChange={(v) => {
+            setAllowProofUpload(v);
+            touch();
+          }}
+          disabled={!planAllowsProof}
+          switchLabel="Permitir subir comprobante"
+        />
+      </ListGroup>
 
-      {/* Barra de guardar sticky, pegada al fondo del área de scroll del panel. */}
-      <div className="sticky bottom-0 z-10 -mx-4 -mb-[max(1.25rem,env(safe-area-inset-bottom))] border-t bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:-mx-5 sm:px-5">
-        {dirty && (
-          <p className="mb-2 text-center text-xs font-semibold text-amber-600 dark:text-amber-400">
-            Tienes cambios sin guardar
-          </p>
-        )}
+      {/* Barra de guardar fija, pegada al fondo del área de scroll del panel. */}
+      <StickyBar dirty={dirty}>
         <Button
           type="button"
-          size="lg"
-          variant="brand"
           className="w-full"
           loading={mutation.isPending}
+          loadingText="Guardando…"
           disabled={!dirty || mutation.isPending}
           onClick={save}
         >
           Guardar datos de pago
         </Button>
-      </div>
+      </StickyBar>
     </div>
   );
 }

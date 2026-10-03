@@ -173,6 +173,71 @@ export function SectionCard({
   );
 }
 
+// Barra fija al pie de un formulario (Guardar cambios, Siguiente…): siempre a
+// la mano en celular, sobre el indicador de inicio del iPhone. `dirty` avisa
+// de cambios sin guardar.
+export function StickyBar({
+  children,
+  dirty,
+  className,
+}: {
+  children: React.ReactNode;
+  dirty?: boolean;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        'sticky bottom-0 z-10 -mx-gutter -mb-[max(1.25rem,env(safe-area-inset-bottom))] mt-6 border-t border-rf-separator bg-rf-bg px-gutter pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 lg:-mx-8 lg:-mb-16 lg:px-8 lg:pb-5',
+        className,
+      )}
+    >
+      {dirty && (
+        <p role="status" className="mb-2 text-center text-caption font-medium text-rf-warning">
+          Tienes cambios sin guardar
+        </p>
+      )}
+      {children}
+    </div>
+  );
+}
+
+// Opciones rápidas en píldoras (p. ej. 1 hora · 6 horas · 24 horas).
+export function ChoiceChips<T extends string | number>({
+  options,
+  value,
+  onChange,
+  label,
+}: {
+  options: { label: string; value: T }[];
+  value: T | undefined;
+  onChange: (v: T) => void;
+  label: string;
+}) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <button
+            key={String(o.value)}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(o.value)}
+            className={cn(
+              'rf-press h-11 rounded-full px-4 text-callout font-semibold outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45',
+              active ? 'bg-rf-accent text-white' : 'bg-rf-fill text-rf-label active:bg-rf-fill-strong',
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // Barra de progreso de venta: delgada y sólida, en el verde de la marca.
 export function ProgressBar({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(100, value));

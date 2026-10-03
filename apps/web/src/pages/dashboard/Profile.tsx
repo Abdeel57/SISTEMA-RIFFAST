@@ -2,19 +2,8 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
 import { z } from 'zod';
-import {
-  ExternalLink,
-  Copy,
-  Globe,
-  HelpCircle,
-  Plus,
-  Trash2,
-  ChevronUp,
-  ChevronDown,
-  RotateCcw,
-} from 'lucide-react';
+import { Copy, Eye, Plus, Trash2, ChevronUp, ChevronDown, RotateCcw } from 'lucide-react';
 import {
   updateRiferoSchema,
   DEFAULT_FAQS,
@@ -24,14 +13,14 @@ import {
 } from '@riffast/shared';
 import { riferoService } from '@/services/riferos';
 import { ApiError } from '@/lib/api';
-import { PanelIntro } from '@/components/owner/PanelKit';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { PanelIntro, StickyBar, IconButton } from '@/components/owner/PanelKit';
+import { ListGroup, ListRow } from '@/components/owner/List';
 import { Input, Textarea } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PageLoader } from '@/components/ui/misc';
+import { PageLoader, ErrorState } from '@/components/ui/misc';
 import { VerifiedBadge } from '@/components/brand/VerifiedBadge';
 import { toast } from 'sonner';
 
@@ -47,10 +36,19 @@ const profileFormSchema = updateRiferoSchema.pick({
 });
 type ProfileForm = z.infer<typeof profileFormSchema>;
 
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="mt-1.5 text-callout text-rf-danger">
+      {message}
+    </p>
+  );
+}
+
 export default function Profile() {
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['rifero', 'me'],
     queryFn: () => riferoService.me(),
   });
@@ -113,72 +111,47 @@ export default function Profile() {
   };
 
   if (isLoading) return <PageLoader label="Cargando tu perfil..." />;
+  if (isError && !profile) {
+    return <ErrorState title="No pudimos cargar tu perfil" onRetry={() => void refetch()} retrying={isFetching} />;
+  }
+
+  const socialInput = { autoComplete: 'off', autoCapitalize: 'none', autoCorrect: 'off', spellCheck: false } as const;
 
   return (
     <div>
       <PanelIntro description="Estos son los datos que verán tus compradores en tu página de rifas." />
 
       {/* Página pública + verificación */}
-      <Card className="mb-5">
-        <CardHeader>
-          <div className="flex items-center justify-between gap-2">
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-primary" />
-              Tu página pública
-            </CardTitle>
+      <ListGroup header="Tu página pública" footer="Comparte este enlace para que la gente compre tus boletos.">
+        <div className="flex items-center gap-3 px-4 py-2">
+          <div className="min-w-0 flex-1 py-1.5">
+            <p className="truncate text-body font-medium text-rf-label">{publicUrl}</p>
             {profile?.verified && (
-              <Badge variant="info" className="gap-1">
+              <Badge variant="info" className="mt-1">
                 <VerifiedBadge size={14} />
                 Verificado
               </Badge>
             )}
           </div>
-          <CardDescription>Comparte este enlace para que la gente compre tus boletos.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2 rounded-xl border bg-muted/40 px-3.5 py-3">
-            <span className="truncate text-sm font-semibold">{publicUrl}</span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="ml-auto h-9 w-9 shrink-0"
-              onClick={copyUrl}
-              aria-label="Copiar enlace"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to="/" target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4" />
-                Ver mi página
-              </Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          <IconButton icon={Copy} label="Copiar enlace" tone="accent" onClick={copyUrl} />
+        </div>
+        <ListRow icon={Eye} iconTone="neutral" title="Ver mi página" href="/" external />
+      </ListGroup>
 
       {/* Formulario de datos públicos */}
       <form onSubmit={handleSubmit((v) => mutation.mutate(v))}>
-        <Card className="mb-5">
-          <CardHeader>
-            <CardTitle>Datos públicos</CardTitle>
-            <CardDescription>Nombre, descripción y formas de contacto.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <ListGroup header="Datos públicos">
+          <div className="space-y-5 px-4 py-4">
             <div>
               <Label htmlFor="description">Descripción</Label>
               <Textarea
                 id="description"
                 rows={3}
                 placeholder="Cuéntale a la gente quién eres y por qué confiar en tus rifas."
+                aria-invalid={!!errors.description}
                 {...register('description')}
               />
-              {errors.description && (
-                <p className="text-destructive text-sm mt-1">{errors.description.message}</p>
-              )}
+              <FieldError message={errors.description?.message} />
             </div>
 
             <div>
@@ -186,7 +159,7 @@ export default function Profile() {
               {/* País + número: la bandera define la lada (+52/+1) con la que se
                   arman los enlaces de WhatsApp de toda la página pública. */}
               <div className="flex gap-2">
-                <div className="w-28 shrink-0">
+                <div className="w-[124px] shrink-0">
                   <Select aria-label="País del número" {...register('whatsappCountry')}>
                     {PHONE_COUNTRIES.map((c) => (
                       <option key={c.code} value={c.code}>
@@ -196,80 +169,100 @@ export default function Profile() {
                   </Select>
                 </div>
                 <div className="flex-1">
-                  <Input id="whatsapp" inputMode="tel" placeholder="55 1234 5678" {...register('whatsapp')} />
+                  <Input
+                    id="whatsapp"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel-national"
+                    placeholder="55 1234 5678"
+                    enterKeyHint="next"
+                    aria-invalid={!!errors.whatsapp}
+                    {...register('whatsapp')}
+                  />
                 </div>
               </div>
-              {errors.whatsapp && (
-                <p className="text-destructive text-sm mt-1">{errors.whatsapp.message}</p>
-              )}
-              <p className="mt-1 text-xs text-muted-foreground">
+              <FieldError message={errors.whatsapp?.message} />
+              <p className="mt-1.5 text-caption text-rf-secondary">
                 Aquí te escribirán tus compradores. Si tu número es de USA, elige 🇺🇸 +1.
               </p>
             </div>
 
             <div>
               <Label htmlFor="whatsappName">
-                ¿Quién atiende este WhatsApp? <span className="font-normal text-muted-foreground">(opcional)</span>
+                ¿Quién atiende este WhatsApp? <span className="font-normal text-rf-secondary">(opcional)</span>
               </Label>
-              <Input id="whatsappName" maxLength={60} placeholder="Ej. Karen" {...register('whatsappName')} />
-              {errors.whatsappName && (
-                <p className="text-destructive text-sm mt-1">{errors.whatsappName.message}</p>
-              )}
-              <p className="mt-1 text-xs text-muted-foreground">
+              <Input
+                id="whatsappName"
+                maxLength={60}
+                placeholder="Ej. Karen"
+                autoComplete="off"
+                autoCapitalize="words"
+                enterKeyHint="next"
+                aria-invalid={!!errors.whatsappName}
+                {...register('whatsappName')}
+              />
+              <FieldError message={errors.whatsappName?.message} />
+              <p className="mt-1.5 text-caption text-rf-secondary">
                 Se muestra en tu página («Te atiende Karen») y en el saludo del mensaje que te envían.
               </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </ListGroup>
 
-        <Card className="mb-5">
-          <CardHeader>
-            <CardTitle>Redes sociales</CardTitle>
-            <CardDescription>Opcional. Pega el enlace o usuario de cada red.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <ListGroup header="Redes sociales" footer="Opcional. Pega el enlace o usuario de cada red.">
+          <div className="space-y-5 px-4 py-4">
             <div>
               <Label htmlFor="facebook">Facebook</Label>
-              <Input id="facebook" placeholder="facebook.com/turifa" {...register('facebook')} />
-              {errors.facebook && (
-                <p className="text-destructive text-sm mt-1">{errors.facebook.message}</p>
-              )}
+              <Input
+                id="facebook"
+                inputMode="url"
+                placeholder="facebook.com/turifa"
+                enterKeyHint="next"
+                aria-invalid={!!errors.facebook}
+                {...socialInput}
+                {...register('facebook')}
+              />
+              <FieldError message={errors.facebook?.message} />
             </div>
             <div>
               <Label htmlFor="instagram">Instagram</Label>
-              <Input id="instagram" placeholder="@turifa" {...register('instagram')} />
-              {errors.instagram && (
-                <p className="text-destructive text-sm mt-1">{errors.instagram.message}</p>
-              )}
+              <Input
+                id="instagram"
+                placeholder="@turifa"
+                enterKeyHint="next"
+                aria-invalid={!!errors.instagram}
+                {...socialInput}
+                {...register('instagram')}
+              />
+              <FieldError message={errors.instagram?.message} />
             </div>
             <div>
               <Label htmlFor="tiktok">TikTok</Label>
-              <Input id="tiktok" placeholder="@turifa" {...register('tiktok')} />
-              {errors.tiktok && (
-                <p className="text-destructive text-sm mt-1">{errors.tiktok.message}</p>
-              )}
+              <Input
+                id="tiktok"
+                placeholder="@turifa"
+                enterKeyHint="done"
+                aria-invalid={!!errors.tiktok}
+                {...socialInput}
+                {...register('tiktok')}
+              />
+              <FieldError message={errors.tiktok?.message} />
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </ListGroup>
 
-        {/* Barra de guardar sticky: visible apenas hay cambios. */}
-        <div className="sticky bottom-0 z-10 -mx-4 -mb-[max(1.25rem,env(safe-area-inset-bottom))] border-t bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur sm:-mx-5 sm:px-5">
-          {isDirty && (
-            <p className="mb-2 text-center text-xs font-semibold text-amber-600 dark:text-amber-400">
-              Tienes cambios sin guardar
-            </p>
-          )}
+        {/* Barra de guardar fija mientras se edita el formulario. */}
+        <StickyBar dirty={isDirty} className="mb-0 lg:mb-0">
           <Button
             type="submit"
-            size="lg"
-            variant="brand"
             className="w-full"
             loading={mutation.isPending}
+            loadingText="Guardando…"
             disabled={!isDirty || mutation.isPending}
           >
             Guardar cambios
           </Button>
-        </div>
+        </StickyBar>
       </form>
 
       {/* Preguntas frecuentes (sección independiente con su propio guardar) */}
@@ -338,65 +331,46 @@ function FaqEditor({ profile }: { profile: RiferoProfileDTO }) {
   };
 
   return (
-    <Card className="mb-5 mt-5">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <HelpCircle className="h-5 w-5 text-primary" />
-          Preguntas frecuentes
-        </CardTitle>
-        <CardDescription>
-          Las preguntas que aparecen al final de tu página pública. Puedes editarlas, reordenarlas o agregar
-          nuevas (máximo 10).
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
+    <ListGroup
+      header="Preguntas frecuentes"
+      footer="Aparecen al final de tu página pública. Puedes editarlas, reordenarlas o agregar nuevas (máximo 10)."
+      className="mt-8"
+    >
+      <div className="space-y-3 px-4 py-4">
         {items.length === 0 && (
-          <p className="rounded-xl border border-dashed p-4 text-center text-sm text-muted-foreground">
+          <p className="rounded-control bg-rf-fill p-4 text-center text-callout text-rf-secondary">
             Sin preguntas propias: tu página mostrará las preguntas de fábrica.
           </p>
         )}
         {items.map((f, i) => (
-          <div key={i} className="rounded-xl border p-3.5">
+          <div key={i} className="rounded-control bg-rf-fill/60 p-3 ring-1 ring-inset ring-rf-separator">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="font-ticket text-xs font-bold text-muted-foreground">
-                {String(i + 1).padStart(2, '0')}
-              </span>
-              <div className="flex items-center gap-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
+              <span className="text-callout font-semibold tabular-nums text-rf-secondary">Pregunta {i + 1}</span>
+              <div className="flex items-center">
+                <IconButton
+                  icon={ChevronUp}
+                  label="Subir"
+                  tone="accent"
                   onClick={() => move(i, -1)}
                   disabled={i === 0}
-                  aria-label="Subir"
-                >
-                  <ChevronUp className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
+                />
+                <IconButton
+                  icon={ChevronDown}
+                  label="Bajar"
+                  tone="accent"
                   onClick={() => move(i, 1)}
                   disabled={i === items.length - 1}
-                  aria-label="Bajar"
-                >
-                  <ChevronDown className="h-4 w-4" />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-destructive"
+                />
+                <IconButton
+                  icon={Trash2}
+                  label="Eliminar pregunta"
+                  tone="accent"
+                  className="text-rf-danger active:bg-rf-danger/10"
                   onClick={() => remove(i)}
-                  aria-label="Eliminar pregunta"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                />
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <div>
                 <Label htmlFor={`faq-q-${i}`}>Pregunta</Label>
                 <Input
@@ -404,6 +378,8 @@ function FaqEditor({ profile }: { profile: RiferoProfileDTO }) {
                   value={f.q}
                   maxLength={120}
                   placeholder="¿Cómo participo?"
+                  className="bg-rf-surface"
+                  enterKeyHint="next"
                   onChange={(e) => update(i, { q: e.target.value })}
                 />
               </div>
@@ -415,6 +391,7 @@ function FaqEditor({ profile }: { profile: RiferoProfileDTO }) {
                   value={f.a}
                   maxLength={600}
                   placeholder="Explica el paso a paso con tus palabras."
+                  className="bg-rf-surface"
                   onChange={(e) => update(i, { a: e.target.value })}
                 />
               </div>
@@ -423,28 +400,28 @@ function FaqEditor({ profile }: { profile: RiferoProfileDTO }) {
         ))}
 
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={add} disabled={items.length >= 10}>
-            <Plus className="h-4 w-4" />
+          <Button type="button" variant="secondary" size="sm" onClick={add} disabled={items.length >= 10}>
+            <Plus className="h-[18px] w-[18px]" />
             Agregar pregunta
           </Button>
           <Button type="button" variant="ghost" size="sm" onClick={restoreDefaults}>
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-[18px] w-[18px]" />
             Restaurar predeterminadas
           </Button>
         </div>
 
         <Button
           type="button"
-          size="lg"
-          variant="brand"
+          variant="secondary"
           className="w-full"
           loading={save.isPending}
+          loadingText="Guardando…"
           disabled={!dirty || save.isPending}
           onClick={submit}
         >
           Guardar preguntas
         </Button>
-      </CardContent>
-    </Card>
+      </div>
+    </ListGroup>
   );
 }

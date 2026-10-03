@@ -7,10 +7,10 @@ import { raffleService } from '@/services/raffles';
 import { reportService, type ReportType, type ReportFormat } from '@/services/payments';
 import { ApiError } from '@/lib/api';
 import { PanelIntro } from '@/components/owner/PanelKit';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { ListGroup } from '@/components/owner/List';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { PageLoader, EmptyState } from '@/components/ui/misc';
+import { PageLoader, EmptyState, ErrorState } from '@/components/ui/misc';
 import { toast } from 'sonner';
 
 const REPORT_TYPES: { type: ReportType; label: string; icon: typeof Receipt }[] = [
@@ -36,59 +36,55 @@ function RaffleReportCard({ raffle }: { raffle: RaffleDTO }) {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <CardTitle className="truncate">
-              <span className="mr-1.5 text-muted-foreground">{raffle.eventLabel}</span>
-              {raffle.title}
-            </CardTitle>
-            <CardDescription>
-              {raffle.soldCount} pagados · {raffle.reservedCount} apartados
-            </CardDescription>
-          </div>
-          <Badge variant="muted" className="shrink-0">
-            {RAFFLE_STATUS_LABELS[raffle.status]}
-          </Badge>
+    <ListGroup
+      header={
+        <span className="flex items-center justify-between gap-2 normal-case tracking-normal">
+          <span className="truncate">
+            <span className="font-semibold text-rf-label">{raffle.eventLabel}</span> · {raffle.title}
+          </span>
+          <Badge variant="muted">{RAFFLE_STATUS_LABELS[raffle.status]}</Badge>
+        </span>
+      }
+      footer={`${raffle.soldCount.toLocaleString('es-MX')} pagados · ${raffle.reservedCount.toLocaleString('es-MX')} apartados`}
+    >
+      {REPORT_TYPES.map(({ type, label, icon: Icon }) => (
+        <div key={type} className="flex min-h-[56px] items-center gap-3 px-4 py-2">
+          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[8px] bg-rf-accent text-white">
+            <Icon className="h-[18px] w-[18px]" />
+          </span>
+          <span className="min-w-0 flex-1 truncate text-body text-rf-label">{label}</span>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="px-3"
+            disabled={downloading !== null}
+            loading={downloading === `${type}-excel`}
+            onClick={() => download(type, 'excel')}
+            aria-label={`Descargar ${label} en Excel`}
+          >
+            {downloading !== `${type}-excel` && <FileSpreadsheet className="h-[18px] w-[18px]" />}
+            Excel
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="px-3"
+            disabled={downloading !== null}
+            loading={downloading === `${type}-pdf`}
+            onClick={() => download(type, 'pdf')}
+            aria-label={`Descargar ${label} en PDF`}
+          >
+            {downloading !== `${type}-pdf` && <FileText className="h-[18px] w-[18px]" />}
+            PDF
+          </Button>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {REPORT_TYPES.map(({ type, label, icon: Icon }) => (
-          <div key={type} className="flex items-center gap-2">
-            <div className="flex min-w-0 flex-1 items-center gap-2">
-              <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="truncate text-sm font-medium">{label}</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={downloading !== null}
-              loading={downloading === `${type}-excel`}
-              onClick={() => download(type, 'excel')}
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              Excel
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={downloading !== null}
-              loading={downloading === `${type}-pdf`}
-              onClick={() => download(type, 'pdf')}
-            >
-              <FileText className="h-4 w-4" />
-              PDF
-            </Button>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
+      ))}
+    </ListGroup>
   );
 }
 
 export default function Reports() {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch, isFetching } = useQuery({
     queryKey: ['raffles', 'list'],
     queryFn: () => raffleService.list(),
   });
@@ -100,14 +96,16 @@ export default function Reports() {
     <div>
       <PanelIntro description="Descarga la información de tus rifas en Excel o PDF." />
 
-      {raffles.length === 0 ? (
+      {isError ? (
+        <ErrorState title="No pudimos cargar tus rifas" onRetry={() => void refetch()} retrying={isFetching} />
+      ) : raffles.length === 0 ? (
         <EmptyState
-          icon={<FileBarChart className="h-10 w-10" />}
+          icon={<FileBarChart />}
           title="Aún no tienes rifas"
           description="Crea tu primera rifa para empezar a generar reportes."
         />
       ) : (
-        <div className="space-y-4">
+        <div>
           {raffles.map((raffle) => (
             <RaffleReportCard key={raffle.id} raffle={raffle} />
           ))}

@@ -5,13 +5,13 @@ import { Megaphone, Layers, Package, Plus, Trash2 } from 'lucide-react';
 import { computeOrderPrice, formatMXN } from '@riffast/shared';
 import { raffleService } from '@/services/raffles';
 import { ApiError } from '@/lib/api';
-import { PanelIntro } from '@/components/owner/PanelKit';
+import { PanelIntro, IconButton, StickyBar } from '@/components/owner/PanelKit';
+import { ListGroup, ToggleRow } from '@/components/owner/List';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { PageLoader, EmptyState } from '@/components/ui/misc';
+import { PageLoader, ErrorState } from '@/components/ui/misc';
 import { PromoBanner } from '@/components/public/PromoBanner';
 import { toast } from 'sonner';
 
@@ -30,17 +30,19 @@ const DEFAULT_FROM = '#f97316';
 const DEFAULT_TO = '#dc2626';
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const id = `color-${label.replace(/\s+/g, '-').toLowerCase()}`;
   return (
     <div>
-      <Label>{label}</Label>
-      <div className="flex items-center gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-2.5">
         <input
+          id={id}
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-11 w-14 shrink-0 cursor-pointer rounded-xl border border-input bg-background p-1"
+          className="h-[50px] w-16 shrink-0 cursor-pointer rounded-control border-0 bg-rf-fill p-1.5"
         />
-        <span className="text-sm font-medium uppercase text-muted-foreground">{value}</span>
+        <span className="text-callout font-medium uppercase tabular-nums text-rf-secondary">{value}</span>
       </div>
     </div>
   );
@@ -137,7 +139,12 @@ export default function RafflePromo() {
 
   if (isLoading) return <PageLoader label="Cargando la rifa..." />;
   if (isError || !raffle) {
-    return <EmptyState title="No pudimos cargar la rifa" description="Regresa a tus rifas e intenta de nuevo." />;
+    return (
+      <ErrorState
+        title="No pudimos cargar la rifa"
+        onRetry={() => void queryClient.invalidateQueries({ queryKey: ['raffle', raffleId] })}
+      />
+    );
   }
 
   return (
@@ -145,27 +152,21 @@ export default function RafflePromo() {
       <PanelIntro description={`Anuncios, avisos y promociones de "${raffle.title}" (${raffle.eventLabel}).`} />
 
       {/* Activar/desactivar */}
-      <Card>
-        <CardContent className="flex items-center justify-between gap-3 p-4">
-          <div className="flex min-w-0 items-center gap-3">
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Megaphone className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-bold">Mostrar promoción</p>
-              <p className="text-xs text-muted-foreground">
-                Aparece como una tira a todo lo ancho bajo el encabezado de tu rifa.
-              </p>
-              {!enabled && title.trim() && (
-                <p className="mt-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
-                  Tu promoción está escrita pero oculta: activa este interruptor para mostrarla.
-                </p>
-              )}
-            </div>
-          </div>
-          <Switch checked={enabled} onCheckedChange={setEnabled} />
-        </CardContent>
-      </Card>
+      <ListGroup>
+        <ToggleRow
+          id="promoEnabled"
+          icon={Megaphone}
+          title="Mostrar promoción"
+          description="Aparece como una tira a todo lo ancho bajo el encabezado de tu rifa."
+          note={
+            !enabled && title.trim()
+              ? 'Tu promoción está escrita pero oculta: activa este interruptor para mostrarla.'
+              : undefined
+          }
+          checked={enabled}
+          onCheckedChange={setEnabled}
+        />
+      </ListGroup>
 
       {/* Contenido y colores */}
       <Card className="mt-3">
@@ -204,16 +205,18 @@ export default function RafflePromo() {
             <ColorField label="Color inicial" value={colorFrom} onChange={setColorFrom} />
             <ColorField label="Color final" value={colorTo} onChange={setColorTo} />
           </div>
-          <button
+          <Button
             type="button"
-            className="justify-self-start text-xs font-semibold text-muted-foreground underline hover:text-foreground"
+            variant="ghost"
+            size="sm"
+            className="-ml-2 justify-self-start"
             onClick={() => {
               setColorFrom(DEFAULT_FROM);
               setColorTo(DEFAULT_TO);
             }}
           >
             Restaurar colores originales
-          </button>
+          </Button>
         </CardContent>
       </Card>
 
@@ -226,7 +229,7 @@ export default function RafflePromo() {
         {title.trim() ? (
           <PromoBanner title={title.trim()} subtitle={subtitle.trim() || null} colorFrom={colorFrom} colorTo={colorTo} />
         ) : (
-          <p className="px-6 pb-5 text-sm text-muted-foreground">Escribe el texto principal para ver tu promoción.</p>
+          <p className="px-4 pb-4 text-callout text-rf-secondary">Escribe el texto principal para ver tu promoción.</p>
         )}
         {title.trim() && <div className="pb-4" />}
       </Card>
@@ -235,7 +238,7 @@ export default function RafflePromo() {
       <Card className="mt-3">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Layers className="h-5 w-5 text-primary" /> Precios por cantidad
+            <Layers className="h-5 w-5 text-rf-accent" /> Precios por cantidad
           </CardTitle>
           <CardDescription>
             A partir de cierta cantidad, cada boleto baja de precio y el nuevo precio aplica a <strong>todo</strong> el
@@ -244,7 +247,7 @@ export default function RafflePromo() {
         </CardHeader>
         <CardContent className="grid gap-3">
           {tiers.length === 0 && (
-            <p className="text-sm text-muted-foreground">Sin niveles. Agrega uno para premiar las compras grandes.</p>
+            <p className="text-callout text-rf-secondary">Sin niveles. Agrega uno para premiar las compras grandes.</p>
           )}
           {tiers.map((t, i) => (
             <div key={i} className="flex items-end gap-2">
@@ -274,23 +277,22 @@ export default function RafflePromo() {
                   }
                 />
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Quitar nivel"
+              <IconButton
+                icon={Trash2}
+                label="Quitar nivel"
+                tone="accent"
+                className="mb-[3px] text-rf-danger active:bg-rf-danger/10"
                 onClick={() => setTiers((rows) => rows.filter((_, j) => j !== i))}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+              />
             </div>
           ))}
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             className="justify-self-start"
             onClick={() => setTiers((rows) => [...rows, { minQty: '', unitPrice: '' }])}
           >
-            <Plus className="h-4 w-4" /> Agregar nivel
+            <Plus className="h-[18px] w-[18px]" /> Agregar nivel
           </Button>
         </CardContent>
       </Card>
@@ -299,7 +301,7 @@ export default function RafflePromo() {
       <Card className="mt-3">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-primary" /> Paquetes
+            <Package className="h-5 w-5 text-rf-accent" /> Paquetes
           </CardTitle>
           <CardDescription>
             Una cantidad exacta por un precio total. Ej.: 3 boletos por $25. Se combinan automáticamente si conviene
@@ -308,7 +310,7 @@ export default function RafflePromo() {
         </CardHeader>
         <CardContent className="grid gap-3">
           {bundles.length === 0 && (
-            <p className="text-sm text-muted-foreground">Sin paquetes. Agrega uno como "3 boletos por $25".</p>
+            <p className="text-callout text-rf-secondary">Sin paquetes. Agrega uno como "3 boletos por $25".</p>
           )}
           {bundles.map((b, i) => (
             <div key={i} className="flex items-end gap-2">
@@ -338,23 +340,22 @@ export default function RafflePromo() {
                   }
                 />
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Quitar paquete"
+              <IconButton
+                icon={Trash2}
+                label="Quitar paquete"
+                tone="accent"
+                className="mb-[3px] text-rf-danger active:bg-rf-danger/10"
                 onClick={() => setBundles((rows) => rows.filter((_, j) => j !== i))}
-              >
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
+              />
             </div>
           ))}
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             className="justify-self-start"
             onClick={() => setBundles((rows) => [...rows, { qty: '', price: '' }])}
           >
-            <Plus className="h-4 w-4" /> Agregar paquete
+            <Plus className="h-[18px] w-[18px]" /> Agregar paquete
           </Button>
         </CardContent>
       </Card>
@@ -367,7 +368,7 @@ export default function RafflePromo() {
             <CardDescription>El comprador siempre paga el total más barato posible.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="divide-y rounded-xl border">
+            <div className="divide-y divide-rf-separator overflow-hidden rounded-control ring-1 ring-inset ring-rf-separator">
               {sampleQtys.map((n) => {
                 const r = computeOrderPrice(n, {
                   basePrice: raffle.ticketPrice,
@@ -375,16 +376,16 @@ export default function RafflePromo() {
                   bundles: cleanBundles,
                 });
                 return (
-                  <div key={n} className="flex items-center justify-between px-3 py-2 text-sm">
-                    <span className="font-semibold">
+                  <div key={n} className="flex min-h-[48px] items-center justify-between gap-3 px-4 py-2 text-callout">
+                    <span className="font-medium text-rf-label">
                       {n} {n === 1 ? 'boleto' : 'boletos'}
                     </span>
-                    <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2 tabular-nums">
                       {r.savings > 0 && (
-                        <span className="text-xs text-muted-foreground line-through">{formatMXN(r.baseTotal)}</span>
+                        <span className="text-caption text-rf-secondary line-through">{formatMXN(r.baseTotal)}</span>
                       )}
-                      <span className="font-bold tabular-nums">{formatMXN(r.total)}</span>
-                      <span className="text-xs text-muted-foreground">({formatMXN(Math.round(r.unitEffective))} c/u)</span>
+                      <span className="font-semibold text-rf-label">{formatMXN(r.total)}</span>
+                      <span className="text-caption text-rf-secondary">({formatMXN(Math.round(r.unitEffective))} c/u)</span>
                     </span>
                   </div>
                 );
@@ -394,9 +395,11 @@ export default function RafflePromo() {
         </Card>
       )}
 
-      <Button variant="brand" className="mt-4 w-full" loading={save.isPending} onClick={onSave}>
-        Guardar promoción
-      </Button>
+      <StickyBar>
+        <Button className="w-full" loading={save.isPending} loadingText="Guardando…" onClick={onSave}>
+          Guardar promoción
+        </Button>
+      </StickyBar>
     </div>
   );
 }

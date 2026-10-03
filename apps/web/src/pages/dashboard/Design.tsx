@@ -9,8 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { PageLoader, Spinner } from '@/components/ui/misc';
+import { PageLoader, Spinner, ErrorState } from '@/components/ui/misc';
+import { ToggleRow } from '@/components/owner/List';
 import { VerifiedBadge } from '@/components/brand/VerifiedBadge';
 import { RiferoTheme } from '@/components/brand/RiferoTheme';
 import { cn } from '@/lib/cn';
@@ -73,29 +73,45 @@ function ImageUploader({
   return (
     <div>
       <Label>{label}</Label>
-      <div className={cn('relative grid w-full place-items-center overflow-hidden rounded-2xl border border-dashed bg-muted/40', aspect)}>
+      <div className={cn('relative grid w-full place-items-center overflow-hidden rounded-card bg-rf-fill', aspect)}>
         {value ? (
           <img src={apiAssetUrl(value)} alt={label} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex flex-col items-center gap-1 text-muted-foreground">
-            <ImagePlus className="h-6 w-6" />
-            <span className="text-xs">Sin imagen</span>
+          <div className="flex flex-col items-center gap-1 text-rf-tertiary">
+            <ImagePlus className="h-7 w-7" />
+            <span className="text-caption">Sin imagen</span>
           </div>
         )}
         {uploading && (
-          <div className="absolute inset-0 grid place-items-center bg-background/70">
+          <div className="absolute inset-0 grid place-items-center bg-white/70" role="status" aria-label="Subiendo imagen">
             <Spinner />
           </div>
         )}
       </div>
       <div className="mt-2 flex gap-2">
-        <Button type="button" variant="outline" size="sm" className="flex-1" disabled={uploading} onClick={() => inputRef.current?.click()}>
-          <Upload className="h-4 w-4" />
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="flex-1"
+          disabled={uploading}
+          loading={uploading}
+          loadingText="Subiendo…"
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload className="h-[18px] w-[18px]" />
           {value ? 'Cambiar' : 'Subir imagen'}
         </Button>
         {value && (
-          <Button type="button" variant="ghost" size="sm" disabled={uploading} onClick={() => onChange('')}>
-            <Trash2 className="h-4 w-4" />
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="text-rf-danger active:bg-rf-danger/10"
+            disabled={uploading}
+            onClick={() => onChange('')}
+          >
+            <Trash2 className="h-[18px] w-[18px]" />
             Quitar
           </Button>
         )}
@@ -235,15 +251,7 @@ export default function Design() {
 
   if (isError && !profile) {
     return (
-      <div className="grid place-items-center py-16 text-center">
-        <div>
-          <p className="font-semibold">No pudimos cargar tu apariencia</p>
-          <p className="mt-1 text-sm text-muted-foreground">Revisa tu conexión e inténtalo de nuevo.</p>
-          <Button className="mt-4" loading={isFetching} onClick={() => void refetch()}>
-            Reintentar
-          </Button>
-        </div>
-      </div>
+      <ErrorState title="No pudimos cargar tu apariencia" onRetry={() => void refetch()} retrying={isFetching} />
     );
   }
 
@@ -252,13 +260,13 @@ export default function Design() {
   return (
     <div>
       {/* Estado de guardado: píldora flotante siempre visible (sin repetir el
-          título — el header del panel ya dice "Apariencia"). */}
-      <div className="pointer-events-none sticky top-2 z-20 -mb-9 flex h-9 justify-end">
+          título — el título grande ya dice "Apariencia"). */}
+      <div className="pointer-events-none sticky top-2 z-20 -mb-9 flex h-9 justify-end" aria-live="polite">
         <span className="pointer-events-auto">
           <SaveIndicator status={status} onRetry={retry} />
         </span>
       </div>
-      <p className="mb-4 pr-36 text-sm text-muted-foreground">
+      <p className="mb-5 pr-36 text-callout text-rf-secondary">
         Personaliza tu página. Se guarda solo mientras editas.
       </p>
 
@@ -266,7 +274,7 @@ export default function Design() {
       <Card className="mb-5 overflow-hidden">
         <CardContent className="p-3">
           <RiferoTheme primaryColor={state.primaryColor} secondaryColor={state.secondaryColor}>
-            <div className="overflow-hidden rounded-2xl border">
+            <div className="overflow-hidden rounded-control">
               <div
                 className="relative h-24 w-full bg-cover bg-center"
                 style={{
@@ -312,7 +320,14 @@ export default function Design() {
           <CardDescription>Así aparece el título de tu página.</CardDescription>
         </CardHeader>
         <CardContent>
-          <Input value={state.publicName} placeholder="Rifas Don José" onChange={(e) => update({ publicName: e.target.value })} />
+          <Input
+            value={state.publicName}
+            placeholder="Rifas Don José"
+            aria-label="Nombre público"
+            autoCapitalize="words"
+            enterKeyHint="done"
+            onChange={(e) => update({ publicName: e.target.value })}
+          />
         </CardContent>
       </Card>
 
@@ -325,13 +340,16 @@ export default function Design() {
         <CardContent className="space-y-5">
           <div>
             <ImageUploader label="Logo" value={state.logoUrl} folder="logos" aspect="aspect-square max-w-[150px]" onChange={(url) => update({ logoUrl: url })} />
-            <p className="mt-1.5 text-xs text-muted-foreground">
-              Recomendado: <strong>PNG con fondo transparente</strong> para que se vea sin recuadro.
+            <p className="mt-1.5 text-caption text-rf-secondary">
+              Recomendado: <strong className="font-semibold text-rf-label">PNG con fondo transparente</strong> para que se
+              vea sin recuadro.
             </p>
-            <div className="mt-3">
+            <div className="mt-4">
               <div className="flex items-center justify-between">
-                <Label htmlFor="logoScale">Tamaño del logo</Label>
-                <span className="text-xs font-semibold tabular-nums text-muted-foreground">{state.logoScale}%</span>
+                <Label htmlFor="logoScale" className="mb-0">
+                  Tamaño del logo
+                </Label>
+                <span className="text-callout font-semibold tabular-nums text-rf-secondary">{state.logoScale}%</span>
               </div>
               <input
                 id="logoScale"
@@ -341,25 +359,19 @@ export default function Design() {
                 step={5}
                 value={state.logoScale}
                 onChange={(e) => update({ logoScale: Number(e.target.value) })}
-                className="mt-2 w-full cursor-pointer"
+                className="mt-2 h-11 w-full cursor-pointer"
                 style={{ accentColor: state.primaryColor }}
               />
             </div>
-            <label className="mt-3 flex cursor-pointer items-start gap-3">
-              <input
-                type="checkbox"
+            <div className="-mx-4 mt-2 border-t border-rf-separator">
+              <ToggleRow
+                id="logoGlow"
+                title="Glow detrás del logo"
+                description="Halo de tu color de marca. Ideal para logos PNG con fondo transparente."
                 checked={state.logoGlow}
-                onChange={(e) => update({ logoGlow: e.target.checked })}
-                className="mt-0.5 h-5 w-5 cursor-pointer rounded"
-                style={{ accentColor: state.primaryColor }}
+                onCheckedChange={(v) => update({ logoGlow: v })}
               />
-              <span className="text-sm">
-                <span className="font-medium">Glow detrás del logo</span>
-                <span className="block text-xs text-muted-foreground">
-                  Halo de tu color de marca. Ideal para logos PNG con fondo transparente.
-                </span>
-              </span>
-            </label>
+            </div>
           </div>
           <ImageUploader label="Portada" value={state.coverUrl} folder="covers" aspect="aspect-[16/9]" onChange={(url) => update({ coverUrl: url })} />
         </CardContent>
@@ -386,23 +398,15 @@ export default function Design() {
               ))}
             </Select>
           </div>
-          <div className="flex items-center justify-between gap-3 rounded-2xl border bg-muted/30 px-4 py-3">
-            <div>
-              <Label className="text-sm font-medium">Modo oscuro</Label>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Define cómo ven tu página los visitantes. Apagado = fondo claro (blanco).
-              </p>
-            </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <span className="w-6 text-right text-xs font-bold tabular-nums text-muted-foreground">
-                {state.publicDarkMode ? 'Sí' : 'No'}
-              </span>
-              <Switch
-                aria-label="Modo oscuro de la página pública"
-                checked={state.publicDarkMode}
-                onCheckedChange={(v) => update({ publicDarkMode: v })}
-              />
-            </div>
+          <div className="-mx-4 border-t border-rf-separator">
+            <ToggleRow
+              id="publicDarkMode"
+              title="Modo oscuro"
+              description="Define cómo ven tu página los visitantes. Apagado = fondo claro (blanco)."
+              checked={state.publicDarkMode}
+              onCheckedChange={(v) => update({ publicDarkMode: v })}
+              switchLabel="Modo oscuro de la página pública"
+            />
           </div>
         </CardContent>
       </Card>
@@ -411,17 +415,19 @@ export default function Design() {
 }
 
 function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const id = `color-${label.replace(/\s+/g, '-').toLowerCase()}`;
   return (
     <div>
-      <Label>{label}</Label>
-      <div className="flex items-center gap-2">
+      <Label htmlFor={id}>{label}</Label>
+      <div className="flex items-center gap-2.5">
         <input
+          id={id}
           type="color"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="h-11 w-14 shrink-0 cursor-pointer rounded-xl border border-input bg-background p-1"
+          className="h-[50px] w-16 shrink-0 cursor-pointer rounded-control border-0 bg-rf-fill p-1.5"
         />
-        <span className="text-sm font-medium uppercase text-muted-foreground">{value}</span>
+        <span className="text-callout font-medium uppercase tabular-nums text-rf-secondary">{value}</span>
       </div>
     </div>
   );
@@ -430,14 +436,14 @@ function ColorField({ label, value, onChange }: { label: string; value: string; 
 function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry: () => void }) {
   if (status === 'saving')
     return (
-      <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border bg-background px-3 text-xs font-semibold text-muted-foreground shadow-md">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Guardando…
+      <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-rf-surface px-3 text-caption font-semibold text-rf-secondary shadow-raised">
+        <Loader2 className="h-4 w-4 animate-spin" /> Guardando…
       </span>
     );
   if (status === 'saved')
     return (
-      <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-emerald-600 px-3 text-xs font-bold text-white shadow-md">
-        <Check className="h-3.5 w-3.5" /> Guardado
+      <span className="inline-flex h-9 shrink-0 animate-rf-fade-in items-center gap-1.5 rounded-full bg-rf-accent px-3 text-caption font-semibold text-white shadow-raised">
+        <Check className="h-4 w-4" /> Guardado
       </span>
     );
   if (status === 'error')
@@ -445,7 +451,7 @@ function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry: () =>
       <button
         type="button"
         onClick={onRetry}
-        className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-destructive px-3 text-xs font-bold text-white shadow-lg transition-colors hover:bg-destructive/90"
+        className="rf-press inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full bg-rf-danger px-4 text-caption font-semibold text-white shadow-raised"
       >
         No se guardó · Reintentar
       </button>

@@ -1,7 +1,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient, type QueryKey } from '@tanstack/react-query';
-import { ScanLine, Search, X, Store, Gift, Pencil, MapPin, FileText, ExternalLink } from 'lucide-react';
+import {
+  ScanLine,
+  Search,
+  X,
+  Store,
+  Gift,
+  Pencil,
+  MapPin,
+  FileText,
+  ExternalLink,
+  MessageCircle,
+  MoreHorizontal,
+  Ticket,
+  FileCheck2,
+  Unlock,
+  Ban,
+  CircleX,
+  Receipt,
+  Loader2,
+  Send,
+} from 'lucide-react';
 import {
   formatMXN,
   formatDateTimeMX,
@@ -18,22 +38,25 @@ import { orderService, type OrderFilter } from '@/services/orders';
 import { ApiError, apiAssetUrl } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { useAuthStore } from '@/store/auth';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PageLoader, EmptyState } from '@/components/ui/misc';
+import { PageLoader, EmptyState, ErrorState } from '@/components/ui/misc';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { OrderStatusBadge } from '@/lib/statusBadges';
-import { WhatsAppButton } from '@/components/brand/WhatsAppButton';
 import { QrScanner } from '@/components/owner/QrScanner';
-import { PanelIntro, PANEL_CARD } from '@/components/owner/PanelKit';
+import { PanelIntro, PANEL_CARD, IconButton } from '@/components/owner/PanelKit';
+import { HeaderAction } from '@/components/owner/AdminChrome';
+import { ActionSheet, type SheetAction } from '@/components/owner/ActionSheet';
 import { cn } from '@/lib/cn';
 import { toast } from 'sonner';
 
@@ -63,8 +86,7 @@ const PAYMENT_METHOD_LABEL: Record<OrderPaymentMethod, string> = {
   otro: 'Otro',
 };
 
-function ProofDialog({ orderId, className }: { orderId: string; className?: string }) {
-  const [open, setOpen] = useState(false);
+function ProofDialog({ orderId, open, onOpenChange }: { orderId: string; open: boolean; onOpenChange: (o: boolean) => void }) {
   const proofsQuery = useQuery({
     queryKey: ['order-proofs', orderId],
     queryFn: () => orderService.proofs(orderId),
@@ -73,24 +95,23 @@ function ProofDialog({ orderId, className }: { orderId: string; className?: stri
   const proofs = proofsQuery.data?.items ?? [];
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <Button variant="outline" size="sm" className={className} onClick={() => setOpen(true)}>
-        Comprobante
-      </Button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Comprobante de pago</DialogTitle>
           <DialogDescription>Revisa el comprobante que envió el comprador.</DialogDescription>
         </DialogHeader>
         {proofsQuery.isLoading ? (
-          <PageLoader />
+          <PageLoader label="Cargando comprobante..." />
+        ) : proofsQuery.isError ? (
+          <ErrorState onRetry={() => void proofsQuery.refetch()} retrying={proofsQuery.isFetching} />
         ) : proofs.length === 0 ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">No hay comprobantes para mostrar.</p>
+          <EmptyState icon={<FileText />} title="No hay comprobantes para mostrar" />
         ) : (
           <div className="flex flex-col gap-3">
             {proofs.map((proof) => {
               // Un PDF (comprobante de banca en línea) no se puede mostrar con
-              // <img>: se ofrece como tarjeta para abrirlo en otra pestaña.
+              // <img>: se ofrece como fila para abrirlo en otra pestaña.
               const isPdf = /\.pdf($|\?)/i.test(proof.fileUrl);
               return (
                 <a
@@ -98,18 +119,18 @@ function ProofDialog({ orderId, className }: { orderId: string; className?: stri
                   href={apiAssetUrl(proof.fileUrl)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block overflow-hidden rounded-xl border transition-colors hover:bg-accent"
+                  className="rf-press block overflow-hidden rounded-control bg-rf-fill"
                 >
                   {isPdf ? (
                     <div className="flex items-center gap-3 p-4">
-                      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-red-100 text-red-600 dark:bg-red-950 dark:text-red-300">
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-control bg-rf-danger/10 text-rf-danger">
                         <FileText className="h-6 w-6" />
                       </span>
                       <span className="min-w-0">
-                        <span className="block font-semibold leading-tight">Comprobante en PDF</span>
-                        <span className="block text-xs text-muted-foreground">Toca para abrirlo</span>
+                        <span className="block text-body font-semibold">Comprobante en PDF</span>
+                        <span className="block text-caption text-rf-secondary">Toca para abrirlo</span>
                       </span>
-                      <ExternalLink className="ml-auto h-4 w-4 shrink-0 text-muted-foreground" />
+                      <ExternalLink className="ml-auto h-5 w-5 shrink-0 text-rf-tertiary" />
                     </div>
                   ) : (
                     <img
@@ -120,7 +141,7 @@ function ProofDialog({ orderId, className }: { orderId: string; className?: stri
                       className="w-full object-contain"
                     />
                   )}
-                  {proof.note && <p className="p-3 text-sm text-muted-foreground">{proof.note}</p>}
+                  {proof.note && <p className="p-3 text-callout text-rf-secondary">{proof.note}</p>}
                 </a>
               );
             })}
@@ -141,7 +162,7 @@ function TicketChips({ numbers }: { numbers: string[] }) {
   return (
     <div className="flex flex-wrap gap-1.5">
       {visible.map((n) => (
-        <span key={n} className="rounded-md bg-muted px-2 py-0.5 font-mono text-xs font-semibold">
+        <span key={n} className="rounded-[8px] bg-rf-fill px-2 py-1 text-caption font-semibold tabular-nums text-rf-label">
           {n}
         </span>
       ))}
@@ -149,9 +170,9 @@ function TicketChips({ numbers }: { numbers: string[] }) {
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
-          className="rounded-md bg-brand/10 px-2 py-0.5 font-mono text-xs font-bold text-brand transition-colors hover:bg-brand/20"
+          className="rf-press min-h-[30px] rounded-[8px] bg-rf-accent/10 px-2.5 text-caption font-semibold text-rf-accent"
         >
-          {expanded ? 'ver menos' : `+${hidden} más`}
+          {expanded ? 'Ver menos' : `+${hidden} más`}
         </button>
       )}
     </div>
@@ -160,9 +181,8 @@ function TicketChips({ numbers }: { numbers: string[] }) {
 
 // Edición de los DATOS del comprador (nombre/teléfono/WhatsApp/estado) cuando el
 // cliente se equivocó al capturarlos. No toca boletos ni el estado de la orden.
-function EditBuyerDialog({ order }: { order: OrderDTO }) {
+function EditBuyerDialog({ order, open, onOpenChange }: { order: OrderDTO; open: boolean; onOpenChange: (o: boolean) => void }) {
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const [fullName, setFullName] = useState(order.buyer.fullName);
   const [phone, setPhone] = useState(order.buyer.phone);
   const [whatsapp, setWhatsapp] = useState(order.buyer.whatsapp ?? '');
@@ -191,76 +211,103 @@ function EditBuyerDialog({ order }: { order: OrderDTO }) {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['orders'] });
       toast.success('Datos del cliente actualizados');
-      setOpen(false);
+      onOpenChange(false);
     },
     onError: (e: unknown) => toast.error(e instanceof ApiError ? e.message : 'No se pudieron guardar los datos'),
   });
 
+  const nameError = fullName.trim().length > 0 && fullName.trim().length < 2 ? 'Escribe el nombre completo.' : undefined;
+  const phoneError = phone.trim().length > 0 && phone.trim().length < 10 ? 'El teléfono debe tener 10 dígitos.' : undefined;
   const canSave = fullName.trim().length >= 2 && phone.trim().length >= 10;
+  const fieldId = (k: string) => `buyer-${order.id}-${k}`;
 
   return (
-    <>
-      <Button variant="ghost" size="sm" className="text-muted-foreground" onClick={() => setOpen(true)}>
-        <Pencil className="h-4 w-4" /> Editar datos
-      </Button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar datos del cliente</DialogTitle>
-            <DialogDescription>
-              Corrige el nombre o el contacto si el cliente se equivocó. No cambia los boletos ni el monto.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (canSave && !save.isPending) save.mutate();
-            }}
-            className="space-y-3"
-          >
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar datos del cliente</DialogTitle>
+          <DialogDescription>
+            Corrige el nombre o el contacto si el cliente se equivocó. No cambia los boletos ni el monto.
+          </DialogDescription>
+        </DialogHeader>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (canSave && !save.isPending) save.mutate();
+          }}
+          className="space-y-4"
+        >
+          <div>
+            <Label htmlFor={fieldId('name')}>Nombre completo</Label>
+            <Input
+              id={fieldId('name')}
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              autoComplete="off"
+              autoCapitalize="words"
+              enterKeyHint="next"
+              aria-invalid={!!nameError}
+            />
+            {nameError && <p className="mt-1.5 text-callout text-rf-danger">{nameError}</p>}
+          </div>
+          <div className="grid grid-cols-[124px_1fr] gap-3">
             <div>
-              <label className="mb-1 block text-sm font-semibold">Nombre completo</label>
-              <Input value={fullName} onChange={(e) => setFullName(e.target.value)} autoComplete="off" />
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <label className="mb-1 block text-sm font-semibold">País</label>
-                <Select value={country} onChange={(e) => setCountry(e.target.value)}>
-                  <option value="MX">🇲🇽 MX</option>
-                  <option value="US">🇺🇸 US</option>
-                </Select>
-              </div>
-              <div className="col-span-2">
-                <label className="mb-1 block text-sm font-semibold">Teléfono</label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="numeric" autoComplete="off" />
-              </div>
+              <Label htmlFor={fieldId('country')}>País</Label>
+              <Select id={fieldId('country')} value={country} onChange={(e) => setCountry(e.target.value)}>
+                <option value="MX">🇲🇽 MX</option>
+                <option value="US">🇺🇸 US</option>
+              </Select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold">WhatsApp (opcional)</label>
+              <Label htmlFor={fieldId('phone')}>Teléfono</Label>
               <Input
-                value={whatsapp}
-                onChange={(e) => setWhatsapp(e.target.value)}
-                placeholder="Si lo dejas vacío, se usa el teléfono"
-                inputMode="numeric"
+                id={fieldId('phone')}
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                inputMode="tel"
                 autoComplete="off"
+                enterKeyHint="next"
+                aria-invalid={!!phoneError}
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-semibold">Estado (opcional)</label>
-              <Input value={state} onChange={(e) => setState(e.target.value)} autoComplete="off" />
-            </div>
-            <div className="flex justify-end gap-2 pt-1">
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" variant="brand" loading={save.isPending} disabled={!canSave}>
-                Guardar cambios
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-    </>
+          </div>
+          {phoneError && <p className="-mt-2 text-callout text-rf-danger">{phoneError}</p>}
+          <div>
+            <Label htmlFor={fieldId('wa')}>WhatsApp (opcional)</Label>
+            <Input
+              id={fieldId('wa')}
+              type="tel"
+              value={whatsapp}
+              onChange={(e) => setWhatsapp(e.target.value)}
+              placeholder="Si lo dejas vacío, se usa el teléfono"
+              inputMode="tel"
+              autoComplete="off"
+              enterKeyHint="next"
+            />
+          </div>
+          <div>
+            <Label htmlFor={fieldId('state')}>Estado (opcional)</Label>
+            <Input
+              id={fieldId('state')}
+              value={state}
+              onChange={(e) => setState(e.target.value)}
+              autoComplete="off"
+              autoCapitalize="words"
+              enterKeyHint="done"
+            />
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              Cancelar
+            </Button>
+            <Button type="submit" loading={save.isPending} loadingText="Guardando…" disabled={!canSave}>
+              Guardar cambios
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -272,6 +319,9 @@ function OrderCard({ order }: { order: OrderDTO }) {
   const [payMethod, setPayMethod] = useState<OrderPaymentMethod>('efectivo');
   const [payNote, setPayNote] = useState('');
   const [releaseOpen, setReleaseOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [proofOpen, setProofOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -372,156 +422,176 @@ function OrderCard({ order }: { order: OrderDTO }) {
     },
   });
 
+  const waLink = waPhone
+    ? buildWhatsappLink(waPhone, order.digitalTicketCode ? ticketWaMessage : waMessage, buyerDial)
+    : null;
+  const totalNumbers = order.ticketNumbers.length + order.giftNumbers.length;
+
+  // Acciones secundarias: suben en una hoja desde abajo.
+  const sheetActions: SheetAction[] = [
+    { label: 'Ver comprobante', icon: FileCheck2, onSelect: () => setProofOpen(true), hidden: !order.hasProof },
+    {
+      label: 'Ver boleto digital',
+      icon: Ticket,
+      href: order.digitalTicketCode ? `/boleto/${order.digitalTicketCode}` : undefined,
+      external: true,
+      hidden: !order.digitalTicketCode,
+    },
+    { label: 'Editar datos del cliente', icon: Pencil, onSelect: () => setEditOpen(true) },
+    { label: 'Liberar boletos', icon: Unlock, destructive: true, onSelect: () => setReleaseOpen(true), hidden: order.status !== 'PAID' },
+    { label: 'Rechazar pago', icon: CircleX, destructive: true, onSelect: () => setConfirming('reject'), hidden: !isPending },
+    { label: 'Cancelar apartado', icon: Ban, destructive: true, onSelect: () => setConfirming('cancel'), hidden: !isPending },
+  ];
+
   return (
-    <div className={cn(PANEL_CARD, 'flex flex-col gap-3 p-4')}>
-      <div className="flex items-start justify-between gap-2">
+    <article className={cn(PANEL_CARD, 'p-4')}>
+      {/* Quién y en qué estado */}
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-xs font-semibold text-muted-foreground">{order.code}</p>
-          <p className="truncate text-base font-bold leading-tight">{order.buyer.fullName}</p>
-          <p className="text-sm text-muted-foreground tabular-nums">
+          <h3 className="truncate text-body font-semibold text-rf-label">{order.buyer.fullName}</h3>
+          <p className="text-callout tabular-nums text-rf-secondary">
             +{buyerDial} {order.buyer.phone}
             {order.buyer.country === 'US' && <span className="ml-1 font-semibold">🇺🇸 USA</span>}
           </p>
-          {order.buyer.state && (
-            <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-              <MapPin className="h-3 w-3 shrink-0" />
-              <span className="truncate">{order.buyer.state}</span>
-            </p>
-          )}
         </div>
         <OrderStatusBadge status={order.status} />
       </div>
 
-      <div className="text-sm">
-        <span className="font-semibold">{order.raffleTitle}</span>{' '}
-        <span className="text-muted-foreground">· {order.eventLabel}</span>
+      {/* Folio, rifa, vendedor y ubicación */}
+      <div className="mt-2 space-y-1 text-caption text-rf-secondary">
+        <p className="truncate">
+          <span className="font-semibold tabular-nums text-rf-label">{order.code}</span> · {order.raffleTitle} ·{' '}
+          {order.eventLabel}
+        </p>
+        <p className="flex items-center gap-1.5">
+          <Store className="h-3.5 w-3.5 shrink-0" />
+          {order.seller ? (
+            <span className="truncate">
+              {order.seller.name}
+              {order.seller.sellerCode && <span className="ml-1 font-semibold">({order.seller.sellerCode})</span>}
+            </span>
+          ) : (
+            <span>Venta directa</span>
+          )}
+          {order.buyer.state && (
+            <>
+              <span aria-hidden>·</span>
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{order.buyer.state}</span>
+            </>
+          )}
+        </p>
       </div>
 
-      {/* Vendedor atribuido (o venta directa) */}
-      <div className="flex items-center gap-1.5 text-xs">
-        <Store className="h-3.5 w-3.5 text-muted-foreground" />
-        {order.seller ? (
-          <span className="font-semibold">
-            {order.seller.name}
-            {order.seller.sellerCode && (
-              <span className="ml-1 font-mono font-bold text-muted-foreground">({order.seller.sellerCode})</span>
-            )}
-          </span>
+      {/* Boletos */}
+      <div className="mt-3">
+        {order.giftNumbers.length > 0 ? (
+          <div className="space-y-2.5">
+            <div>
+              <p className="mb-1.5 text-caption font-medium text-rf-secondary">Elegidos</p>
+              <TicketChips numbers={order.ticketNumbers} />
+            </div>
+            <div>
+              <p className="mb-1.5 flex items-center gap-1 text-caption font-medium text-rf-accent">
+                <Gift className="h-3.5 w-3.5" /> Regalo ({order.giftNumbers.length})
+              </p>
+              <TicketChips numbers={order.giftNumbers} />
+            </div>
+            <p className="text-caption text-rf-secondary">
+              Números participantes: <span className="font-semibold text-rf-label">{totalNumbers}</span> ·{' '}
+              {order.opportunities} oportunidades por boleto
+            </p>
+          </div>
         ) : (
-          <span className="text-muted-foreground">Venta directa</span>
+          <TicketChips numbers={order.ticketNumbers} />
         )}
       </div>
 
-      {order.giftNumbers.length > 0 ? (
-        <div className="space-y-2">
-          <div>
-            <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">Elegidos</p>
-            <TicketChips numbers={order.ticketNumbers} />
-          </div>
-          <div>
-            <p className="mb-1 flex items-center gap-1 text-[11px] font-bold uppercase tracking-wide text-primary">
-              <Gift className="h-3.5 w-3.5" /> Regalo ({order.giftNumbers.length})
-            </p>
-            <TicketChips numbers={order.giftNumbers} />
-          </div>
-          <p className="text-xs font-semibold text-muted-foreground">
-            Números participantes: {order.ticketNumbers.length + order.giftNumbers.length}
-            <span className="ml-1 font-normal">· {order.opportunities} oportunidades por boleto</span>
-          </p>
+      {/* Total y tiempo */}
+      <div className="mt-3 flex items-end justify-between gap-3 border-t border-rf-separator pt-3">
+        <div className="min-w-0">
+          <p className="text-heading tabular-nums text-rf-label">{formatMXN(order.totalAmount)}</p>
+          <p className="text-caption text-rf-secondary">{formatDateTimeMX(order.createdAt)}</p>
         </div>
-      ) : (
-        <TicketChips numbers={order.ticketNumbers} />
-      )}
-
-      <div className="flex items-center justify-between gap-2 border-t pt-3">
-        <p className="text-xl font-extrabold tracking-tight">{formatMXN(order.totalAmount)}</p>
-        <p className="text-right text-xs text-muted-foreground">{formatDateTimeMX(order.createdAt)}</p>
+        {isPending && remaining && (
+          <span className="shrink-0 rounded-full bg-rf-warning/[0.12] px-2.5 py-1 text-caption font-semibold text-rf-warning">
+            Vence en {remaining}
+          </span>
+        )}
       </div>
 
       {order.paymentMethod && (
-        <p className="text-xs text-muted-foreground">
-          💵 Pagado en{' '}
-          <span className="font-semibold text-foreground">
+        <p className="mt-2 text-caption text-rf-secondary">
+          Pagado en{' '}
+          <span className="font-semibold text-rf-label">
             {PAYMENT_METHOD_LABEL[order.paymentMethod as OrderPaymentMethod] ?? order.paymentMethod}
           </span>
           {order.paymentNote ? ` · ${order.paymentNote}` : ''}
         </p>
       )}
 
-      {isPending && remaining && (
-        <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">Vence en {remaining}</p>
+      {isPending && order.hasProof && (
+        <button
+          type="button"
+          onClick={() => setProofOpen(true)}
+          className="rf-press mt-3 flex min-h-[44px] w-full items-center gap-2 rounded-control bg-rf-accent/[0.08] px-3 text-left text-callout font-medium text-rf-accent"
+        >
+          <FileCheck2 className="h-5 w-5 shrink-0" />
+          <span className="flex-1">Subió su comprobante</span>
+          <span className="font-semibold">Ver</span>
+        </button>
       )}
 
-      {/* Acción principal a la vista; lo demás en fila secundaria. */}
-      {isPending && (
-        <div className="flex gap-2">
-          {order.hasProof && <ProofDialog orderId={order.id} className="h-11 flex-1" />}
+      {/* Acción principal a la vista; WhatsApp a un toque; el resto en «⋯». */}
+      <div className="mt-3 flex items-center gap-2">
+        {isPending ? (
           <Button
-            variant="success"
-            className="h-11 flex-[1.4]"
+            variant="secondary"
+            size="sm"
+            className="flex-1"
             loading={markPaid.isPending}
-            // Doble confirmación: abre el diálogo para capturar cómo se pagó antes
+            loadingText="Confirmando…"
+            // Doble confirmación: abre la hoja para capturar cómo se pagó antes
             // de confirmar (evita marcar pagado por accidente).
             onClick={() => setPayOpen(true)}
           >
             Marcar pagado
           </Button>
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        {order.digitalTicketCode ? (
-          <>
-            {/* Pagada: reenviar el boleto al cliente y abrirlo como link. */}
-            <WhatsAppButton
-              phone={waPhone}
-              dialCode={buyerDial}
-              message={ticketWaMessage}
-              size="sm"
-              label="Enviar boleto"
-            />
-            <Button asChild variant="outline" size="sm">
-              <a href={`/boleto/${order.digitalTicketCode}`} target="_blank" rel="noopener noreferrer">
-                Ver boleto
-              </a>
-            </Button>
-          </>
-        ) : (
-          <WhatsAppButton phone={waPhone} dialCode={buyerDial} message={waMessage} size="sm" />
-        )}
-        <EditBuyerDialog order={order} />
-        {order.status === 'PAID' && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-destructive hover:text-destructive"
-            onClick={() => setReleaseOpen(true)}
-          >
-            Liberar boletos
+        ) : order.digitalTicketCode && waLink ? (
+          <Button asChild variant="secondary" size="sm" className="flex-1">
+            <a href={waLink} target="_blank" rel="noopener noreferrer">
+              <Send className="h-[18px] w-[18px]" />
+              Enviar boleto
+            </a>
           </Button>
+        ) : (
+          <div className="flex-1" />
         )}
-        {!isPending && order.hasProof && <ProofDialog orderId={order.id} />}
-        {isPending && (
-          <div className="ml-auto flex gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setConfirming('reject')}
-            >
-              Rechazar
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground"
-              onClick={() => setConfirming('cancel')}
-            >
-              Cancelar
-            </Button>
-          </div>
+        {waLink && !(order.digitalTicketCode && !isPending) && (
+          <a
+            href={waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Escribir por WhatsApp"
+            title="Escribir por WhatsApp"
+            className="rf-press grid h-11 w-11 shrink-0 place-items-center rounded-full bg-rf-fill text-rf-label outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45"
+          >
+            <MessageCircle className="h-[22px] w-[22px]" />
+          </a>
         )}
+        <IconButton icon={MoreHorizontal} label="Más acciones" onClick={() => setMenuOpen(true)} />
       </div>
+
+      <ActionSheet
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+        title={order.buyer.fullName}
+        description={`${order.code} · ${formatMXN(order.totalAmount)}`}
+        actions={sheetActions}
+      />
+
+      {order.hasProof && <ProofDialog orderId={order.id} open={proofOpen} onOpenChange={setProofOpen} />}
+      <EditBuyerDialog order={order} open={editOpen} onOpenChange={setEditOpen} />
 
       <ConfirmDialog
         open={confirming === 'reject'}
@@ -529,8 +599,8 @@ function OrderCard({ order }: { order: OrderDTO }) {
         title="¿Rechazar este pago?"
         description={
           <>
-            La orden <span className="font-mono font-semibold">{order.code}</span> de{' '}
-            <span className="font-semibold">{order.buyer.fullName}</span> se marcará como rechazada y
+            La orden <span className="font-semibold text-rf-label">{order.code}</span> de{' '}
+            <span className="font-semibold text-rf-label">{order.buyer.fullName}</span> se marcará como rechazada y
             sus boletos volverán a estar disponibles. Esta acción no se puede deshacer.
           </>
         }
@@ -545,8 +615,8 @@ function OrderCard({ order }: { order: OrderDTO }) {
         title="¿Cancelar este apartado?"
         description={
           <>
-            La orden <span className="font-mono font-semibold">{order.code}</span> de{' '}
-            <span className="font-semibold">{order.buyer.fullName}</span> se cancelará y sus boletos
+            La orden <span className="font-semibold text-rf-label">{order.code}</span> de{' '}
+            <span className="font-semibold text-rf-label">{order.buyer.fullName}</span> se cancelará y sus boletos
             volverán a estar disponibles. Esta acción no se puede deshacer.
           </>
         }
@@ -562,14 +632,18 @@ function OrderCard({ order }: { order: OrderDTO }) {
           <DialogHeader>
             <DialogTitle>Confirmar pago</DialogTitle>
             <DialogDescription>
-              ¿Confirmas que <span className="font-semibold">{order.buyer.fullName}</span> ya pagó{' '}
-              <span className="font-semibold">{formatMXN(order.totalAmount)}</span>? Indica cómo pagó.
+              ¿Confirmas que <span className="font-semibold text-rf-label">{order.buyer.fullName}</span> ya pagó{' '}
+              <span className="font-semibold text-rf-label">{formatMXN(order.totalAmount)}</span>? Indica cómo pagó.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-semibold">¿Cómo pagó?</label>
-              <Select value={payMethod} onChange={(e) => setPayMethod(e.target.value as OrderPaymentMethod)}>
+              <Label htmlFor={`pay-method-${order.id}`}>¿Cómo pagó?</Label>
+              <Select
+                id={`pay-method-${order.id}`}
+                value={payMethod}
+                onChange={(e) => setPayMethod(e.target.value as OrderPaymentMethod)}
+              >
                 {ORDER_PAYMENT_METHODS.map((m) => (
                   <option key={m} value={m}>
                     {PAYMENT_METHOD_LABEL[m]}
@@ -578,31 +652,38 @@ function OrderCard({ order }: { order: OrderDTO }) {
               </Select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-semibold">Detalles (opcional)</label>
+              <Label htmlFor={`pay-note-${order.id}`}>Detalles (opcional)</Label>
               <Input
+                id={`pay-note-${order.id}`}
                 value={payNote}
                 onChange={(e) => setPayNote(e.target.value)}
                 placeholder="Referencia, banco, quién recibió…"
                 autoComplete="off"
+                enterKeyHint="done"
               />
             </div>
-            <div className="flex justify-end gap-2 pt-1">
-              <Button variant="ghost" onClick={() => setPayOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                variant="success"
-                loading={markPaid.isPending}
-                // El WhatsApp se abre dentro del gesto del clic (no lo bloquea el navegador).
-                onClick={() => {
-                  sendTicketWa();
-                  markPaid.mutate({ paymentMethod: payMethod, paymentNote: payNote.trim() });
-                }}
-              >
-                Sí, confirmar pago
-              </Button>
-            </div>
+            {waPhone && (
+              <p className="text-caption text-rf-secondary">
+                Al confirmar se abre WhatsApp con el boleto listo para enviárselo al cliente.
+              </p>
+            )}
           </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setPayOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              loading={markPaid.isPending}
+              loadingText="Confirmando…"
+              // El WhatsApp se abre dentro del gesto del clic (no lo bloquea el navegador).
+              onClick={() => {
+                sendTicketWa();
+                markPaid.mutate({ paymentMethod: payMethod, paymentNote: payNote.trim() });
+              }}
+            >
+              Sí, confirmar pago
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -612,40 +693,55 @@ function OrderCard({ order }: { order: OrderDTO }) {
           <DialogHeader>
             <DialogTitle>Liberar boletos</DialogTitle>
             <DialogDescription>
-              Elige qué hacer con los {order.ticketNumbers.length + order.giftNumbers.length} números de la orden{' '}
-              <span className="font-mono font-semibold">{order.code}</span>.
+              Elige qué hacer con los {totalNumbers} números de la orden{' '}
+              <span className="font-semibold text-rf-label">{order.code}</span>.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Button
-              variant="outline"
-              className="h-auto w-full flex-col items-start gap-0.5 whitespace-normal py-3 text-left"
-              loading={release.isPending && release.variables === 'reserved'}
-              onClick={() => release.mutate('reserved')}
-            >
-              <span className="font-bold">Volver a apartado</span>
-              <span className="text-xs font-normal text-muted-foreground">
-                El cliente conserva sus boletos, pero la orden queda pendiente de pago.
-              </span>
-            </Button>
-            <Button
-              variant="outline"
-              className="h-auto w-full flex-col items-start gap-0.5 whitespace-normal py-3 text-left"
-              loading={release.isPending && release.variables === 'available'}
-              onClick={() => release.mutate('available')}
-            >
-              <span className="font-bold text-destructive">Liberar a la venta</span>
-              <span className="text-xs font-normal text-muted-foreground">
-                Los boletos vuelven a estar disponibles para cualquiera. La orden se cancela.
-              </span>
-            </Button>
-            <Button variant="ghost" className="w-full" onClick={() => setReleaseOpen(false)}>
+            {(
+              [
+                {
+                  target: 'reserved' as const,
+                  title: 'Volver a apartado',
+                  desc: 'El cliente conserva sus boletos, pero la orden queda pendiente de pago.',
+                  danger: false,
+                },
+                {
+                  target: 'available' as const,
+                  title: 'Liberar a la venta',
+                  desc: 'Los boletos vuelven a estar disponibles para cualquiera. La orden se cancela.',
+                  danger: true,
+                },
+              ]
+            ).map((opt) => {
+              const busy = release.isPending && release.variables === opt.target;
+              return (
+                <button
+                  key={opt.target}
+                  type="button"
+                  disabled={release.isPending}
+                  onClick={() => release.mutate(opt.target)}
+                  className="rf-row flex w-full items-center gap-3 rounded-control bg-rf-fill px-4 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45 disabled:opacity-60"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className={cn('block text-body font-semibold', opt.danger ? 'text-rf-danger' : 'text-rf-label')}>
+                      {opt.title}
+                    </span>
+                    <span className="mt-0.5 block text-callout text-rf-secondary">{opt.desc}</span>
+                  </span>
+                  {busy && <Loader2 className="h-5 w-5 shrink-0 animate-spin text-rf-secondary" />}
+                </button>
+              );
+            })}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setReleaseOpen(false)}>
               Cancelar
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </article>
   );
 }
 
@@ -718,20 +814,16 @@ export default function Orders() {
 
   return (
     <div>
+      <HeaderAction label="Validar boleto" icon={ScanLine} onClick={() => setScanOpen(true)} />
       <PanelIntro
         description={
           isSeller ? 'Estas son las ventas generadas con tu link.' : 'Administra los apartados y pagos de tus rifas.'
-        }
-        action={
-          <Button variant="outline" size="sm" onClick={() => setScanOpen(true)}>
-            <ScanLine className="h-4 w-4" /> Validar
-          </Button>
         }
       />
       <QrScanner open={scanOpen} onOpenChange={setScanOpen} />
 
       <Tabs value={urlFilter} onValueChange={(v) => navigate(`/admin/ordenes/${v}`)}>
-        <TabsList>
+        <TabsList aria-label="Filtrar órdenes">
           {TABS.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>
               {tab.label}
@@ -742,22 +834,27 @@ export default function Orders() {
 
       {/* Búsqueda */}
       <div className="relative mt-3">
-        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-rf-secondary" />
         <Input
+          type="search"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar por boleto, nombre, teléfono, folio o rifa"
-          className="pl-10 pr-10"
+          placeholder="Boleto, nombre, teléfono, folio o rifa"
+          aria-label="Buscar órdenes"
+          className="h-11 bg-rf-fill-strong pl-10 pr-11 focus:bg-rf-surface [&::-webkit-search-cancel-button]:hidden"
           autoComplete="off"
+          enterKeyHint="search"
         />
         {search && (
           <button
             type="button"
             aria-label="Limpiar búsqueda"
             onClick={() => setSearch('')}
-            className="absolute right-1 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-lg text-muted-foreground hover:text-foreground"
+            className="absolute right-0 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center text-rf-tertiary outline-none active:opacity-50"
           >
-            <X className="h-4 w-4" />
+            <span className="grid h-5 w-5 place-items-center rounded-full bg-rf-tertiary text-white">
+              <X className="h-3.5 w-3.5" strokeWidth={3} />
+            </span>
           </button>
         )}
       </div>
@@ -765,7 +862,12 @@ export default function Orders() {
       {/* Filtro por vendedor (solo administradores). */}
       {!isSeller && sellerOptions.length > 0 && (
         <div className="mt-3">
-          <Select value={sellerFilter} onChange={(e) => setSellerFilter(e.target.value)} aria-label="Filtrar por vendedor">
+          <Select
+            value={sellerFilter}
+            onChange={(e) => setSellerFilter(e.target.value)}
+            aria-label="Filtrar por vendedor"
+            className="h-11 bg-rf-fill-strong focus:bg-rf-surface"
+          >
             <option value="all">Todos los vendedores</option>
             <option value="direct">Venta directa (sin vendedor)</option>
             {sellerOptions.map(([id, label]) => (
@@ -779,15 +881,24 @@ export default function Orders() {
 
       <div className="mt-4">
         {ordersQuery.isLoading ? (
-          <PageLoader />
+          <PageLoader label="Cargando órdenes..." />
+        ) : ordersQuery.isError && orders.length === 0 ? (
+          <ErrorState
+            title="No pudimos cargar las órdenes"
+            description={ordersQuery.error instanceof ApiError ? ordersQuery.error.message : undefined}
+            onRetry={() => void ordersQuery.refetch()}
+            retrying={ordersQuery.isFetching}
+          />
         ) : filtered.length === 0 ? (
           search ? (
             <EmptyState
+              icon={<Search />}
               title="Sin resultados"
-              description={`Ninguna orden coincide con "${search}". Prueba con el código, nombre o teléfono.`}
+              description={`Ninguna orden coincide con "${search}". Prueba con el folio, nombre o teléfono.`}
             />
           ) : (
             <EmptyState
+              icon={<Receipt />}
               title="Sin órdenes por aquí"
               description="Cuando alguien aparte boletos, sus órdenes aparecerán en esta lista."
             />
@@ -801,8 +912,7 @@ export default function Orders() {
             </div>
             {filtered.length > visibleCount && (
               <Button
-                variant="outline"
-                size="lg"
+                variant="secondary"
                 className="mt-4 w-full"
                 onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
               >

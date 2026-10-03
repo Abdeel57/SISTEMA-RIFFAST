@@ -27,7 +27,8 @@ function ToolBtn({
       // mousedown: no soltar la selección del editor al hacer clic en la herramienta.
       onMouseDown={(e) => e.preventDefault()}
       onClick={onAction}
-      className="grid h-8 min-w-8 place-items-center rounded-md px-1.5 text-sm text-foreground transition-colors hover:bg-muted"
+      aria-label={title}
+      className="grid h-11 min-w-11 shrink-0 place-items-center rounded-[10px] px-1.5 text-rf-label outline-none transition-colors active:bg-rf-fill-strong focus-visible:ring-2 focus-visible:ring-rf-accent/45"
     >
       {children}
     </button>
@@ -68,9 +69,11 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
   };
 
   return (
-    <div className="overflow-hidden rounded-xl border">
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 border-b bg-muted/40 p-1.5">
+    <div className="overflow-hidden rounded-control bg-rf-fill transition-shadow focus-within:ring-2 focus-within:ring-rf-accent/40">
+      {/* Barra de formato: dos filas (formato y colores) que se desplazan de lado
+          si no caben, en vez de crecer a cuatro renglones en celular. */}
+      <div role="toolbar" aria-label="Formato del texto" className="border-b border-rf-separator px-1">
+        <div className="no-scrollbar flex items-center gap-0.5 overflow-x-auto">
         <ToolBtn title="Negrita" onAction={() => exec('bold')}>
           <Bold className="h-4 w-4" />
         </ToolBtn>
@@ -81,7 +84,7 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
           <Underline className="h-4 w-4" />
         </ToolBtn>
 
-        <span className="mx-1 h-5 w-px bg-border" />
+        <span className="mx-1 h-6 w-px shrink-0 bg-rf-separator" />
 
         <ToolBtn title="Alinear a la izquierda" onAction={() => exec('justifyLeft')}>
           <AlignLeft className="h-4 w-4" />
@@ -90,7 +93,7 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
           <AlignCenter className="h-4 w-4" />
         </ToolBtn>
 
-        <span className="mx-1 h-5 w-px bg-border" />
+        <span className="mx-1 h-6 w-px shrink-0 bg-rf-separator" />
 
         {SIZES.map((s, i) => (
           <ToolBtn key={s.value} title={['Texto chico', 'Texto normal', 'Texto grande'][i]} onAction={() => exec('fontSize', s.value)}>
@@ -98,9 +101,14 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
           </ToolBtn>
         ))}
 
-        <span className="mx-1 h-5 w-px bg-border" />
+        <span className="mx-1 h-6 w-px shrink-0 bg-rf-separator" />
 
-        <div className="flex flex-wrap items-center gap-1">
+        <ToolBtn title="Quitar formato" onAction={() => exec('removeFormat')}>
+          <Eraser className="h-4 w-4" />
+        </ToolBtn>
+      </div>
+
+        <div className="no-scrollbar flex items-center overflow-x-auto border-t border-rf-separator">
           {COLORS.map((c) => (
             <button
               key={c}
@@ -108,18 +116,16 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
               title={`Color ${c}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => exec('foreColor', c)}
-              className="h-5 w-5 rounded-full border border-black/15 transition-transform hover:scale-110"
-              style={{ backgroundColor: c }}
+              className="group grid h-11 w-11 shrink-0 place-items-center outline-none"
               aria-label={`Color ${c}`}
-            />
+            >
+              <span
+                className="block h-6 w-6 rounded-full ring-1 ring-black/10 transition-transform group-active:scale-90 group-focus-visible:ring-2 group-focus-visible:ring-rf-accent"
+                style={{ backgroundColor: c }}
+              />
+            </button>
           ))}
         </div>
-
-        <span className="mx-1 h-5 w-px bg-border" />
-
-        <ToolBtn title="Quitar formato" onAction={() => exec('removeFormat')}>
-          <Eraser className="h-4 w-4" />
-        </ToolBtn>
       </div>
 
       {/* Área editable */}
@@ -132,7 +138,7 @@ export function RichTextEditor({ value, onChange, placeholder }: Props) {
         data-placeholder={placeholder}
         onInput={emit}
         onBlur={emit}
-        className={cn('rt-editor min-h-[170px] px-3 py-2.5 text-sm leading-relaxed outline-none')}
+        className={cn('rt-editor min-h-[170px] px-4 py-3 text-body text-rf-label outline-none')}
       />
     </div>
   );

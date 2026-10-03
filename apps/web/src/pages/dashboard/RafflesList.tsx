@@ -1,7 +1,22 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Image as ImageIcon, Eye, EyeOff, Clock } from 'lucide-react';
+import {
+  Plus,
+  Trash2,
+  Image as ImageIcon,
+  Eye,
+  EyeOff,
+  Clock,
+  MoreHorizontal,
+  Pencil,
+  Ticket,
+  Trophy,
+  Megaphone,
+  ExternalLink,
+  Share2,
+  Send,
+} from 'lucide-react';
 import {
   RAFFLE_STATUS_LABELS,
   formatMXN,
@@ -14,29 +29,27 @@ import { riferoService } from '@/services/riferos';
 import { ApiError, apiAssetUrl } from '@/lib/api';
 import { buildRaffleUrl, buildRaffleShareUrl } from '@/lib/site';
 import { Button } from '@/components/ui/button';
-import { Badge, type BadgeProps } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { PageLoader, EmptyState } from '@/components/ui/misc';
-import { PanelIntro, PANEL_CARD, ProgressBar } from '@/components/owner/PanelKit';
+import { PageLoader, EmptyState, ErrorState } from '@/components/ui/misc';
+import { PanelIntro, PANEL_CARD, ProgressBar, IconButton } from '@/components/owner/PanelKit';
+import { HeaderAction } from '@/components/owner/AdminChrome';
+import { ActionSheet, type SheetAction } from '@/components/owner/ActionSheet';
 import { cn } from '@/lib/cn';
 import { toast } from 'sonner';
 
-const STATUS_VARIANT: Record<RaffleStatus, BadgeProps['variant']> = {
-  DRAFT: 'muted',
-  PUBLISHED: 'success',
-  FINISHED: 'info',
-  CANCELLED: 'danger',
+// Estado de la rifa sobre la foto: píldora sólida para leerse sobre cualquier imagen.
+const STATUS_STYLE: Record<RaffleStatus, string> = {
+  DRAFT: 'bg-white/95 text-rf-secondary',
+  PUBLISHED: 'bg-rf-accent text-white',
+  FINISHED: 'bg-white/95 text-rf-info',
+  CANCELLED: 'bg-white/95 text-rf-danger',
 };
-
-function RaffleStatusBadge({ status }: { status: RaffleStatus }) {
-  return <Badge variant={STATUS_VARIANT[status]}>{RAFFLE_STATUS_LABELS[status]}</Badge>;
-}
 
 function RaffleCard({ raffle, slug }: { raffle: RaffleDTO; slug?: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Compartir el link público de la rifa (nativo en móvil, copiar en desktop).
   const share = () => {
@@ -94,141 +107,125 @@ function RaffleCard({ raffle, slug }: { raffle: RaffleDTO; slug?: string }) {
   const total = raffle.totalTickets;
   const progress = total > 0 ? Math.min(100, Math.round((sold / total) * 100)) : 0;
   const cover = raffle.images[0]?.url;
+  const canToggleVisibility = raffle.status !== 'DRAFT' && raffle.status !== 'CANCELLED';
+
+  const sheetActions: SheetAction[] = [
+    { label: 'Editar rifa', icon: Pencil, onSelect: () => navigate(`/admin/rifas/${raffle.id}/editar`) },
+    { label: 'Sorteo', icon: Trophy, onSelect: () => navigate(`/admin/rifas/${raffle.id}/sorteo`) },
+    { label: 'Promociones', icon: Megaphone, onSelect: () => navigate(`/admin/rifas/${raffle.id}/promociones`) },
+    {
+      label: 'Ver resultado público',
+      icon: ExternalLink,
+      href: slug ? buildRaffleUrl(slug, raffle.eventNumber) : undefined,
+      external: true,
+      hidden: raffle.status !== 'FINISHED' || !slug,
+    },
+    {
+      label: raffle.hidden ? 'Mostrar en la página' : 'Ocultar de la página',
+      icon: raffle.hidden ? Eye : EyeOff,
+      onSelect: () => visibility.mutate(!raffle.hidden),
+      hidden: !canToggleVisibility,
+    },
+    { label: 'Eliminar rifa', icon: Trash2, destructive: true, onSelect: () => setConfirmDelete(true) },
+  ];
+
+  // Acción del estado: publicar el borrador o compartir la publicada.
+  const stateAction =
+    raffle.status === 'DRAFT' ? (
+      <Button
+        variant="secondary"
+        size="sm"
+        className="flex-1"
+        loading={publish.isPending}
+        loadingText="Publicando…"
+        onClick={() => publish.mutate()}
+      >
+        <Send className="h-[18px] w-[18px]" /> Publicar
+      </Button>
+    ) : raffle.status === 'PUBLISHED' && slug ? (
+      <Button variant="secondary" size="sm" className="flex-1" onClick={share}>
+        <Share2 className="h-[18px] w-[18px]" /> Compartir
+      </Button>
+    ) : null;
 
   return (
-    <div className={cn(PANEL_CARD, 'overflow-hidden')}>
-      {/* Imagen principal del premio con el evento y el estado superpuestos */}
-      <div className="relative aspect-[16/9] w-full bg-muted">
-        {cover ? (
-          <img
-            src={apiAssetUrl(cover)}
-            alt={raffle.title}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="grid h-full w-full place-items-center text-muted-foreground/50">
-            <ImageIcon className="h-10 w-10" />
-          </div>
-        )}
-        {/* Degradado inferior para que los chips se lean sobre cualquier foto */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/45 to-transparent" />
-        <span className="absolute left-3 top-3 rounded-lg bg-white/90 px-2 py-0.5 text-xs font-extrabold tracking-wide text-primary shadow-sm backdrop-blur">
-          {raffle.eventLabel}
-        </span>
-        <div className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
-          <RaffleStatusBadge status={raffle.status} />
-          {raffle.comingSoon && raffle.status === 'PUBLISHED' && (
-            <Badge variant="warning" className="gap-1">
-              <Clock className="h-3 w-3" /> Próximamente
-            </Badge>
-          )}
-          {raffle.hidden && raffle.status !== 'DRAFT' && (
-            <Badge variant="muted" className="gap-1">
-              <EyeOff className="h-3 w-3" /> Oculta
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      <div className="p-4">
-      {/* Título */}
-      <h3 className="text-lg font-extrabold leading-tight tracking-tight">{raffle.title}</h3>
-      {raffle.prize && <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">Premio: {raffle.prize}</p>}
-
-      {/* Precio + ingresos */}
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-        <span className="font-bold">{formatMXN(raffle.ticketPrice)}</span>
-        <span className="text-muted-foreground">por boleto</span>
-        <span className="ml-auto font-bold text-emerald-600 dark:text-emerald-400">
-          {formatMXN(raffle.estimatedRevenue)}
-        </span>
-      </div>
-
-      {/* Barra de progreso de venta */}
-      <div className="mt-3">
-        <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            <strong className="text-foreground">{sold.toLocaleString('es-MX')}</strong> de{' '}
-            {total.toLocaleString('es-MX')} vendidos
-          </span>
-          <span className="font-bold text-primary">{progress}%</span>
-        </div>
-        <ProgressBar value={progress} />
-      </div>
-
-      {/* Fecha de sorteo */}
-      {raffle.drawDate && (
-        <p className="mt-3 text-xs text-muted-foreground">Sorteo: {formatDateMX(raffle.drawDate)}</p>
-      )}
-
-      {/* Acciones */}
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <Button variant="outline" size="sm" onClick={() => navigate(`/admin/rifas/${raffle.id}/editar`)}>
-          Editar
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => navigate(`/admin/rifas/${raffle.id}/boletos`)}>
-          Boletos
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => navigate(`/admin/rifas/${raffle.id}/sorteo`)}>
-          Sorteo
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => navigate(`/admin/rifas/${raffle.id}/promociones`)}>
-          Promociones
-        </Button>
-      </div>
-
-      {/* Acción primaria según el estado de la rifa */}
-      {raffle.status === 'DRAFT' && (
-        <Button variant="brand" className="mt-2 w-full" loading={publish.isPending} onClick={() => publish.mutate()}>
-          Publicar rifa
-        </Button>
-      )}
-      {raffle.status === 'PUBLISHED' && slug && (
-        <Button variant="brand" className="mt-2 w-full" onClick={share}>
-          Compartir rifa
-        </Button>
-      )}
-      {raffle.status === 'FINISHED' && slug && (
-        <Button asChild variant="outline" className="mt-2 w-full">
-          <a href={buildRaffleUrl(slug, raffle.eventNumber)} target="_blank" rel="noopener noreferrer">
-            Ver resultado público
-          </a>
-        </Button>
-      )}
-
-      {/* Visibilidad en la página pública (solo aplica a rifas ya publicadas) */}
-      {raffle.status !== 'DRAFT' && raffle.status !== 'CANCELLED' && (
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border bg-muted/30 px-3 py-2.5">
-          <div className="flex items-center gap-2">
-            {raffle.hidden ? (
-              <EyeOff className="h-4 w-4 text-muted-foreground" />
-            ) : (
-              <Eye className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            )}
-            <span className="text-sm font-semibold">
-              {raffle.hidden ? 'Oculta en la página' : 'Visible en la página'}
-            </span>
-          </div>
-          <Switch
-            checked={!raffle.hidden}
-            disabled={visibility.isPending}
-            onCheckedChange={(v) => visibility.mutate(!v)}
-            aria-label="Mostrar u ocultar en la página pública"
-          />
-        </div>
-      )}
-
-      {/* Eliminar rifa (acción destructiva, con confirmación) */}
+    <article className={cn(PANEL_CARD, 'overflow-hidden')}>
+      {/* Foto del premio con el evento y el estado encima */}
       <button
         type="button"
-        onClick={() => setConfirmDelete(true)}
-        className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-destructive"
+        onClick={() => navigate(`/admin/rifas/${raffle.id}/editar`)}
+        aria-label={`Editar ${raffle.title}`}
+        className="relative block aspect-[2/1] w-full bg-rf-fill-strong outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-rf-accent/45"
       >
-        <Trash2 className="h-3.5 w-3.5" /> Eliminar rifa
+        {cover ? (
+          <img src={apiAssetUrl(cover)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
+        ) : (
+          <span className="grid h-full w-full place-items-center text-rf-tertiary">
+            <ImageIcon className="h-9 w-9" />
+          </span>
+        )}
+        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-caption font-semibold tabular-nums text-rf-label shadow-card">
+          {raffle.eventLabel}
+        </span>
+        <span className="absolute right-3 top-3 flex flex-col items-end gap-1.5">
+          <span className={cn('rounded-full px-2.5 py-1 text-caption font-semibold shadow-card', STATUS_STYLE[raffle.status])}>
+            {RAFFLE_STATUS_LABELS[raffle.status]}
+          </span>
+          {raffle.comingSoon && raffle.status === 'PUBLISHED' && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-caption font-semibold text-rf-warning shadow-card">
+              <Clock className="h-3.5 w-3.5" /> Próximamente
+            </span>
+          )}
+          {raffle.hidden && raffle.status !== 'DRAFT' && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-caption font-semibold text-rf-secondary shadow-card">
+              <EyeOff className="h-3.5 w-3.5" /> Oculta
+            </span>
+          )}
+        </span>
       </button>
+
+      <div className="p-4">
+        <h3 className="text-body font-semibold leading-snug text-rf-label">{raffle.title}</h3>
+        {raffle.prize && <p className="mt-0.5 line-clamp-1 text-callout text-rf-secondary">Premio: {raffle.prize}</p>}
+
+        {/* Números clave: vendidos e ingresos */}
+        <div className="mt-3 flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-heading tabular-nums text-rf-label">
+              {sold.toLocaleString('es-MX')}
+              <span className="text-callout font-normal text-rf-secondary"> de {total.toLocaleString('es-MX')}</span>
+            </p>
+            <p className="text-caption text-rf-secondary">boletos vendidos · {progress}%</p>
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="text-heading tabular-nums text-rf-accent">{formatMXN(raffle.estimatedRevenue)}</p>
+            <p className="text-caption text-rf-secondary">{formatMXN(raffle.ticketPrice)} por boleto</p>
+          </div>
+        </div>
+        <div className="mt-2.5">
+          <ProgressBar value={progress} />
+        </div>
+        {raffle.drawDate && (
+          <p className="mt-2.5 text-caption text-rf-secondary">Sorteo: {formatDateMX(raffle.drawDate)}</p>
+        )}
+
+        {/* Acciones: las frecuentes a la vista, el resto en «⋯». */}
+        <div className="mt-4 flex items-center gap-2">
+          <Button variant="secondary" size="sm" className="flex-1" onClick={() => navigate(`/admin/rifas/${raffle.id}/boletos`)}>
+            <Ticket className="h-[18px] w-[18px]" /> Boletos
+          </Button>
+          {stateAction}
+          <IconButton icon={MoreHorizontal} label="Más acciones" onClick={() => setMenuOpen(true)} />
+        </div>
       </div>
+
+      <ActionSheet
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+        title={raffle.title}
+        description={`${raffle.eventLabel} · ${RAFFLE_STATUS_LABELS[raffle.status]}`}
+        actions={sheetActions}
+      />
 
       <ConfirmDialog
         open={confirmDelete}
@@ -236,8 +233,8 @@ function RaffleCard({ raffle, slug }: { raffle: RaffleDTO; slug?: string }) {
         title="¿Eliminar esta rifa?"
         description={
           <>
-            Se eliminará <span className="font-semibold">{raffle.title}</span> ({raffle.eventLabel}) junto con{' '}
-            <span className="font-semibold">todas sus órdenes, pagos, boletos, ganador, imágenes y promociones</span>.
+            Se eliminará <span className="font-semibold text-rf-label">{raffle.title}</span> ({raffle.eventLabel}) junto
+            con <span className="font-semibold text-rf-label">todas sus órdenes, pagos, boletos, ganador, imágenes y promociones</span>.
             Esta acción no se puede deshacer.
           </>
         }
@@ -246,14 +243,14 @@ function RaffleCard({ raffle, slug }: { raffle: RaffleDTO; slug?: string }) {
         loading={remove.isPending}
         onConfirm={() => remove.mutate()}
       />
-    </div>
+    </article>
   );
 }
 
 export default function RafflesList() {
   const navigate = useNavigate();
 
-  const { data, isLoading, isError, error } = useQuery({
+  const { data, isLoading, isError, error, refetch, isFetching } = useQuery({
     queryKey: ['raffles'],
     queryFn: () => raffleService.list(),
   });
@@ -264,34 +261,31 @@ export default function RafflesList() {
 
   return (
     <div>
-      <PanelIntro
-        description="Crea, publica y administra tus sorteos."
-        action={
-          <Button variant="brand" size="sm" onClick={() => navigate('/admin/rifas/nueva')}>
-            <Plus className="h-4 w-4" /> Nueva rifa
-          </Button>
-        }
-      />
+      <HeaderAction label="Nueva rifa" icon={Plus} onClick={() => navigate('/admin/rifas/nueva')} />
+      <PanelIntro description="Crea, publica y administra tus sorteos." />
 
       {isLoading ? (
         <PageLoader label="Cargando tus rifas..." />
       ) : isError ? (
-        <EmptyState
+        <ErrorState
           title="No pudimos cargar tus rifas"
-          description={error instanceof ApiError ? error.message : 'Algo salió mal. Intenta de nuevo.'}
+          description={error instanceof ApiError ? error.message : undefined}
+          onRetry={() => void refetch()}
+          retrying={isFetching}
         />
       ) : raffles.length === 0 ? (
         <EmptyState
+          icon={<Ticket />}
           title="Aún no tienes rifas"
           description="Crea tu primera rifa y empieza a vender boletos en minutos."
           action={
-            <Button variant="brand" onClick={() => navigate('/admin/rifas/nueva')}>
-              <Plus className="h-4 w-4" /> Crear mi primera rifa
+            <Button onClick={() => navigate('/admin/rifas/nueva')}>
+              <Plus className="h-5 w-5" /> Crear rifa
             </Button>
           }
         />
       ) : (
-        <div className="grid gap-3 xl:grid-cols-2">
+        <div className="grid items-start gap-3 lg:grid-cols-2">
           {raffles.map((raffle) => (
             <RaffleCard key={raffle.id} raffle={raffle} slug={slug} />
           ))}

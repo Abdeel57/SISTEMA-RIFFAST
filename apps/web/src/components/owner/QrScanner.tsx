@@ -125,7 +125,7 @@ export function QrScanner({ open, onOpenChange }: { open: boolean; onOpenChange:
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <QrCode className="h-5 w-5" />
+            <QrCode className="h-6 w-6 text-rf-accent" />
             Validar boleto
           </DialogTitle>
           <DialogDescription>
@@ -136,27 +136,32 @@ export function QrScanner({ open, onOpenChange }: { open: boolean; onOpenChange:
         </DialogHeader>
 
         {supported && !error && (
-          <div className="relative overflow-hidden rounded-2xl bg-black">
+          <div className="relative overflow-hidden rounded-card bg-black">
             {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
             <video ref={videoRef} className="aspect-square w-full object-cover" playsInline muted />
             <div className="pointer-events-none absolute inset-0 grid place-items-center">
-              <div className="h-2/3 w-2/3 rounded-2xl border-2 border-white/80 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
+              <div className="h-2/3 w-2/3 rounded-card border-2 border-white/85 shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
               <ScanLine className="absolute h-10 w-10 animate-pulse text-white/90" />
             </div>
           </div>
         )}
 
         {error && (
-          <div className="flex items-center gap-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-950 dark:text-amber-300">
-            <Camera className="h-4 w-4 shrink-0" />
+          <div role="alert" className="flex items-center gap-2.5 rounded-control bg-rf-warning/10 p-3 text-callout text-rf-warning">
+            <Camera className="h-5 w-5 shrink-0" />
             {error}
           </div>
         )}
 
         {/* Fallback / alternativa: captura manual del folio */}
-        <div className="flex flex-col gap-2">
-          <label htmlFor="qr-manual" className="flex items-center gap-1.5 text-sm font-semibold">
-            <KeyRound className="h-4 w-4 text-muted-foreground" />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            submitManual();
+          }}
+        >
+          <label htmlFor="qr-manual" className="mb-2 flex items-center gap-1.5 text-callout font-medium text-rf-label">
+            <KeyRound className="h-4 w-4 text-rf-secondary" />
             Folio del boleto
           </label>
           <div className="flex gap-2">
@@ -166,13 +171,16 @@ export function QrScanner({ open, onOpenChange }: { open: boolean; onOpenChange:
               onChange={(e) => setManual(e.target.value)}
               placeholder="Ej. ABC123"
               autoComplete="off"
-              onKeyDown={(e) => e.key === 'Enter' && submitManual()}
+              autoCapitalize="characters"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="go"
             />
-            <Button onClick={submitManual} disabled={!manual.trim()}>
+            <Button type="submit" disabled={!manual.trim()}>
               Validar
             </Button>
           </div>
-        </div>
+        </form>
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>

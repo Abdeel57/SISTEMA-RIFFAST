@@ -94,19 +94,19 @@ export function OwnerShell() {
       <SurfaceProvider value={ADMIN_SURFACE}>
       <div className="rf-admin grid min-h-[100dvh] place-items-center px-6 text-center">
         <div className="w-full max-w-sm">
-          <h1 className="text-xl font-bold">No pudimos cargar tu página</h1>
-          <p className="mt-2 text-muted-foreground">
+          <h1 className="text-heading text-rf-label">No pudimos cargar tu página</h1>
+          <p className="mt-2 text-callout text-rf-secondary">
             Revisa tu conexión a internet e inténtalo de nuevo.
           </p>
           <Button
             className="mt-6 w-full"
-            size="lg"
             loading={profileQ.isFetching}
+            loadingText="Reintentando…"
             onClick={() => void profileQ.refetch()}
           >
             Reintentar
           </Button>
-          <Button asChild variant="ghost" className="mt-2 w-full" size="lg">
+          <Button asChild variant="ghost" className="mt-2 w-full">
             <Link to="/login">Volver a iniciar sesión</Link>
           </Button>
         </div>
