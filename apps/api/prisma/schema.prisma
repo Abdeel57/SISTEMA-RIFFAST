@@ -135,6 +135,12 @@ model User {
   passwordResetTokens PasswordResetToken[]
   pushSubscriptions   PushSubscription[]
 
+  // Asistencia 24 h (chat con IA del administrador).
+  assistantConversations AssistantConversation[]
+  assistantActions       AssistantAction[]
+  assistantCalls         AssistantCall[]
+  assistantReports       AssistantReport[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -605,4 +611,100 @@ model StoredAsset {
   bytes     Bytes
   size      Int
   createdAt DateTime @default(now())
+}
+
+// ─────────────────────────────────────────────────────────────
+// ASISTENCIA 24 H (chat con IA dentro del administrador)
+// ─────────────────────────────────────────────────────────────
+// El usuario y la cuenta (riferoId) salen SIEMPRE de la sesión. Los estados se
+// guardan como texto con los valores del módulo `assistant` (en español).
+
+// Conversación de un usuario del panel. Solo una activa a la vez por usuario.
+model AssistantConversation {
+  id       String  @id @default(cuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  riferoId String
+  active   Boolean @default(true)
+  // Última zona horaria que mandó el navegador (para fechas en las tarjetas).
+  timeZone String?
+
+  messages AssistantMessage[]
+  actions  AssistantAction[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, active])
+  @@index([riferoId])
+}
+
+// Mensaje en formato neutral (independiente del proveedor de IA). Las imágenes
+// NO se guardan: en su lugar queda "[Adjuntó 1 imagen]".
+model AssistantMessage {
+  id             String                @id @default(cuid())
+  conversationId String
+  conversation   AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String // user | assistant | tool
+  message        Json
+  tokensIn       Int?
+  tokensOut      Int?
+  createdAt      DateTime              @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([role, createdAt])
+}
+
+// Cambio propuesto por la IA. Nunca se ejecuta sin que el usuario toque
+// «Confirmar» en la tarjeta. estado: pendiente|ejecutando|hecha|cancelada|expirada|fallida
+model AssistantAction {
+  id             String                @id @default(cuid())
+  userId         String
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  riferoId       String
+  conversationId String
+  conversation   AssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  tool           String
+  args           Json
+  card           Json
+  status         String                @default("pendiente")
+  expiresAt      DateTime
+  result         Json?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  @@index([conversationId])
+  @@index([userId, status])
+}
+
+// Llamada pedida al equipo. estado: nueva|en_curso|resuelta
+model AssistantCall {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  riferoId       String
+  conversationId String?
+  phone          String
+  reason         String
+  urgency        String // alta | media
+  attempted      String?
+  status         String   @default("nueva")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+// Reporte para el equipo (falla, duda sin resolver o sugerencia).
+model AssistantReport {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  riferoId    String
+  type        String // falla | duda_sin_resolver | sugerencia
+  description String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
 }
