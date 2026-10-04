@@ -36,6 +36,7 @@ import notificationsRoutes from './modules/notifications/notifications.routes.js
 import ogRoutes from './modules/og/og.routes.js';
 import pushRoutes from './modules/push/push.routes.js';
 import liveRoutes from './modules/live/live.routes.js';
+import assistantRoutes from './modules/assistant/assistant.routes.js';
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({
@@ -182,6 +183,7 @@ export async function buildApp(): Promise<FastifyInstance> {
       await api.register(pushRoutes);
       await api.register(liveRoutes);
       await api.register(publicRoutes);
+      await api.register(assistantRoutes);
     },
     { prefix: '/api' },
   );
