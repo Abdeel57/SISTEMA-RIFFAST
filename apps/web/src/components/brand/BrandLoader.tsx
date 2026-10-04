@@ -3,14 +3,16 @@ import { cn } from '@/lib/cn';
 import { useIntroHold } from '@/lib/intro';
 import cloverUrl from '@/assets/riffast-clover.svg';
 
-// Recorta una capa a la silueta del trébol (SVG transparente).
+// Recorta una capa a la silueta del trébol (SVG transparente). La URL va entre
+// comillas: en producción Vite incrusta el SVG como data URI con comillas
+// simples, y sin comillas el navegador descarta la máscara (se vería la caja).
 function maskFor(url: string): CSSProperties {
   return {
-    maskImage: `url(${url})`,
+    maskImage: `url("${url}")`,
     maskSize: 'contain',
     maskRepeat: 'no-repeat',
     maskPosition: 'center',
-    WebkitMaskImage: `url(${url})`,
+    WebkitMaskImage: `url("${url}")`,
     WebkitMaskSize: 'contain',
     WebkitMaskRepeat: 'no-repeat',
     WebkitMaskPosition: 'center',

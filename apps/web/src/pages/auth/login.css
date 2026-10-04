@@ -60,6 +60,7 @@
 /* ── Franja de marca ─────────────────────────────────────────────────────── */
 .rf-login-band {
   --clear-size: 160px 104px; /* claro del mosaico alrededor de logo + sello */
+  --float-clear: 200px 120px; /* claro (más amplio) para las figuras que se mueven */
   --clear-pos: 50% 48%;
   grid-column: full;
   grid-row: 1 / 4;
@@ -69,10 +70,12 @@
     radial-gradient(75% 60% at 50% 100%, rgb(var(--login-glow) / 0.3) 0%, rgb(var(--login-glow) / 0) 72%),
     linear-gradient(180deg, var(--login-band-top) 0%, var(--login-band-mid) 58%, var(--login-band-low) 100%);
 }
-/* Mosaico de tréboles y boletos (SVG estático al 6 %). Se desvanece hacia
-   abajo y deja un claro alrededor del logotipo para no competir con él. */
+/* Mosaico fijo de tréboles y boletos (SVG estático al 6 %): solo se usa con
+   «reducir movimiento» (ver al final); normalmente las figuras flotan.
+   Se desvanece hacia abajo y deja un claro alrededor del logotipo. */
 .rf-login-band::before {
   content: '';
+  display: none;
   position: absolute;
   inset: 0;
   background: url('../../assets/login-pattern.svg') 0 0 / 200px 200px repeat;
@@ -86,6 +89,73 @@
   -webkit-mask-composite: source-in;
   mask-composite: intersect;
 }
+/* Figuras flotantes: tréboles y boletos que nacen bajo la franja, suben con un
+   vaivén suave y se desvanecen al llegar arriba. Cada figura es una columna
+   del alto de la franja que se desplaza con transform (translateY en % de su
+   propio alto = el de la franja), así recorre todo el verde en cualquier
+   tamaño sin animar propiedades de layout. El claro alrededor del logotipo se
+   respeta con la misma máscara del mosaico. */
+.rf-login-float {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(var(--float-clear) at var(--clear-pos), transparent 55%, #000 100%);
+  mask-image: radial-gradient(var(--float-clear) at var(--clear-pos), transparent 55%, #000 100%);
+}
+.rf-float {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--x);
+  width: var(--s);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: rf-float-rise var(--d) linear var(--delay) infinite;
+}
+.rf-float-shape {
+  display: block;
+  width: var(--s);
+  color: #fff;
+  animation: rf-float-sway calc(var(--d) * 0.45) ease-in-out var(--delay) infinite alternate;
+}
+.rf-float-clover {
+  height: calc(var(--s) * 1.08); /* proporción del trébol: 424 / 392 */
+  background-color: #fff;
+}
+.rf-float-ticket {
+  height: calc(var(--s) * 0.571); /* proporción del boleto: 16 / 28 */
+}
+.rf-float-ticket svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+@keyframes rf-float-rise {
+  0% {
+    transform: translate3d(0, 100%, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: var(--o);
+  }
+  55% {
+    opacity: var(--o);
+  }
+  100% {
+    transform: translate3d(0, calc(-1 * var(--s) - 12px), 0);
+    opacity: 0;
+  }
+}
+@keyframes rf-float-sway {
+  from {
+    transform: translate3d(calc(-0.5 * var(--sway)), 0, 0) rotate(var(--r));
+  }
+  to {
+    transform: translate3d(calc(0.5 * var(--sway)), 0, 0) rotate(calc(var(--r) + 24deg));
+  }
+}
+
 /* Borde festoneado, como el corte de un rollo de boletos (desde tableta; en
    celular solo se verían dos mordidas sueltas a los lados del boleto). */
 .rf-login-band::after {
@@ -570,6 +640,7 @@
   }
   .rf-login-band {
     --clear-size: 300px 150px;
+    --float-clear: 340px 180px;
     --clear-pos: 50% 56%;
   }
   .rf-login-band::after {
@@ -602,6 +673,7 @@
   }
   .rf-login-band {
     --clear-size: 150px 70px;
+    --float-clear: 180px 80px;
     --clear-pos: 50% 50%;
   }
   .rf-login-brand {
@@ -632,6 +704,7 @@
   }
   .rf-login-band {
     --clear-size: 560px 300px;
+    --float-clear: 600px 340px;
     --clear-pos: 45% 46%;
     grid-column: full-start / band-end;
     grid-row: 1 / -1;
@@ -691,10 +764,15 @@
   }
 }
 
-/* ── Menos movimiento: sin destello y sin entrada del boleto ─────────────── */
+/* ── Menos movimiento: sin destello, sin figuras flotantes (vuelve el mosaico
+   fijo) y sin entrada del boleto ─────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
-  .rf-login-shine {
+  .rf-login-shine,
+  .rf-login-float {
     display: none;
+  }
+  .rf-login-band::before {
+    display: block;
   }
   .rf-ticket {
     animation: none;
