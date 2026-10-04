@@ -166,6 +166,7 @@ Restricciones: `npm run typecheck --workspace=@riffast/web` limpio. `App.tsx`/`m
   - `components/brand/RiferoTheme.tsx`: dentro de `/admin` ya no pinta `theme-color` ni el fondo de `<html>/<body>` (la página detrás del panel y la vista previa de Apariencia pisaban el color del admin). En público, igual que antes.
   - `components/layout/InstallBanner.tsx`: se oculta en `/admin` y `/login` (el admin tiene su propia invitación: `components/owner/InstallApp.tsx`). `lib/pwa/useInstallPrompt.ts`: si el admin ya usó el mismo `beforeinstallprompt`, el botón público ya no falla en silencio.
   - Burbuja **Asistencia 24 h** (`components/owner/Assistant.tsx`): carga `VITE_SUPPORT_CHAT_URL` dentro del panel; sin ella ofrece WhatsApp (`VITE_RIFFAST_WHATSAPP`).
+  - Login «El boleto de la suerte» (franja verde + formulario en forma de boleto): `pages/auth/Login.tsx`, `LoginShell.tsx`, `LoginField.tsx`, `login.css` (CSS propio, sin directivas de Tailwind) y `assets/login-pattern.svg`. `ThemeController.tsx` + `store/theme.ts`: en `/login` el theme-color es `LOGIN_THEME_COLOR` (#045A3B) y el `<html>` lleva `rf-login-route`; en `/admin` sigue #F5F5F7. Autenticación sin cambios.
   - **No** se tocó `TicketGrid.tsx` ni `pages/public/**`.
 
 ## 🔄 Protocolo de integración (orquestador)

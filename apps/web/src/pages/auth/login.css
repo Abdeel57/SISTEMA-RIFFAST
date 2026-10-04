@@ -1,0 +1,702 @@
+/* ──────────────────────────────────────────────────────────────────────────
+   Inicio de sesión del administrador — «El boleto de la suerte».
+   Franja verde profunda con el logotipo blanco, un mosaico muy suave de
+   tréboles y boletos y un destello que cruza el trébol; el formulario es un
+   boleto blanco con talón perforado que se monta sobre la franja.
+     · Celular y tableta: una columna; el boleto entra 64 px (80 px desde 640)
+       en el verde.
+     · Computadora (≥ 1024 px, horizontal): panel verde a la izquierda con el
+       logo y el lema, boleto a la derecha montado 48 px sobre el borde.
+   CSS propio, sin directivas de Tailwind (este archivo lo importa Login.tsx y
+   solo afecta a /login). Lo que se mueve (destello y entrada del boleto) usa
+   transform/opacity y se apaga con «reducir movimiento».
+   ────────────────────────────────────────────────────────────────────────── */
+
+.rf-login {
+  --login-band-top: #045a3b; /* = LOGIN_THEME_COLOR (store/theme.ts) */
+  --login-band-mid: #066641;
+  --login-band-low: #077148;
+  --login-glow: 16 198 95; /* #10C65F: luz detrás del boleto */
+  --login-mint: 141 247 188; /* #8DF7BC: bordes del destello */
+  --login-bg: #f5f5f7;
+  --login-stub: #f3f7f5; /* talón del boleto */
+  --login-line: #d2d2d7; /* borde de campo */
+  --login-perf: #c7c7cc; /* puntos de la perforación (decorativo) */
+  --login-ink: #1d1d1f;
+  --login-ink-2: #6e6e73; /* secundario sobre blanco: 5.1:1 */
+  --login-ink-3: #5e5e63; /* secundario sobre gris o relleno: ≥ 5.7:1 */
+  --login-accent: #08804f;
+  --login-danger: #d70015;
+  --login-notch: 14px; /* radio de las muescas del boleto */
+  --login-ease: cubic-bezier(0.32, 0.72, 0, 1);
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  /* Filas: [respiro] [marca] [traslape 64 px] [resto del boleto] [primera vez]
+     [respiro]. La franja cubre las tres primeras: el boleto siempre empieza
+     64 px dentro del verde, sin cálculos. Los respiros (fr) reparten el alto
+     sobrante y valen casi 0 con el teclado abierto. */
+  grid-template-columns:
+    [full-start] minmax(max(16px, env(safe-area-inset-left)), 1fr)
+    [main-start] minmax(0, 440px) [main-end]
+    minmax(max(16px, env(safe-area-inset-right)), 1fr) [full-end];
+  grid-template-rows: minmax(0, 1fr) auto 64px auto auto minmax(max(16px, env(safe-area-inset-bottom)), 1.4fr);
+  background-color: var(--login-bg);
+}
+
+/* Rebote del scroll en iOS: arriba verde (la franja), abajo gris. Solo donde la
+   franja llega al borde de arriba (en computadora es un panel con margen). */
+@media (max-width: 1023px), (orientation: portrait) {
+  :root.rf-login-route {
+    background-color: #045a3b;
+    background-image: linear-gradient(180deg, #045a3b 0 50%, #f5f5f7 50% 100%);
+  }
+  :root.rf-login-route body {
+    background-color: transparent;
+  }
+}
+
+/* ── Franja de marca ─────────────────────────────────────────────────────── */
+.rf-login-band {
+  --clear-size: 160px 104px; /* claro del mosaico alrededor de logo + sello */
+  --clear-pos: 50% 48%;
+  grid-column: full;
+  grid-row: 1 / 4;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(75% 60% at 50% 100%, rgb(var(--login-glow) / 0.3) 0%, rgb(var(--login-glow) / 0) 72%),
+    linear-gradient(180deg, var(--login-band-top) 0%, var(--login-band-mid) 58%, var(--login-band-low) 100%);
+}
+/* Mosaico de tréboles y boletos (SVG estático al 6 %). Se desvanece hacia
+   abajo y deja un claro alrededor del logotipo para no competir con él. */
+.rf-login-band::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('../../assets/login-pattern.svg') 0 0 / 200px 200px repeat;
+  opacity: 0.06;
+  -webkit-mask-image:
+    radial-gradient(var(--clear-size) at var(--clear-pos), transparent 55%, #000 100%),
+    linear-gradient(180deg, #000 0%, #000 35%, transparent 92%);
+  mask-image:
+    radial-gradient(var(--clear-size) at var(--clear-pos), transparent 55%, #000 100%),
+    linear-gradient(180deg, #000 0%, #000 35%, transparent 92%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+/* Borde festoneado, como el corte de un rollo de boletos (desde tableta; en
+   celular solo se verían dos mordidas sueltas a los lados del boleto). */
+.rf-login-band::after {
+  content: '';
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 7px;
+  background: radial-gradient(circle at 50% 100%, var(--login-bg) 4.5px, transparent 5px) 4px 0 / 16px 7px repeat-x;
+}
+
+/* ── Marca: logotipo con destello, sello y lema ──────────────────────────── */
+.rf-login-brand {
+  grid-column: main;
+  grid-row: 2;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: max(40px, calc(env(safe-area-inset-top) + 24px)) 0 32px;
+  color: #fff;
+}
+.rf-login-logo {
+  position: relative;
+  display: flex;
+}
+.rf-login .rf-login-logo-img {
+  height: 52px;
+}
+/* Capa recortada a la silueta del trébol (máscara en el componente). Dentro
+   viaja una franja de luz solo con transform: pasa al cargar y luego una vez
+   cada 7 s; entre pasadas queda fuera del trébol y el logo se ve plano. */
+.rf-login-shine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 29.742%; /* caja del trébol dentro del logotipo: 392 / 1318 */
+  height: 99.065%; /* 424 / 428 */
+  overflow: hidden;
+  pointer-events: none;
+}
+.rf-login-shine::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    transparent 36%,
+    rgb(var(--login-mint) / 0.45) 45%,
+    rgb(255 255 255 / 0.85) 50%,
+    rgb(var(--login-mint) / 0.45) 55%,
+    transparent 64%
+  );
+  transform: translateX(-110%);
+  animation: rf-login-shine 7s cubic-bezier(0.45, 0.05, 0.55, 0.95) 0.9s infinite;
+}
+@keyframes rf-login-shine {
+  0% {
+    transform: translateX(-110%);
+  }
+  20%,
+  100% {
+    transform: translateX(110%);
+  }
+}
+/* Mientras la persona escribe (cualquier foco en la pantalla) no hay destello. */
+.rf-login:focus-within .rf-login-shine {
+  display: none;
+}
+
+/* Sello «Panel del rifero» con forma de boleto (muescas a los lados). Blanco
+   sobre blanco 12 % encima de la franja: ≥ 4.7:1 en cualquier punto. */
+.rf-login-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  margin-top: 16px;
+  padding: 0 14px;
+  border-radius: 6px;
+  background-color: rgb(255 255 255 / 0.12);
+  color: #fff;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  -webkit-mask:
+    radial-gradient(circle at 0 50%, transparent 4px, #000 4.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 50%, transparent 4px, #000 4.5px) right / 51% 100% no-repeat;
+  mask:
+    radial-gradient(circle at 0 50%, transparent 4px, #000 4.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 50%, transparent 4px, #000 4.5px) right / 51% 100% no-repeat;
+}
+.rf-login-tagline {
+  display: none;
+  max-width: 440px;
+  margin-top: 20px;
+  color: #fff;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.016em;
+  text-wrap: balance;
+}
+
+/* ── Boleto ──────────────────────────────────────────────────────────────── */
+.rf-ticket {
+  grid-column: main;
+  grid-row: 3 / 5;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  overflow: hidden; /* recorta la mitad de fuera del borde de las muescas */
+  border-radius: 20px;
+  box-shadow:
+    0 1px 2px rgb(16 41 31 / 0.05),
+    0 18px 40px -18px rgb(16 41 31 / 0.2);
+  animation: rf-ticket-in 250ms var(--login-ease) both;
+}
+@keyframes rf-ticket-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* Cuerpo y talón pintan su fondo en dos mitades: cada una deja un cuarto de
+   círculo transparente en su esquina y juntas forman las muescas (se ve lo que
+   hay detrás del boleto). Sin máscaras ni filtros. */
+.rf-ticket-body {
+  position: relative;
+  padding: 28px 20px 12px;
+  border-radius: 20px 20px 0 0;
+  background:
+    radial-gradient(circle at 0 100%, transparent var(--login-notch), #fff calc(var(--login-notch) + 0.5px)) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 100%, transparent var(--login-notch), #fff calc(var(--login-notch) + 0.5px)) right / 51% 100% no-repeat;
+}
+.rf-ticket-stub {
+  position: relative;
+  padding: 20px;
+  border-radius: 0 0 20px 20px;
+  background:
+    radial-gradient(circle at 0 0, transparent var(--login-notch), var(--login-stub) calc(var(--login-notch) + 0.5px)) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 0, transparent var(--login-notch), var(--login-stub) calc(var(--login-notch) + 0.5px)) right / 51% 100% no-repeat;
+}
+/* Línea perforada entre cuerpo y talón (solo puntos completos). */
+.rf-ticket-stub::before {
+  content: '';
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  top: -2px;
+  height: 4px;
+  background: radial-gradient(circle, var(--login-perf) 1.5px, transparent 2px) 0 50% / 10px 4px;
+  background-repeat: space no-repeat;
+}
+/* Borde interior de cada muesca: círculo centrado en el filo; el boleto
+   (overflow: hidden) recorta la mitad de fuera y queda el arco de adentro. */
+.rf-ticket-body::after,
+.rf-ticket-stub::after {
+  content: '';
+  position: absolute;
+  width: calc(var(--login-notch) * 2);
+  height: calc(var(--login-notch) * 2);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 0 1px rgb(2 38 24 / 0.07),
+    inset 0 2px 4px rgb(2 38 24 / 0.12);
+  pointer-events: none;
+}
+.rf-ticket-body::after {
+  right: calc(var(--login-notch) * -1);
+  bottom: calc(var(--login-notch) * -1);
+}
+.rf-ticket-stub::after {
+  left: calc(var(--login-notch) * -1);
+  top: calc(var(--login-notch) * -1);
+}
+
+/* ── Campos con etiqueta flotante (la etiqueta va DESPUÉS del campo) ─────── */
+.rf-login-field {
+  position: relative;
+}
+.rf-login-input {
+  display: block;
+  width: 100%;
+  height: 56px;
+  margin: 0;
+  padding: 24px 15px 6px; /* + 1 px de borde = 16 px de margen visual */
+  border: 1px solid var(--login-line);
+  border-radius: 12px;
+  background-color: #fff;
+  color: var(--login-ink);
+  font-size: 17px; /* iOS no hace zoom al enfocar */
+  line-height: 24px;
+  letter-spacing: -0.011em;
+  caret-color: var(--login-accent);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  transition: border-color 150ms ease-out;
+}
+.rf-login-input--password {
+  padding-right: 56px;
+}
+.rf-login-label {
+  position: absolute;
+  left: 16px;
+  top: 16px;
+  max-width: calc(100% - 32px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 17px;
+  line-height: 24px;
+  letter-spacing: -0.011em;
+  color: var(--login-ink-2);
+  transform-origin: 0 0;
+  pointer-events: none;
+  transition:
+    transform 150ms var(--login-ease),
+    color 150ms ease-out;
+}
+.rf-login-input--password + .rf-login-label {
+  max-width: calc(100% - 72px);
+}
+/* Sube y se encoge de 17 a 13 px (solo transform) al enfocar, con texto o con
+   autocompletado. Reglas separadas: un selector desconocido anularía la lista. */
+.rf-login-input:focus + .rf-login-label,
+.rf-login-input:not(:placeholder-shown) + .rf-login-label {
+  transform: translateY(-8px) scale(0.7647);
+}
+.rf-login-input:-webkit-autofill + .rf-login-label {
+  transform: translateY(-8px) scale(0.7647);
+}
+.rf-login-input:autofill + .rf-login-label {
+  transform: translateY(-8px) scale(0.7647);
+}
+@media (hover: hover) {
+  .rf-login-input:hover {
+    border-color: #b9b9bf;
+  }
+}
+.rf-login-input:focus {
+  border-color: var(--login-accent);
+  box-shadow:
+    inset 0 0 0 1px var(--login-accent),
+    0 0 0 4px rgb(8 128 79 / 0.14);
+}
+.rf-login-input:focus + .rf-login-label {
+  color: var(--login-accent);
+}
+/* Rojo solo con el error PROPIO del campo (data-error). El error del servidor
+   marca aria-invalid en la contraseña para el lector de pantalla, pero no la
+   pinta de rojo: el aviso ya está junto al botón. */
+.rf-login-input[data-error='true'] {
+  border-color: var(--login-danger);
+  box-shadow: inset 0 0 0 1px var(--login-danger);
+}
+.rf-login-input[data-error='true']:focus {
+  box-shadow:
+    inset 0 0 0 1px var(--login-danger),
+    0 0 0 4px rgb(215 0 21 / 0.12);
+}
+.rf-login-input[data-error='true'] + .rf-login-label {
+  color: var(--login-danger);
+}
+/* Autocompletado del navegador: sin el fondo azul/amarillo (sombra interior
+   blanca debajo de los anillos). */
+.rf-login-input:-webkit-autofill {
+  -webkit-text-fill-color: var(--login-ink);
+  box-shadow: inset 0 0 0 100px #fff;
+}
+.rf-login-input:-webkit-autofill:focus {
+  box-shadow:
+    inset 0 0 0 1px var(--login-accent),
+    0 0 0 4px rgb(8 128 79 / 0.14),
+    inset 0 0 0 100px #fff;
+}
+.rf-login-input[data-error='true']:-webkit-autofill {
+  box-shadow:
+    inset 0 0 0 1px var(--login-danger),
+    inset 0 0 0 100px #fff;
+}
+
+/* Botón del ojo (mostrar u ocultar la contraseña): 44 × 44 px. */
+.rf-login-eye {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  background-color: transparent;
+  color: var(--login-ink-2);
+  cursor: pointer;
+  transition:
+    background-color 150ms ease-out,
+    opacity 150ms ease-out;
+}
+@media (hover: hover) {
+  .rf-login-eye:hover {
+    background-color: #f2f2f7;
+  }
+}
+.rf-login-eye:active {
+  opacity: 0.55;
+}
+
+/* ── Botones y enlaces ───────────────────────────────────────────────────── */
+/* «Iniciar sesión» es el Button compartido; aquí solo el tono al pasar el
+   puntero y que no se apague mientras inicia sesión (texto legible). */
+@media (hover: hover) {
+  .rf-login .rf-login-submit:hover:not(:active):not(:disabled) {
+    background-color: #07744a;
+  }
+}
+.rf-login .rf-login-submit[aria-busy='true'] {
+  opacity: 1;
+}
+
+.rf-login-forgot {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 4px auto 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9999px;
+  background: none;
+  color: var(--login-accent);
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 600;
+  letter-spacing: -0.006em;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: opacity 150ms ease-out;
+}
+@media (hover: hover) {
+  .rf-login-forgot:hover {
+    text-decoration-line: underline;
+  }
+}
+.rf-login-forgot:active {
+  opacity: 0.6;
+}
+
+/* Ayuda de «¿Olvidaste tu contraseña?»: tarjeta pequeña dentro del boleto. */
+.rf-login-help {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 4px 0 8px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background-color: #f2f2f7;
+}
+.rf-login-help[hidden] {
+  display: none;
+}
+
+/* Píldoras blancas con borde verde (verde sobre blanco: 4.99:1). */
+.rf-login-pill,
+.rf-login-wa {
+  border: 1px solid rgb(8 128 79 / 0.45);
+  border-radius: 9999px;
+  background-color: #fff;
+  color: var(--login-accent);
+  font-weight: 600;
+  text-decoration: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition:
+    transform 150ms var(--login-ease),
+    background-color 150ms ease-out;
+}
+.rf-login-pill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  font-size: 17px;
+  line-height: 24px;
+  letter-spacing: -0.011em;
+}
+.rf-login-wa {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  margin-top: 12px;
+  padding: 0 16px;
+  font-size: 15px;
+  line-height: 20px;
+  letter-spacing: -0.006em;
+  white-space: nowrap;
+}
+@media (hover: hover) {
+  .rf-login-pill:hover,
+  .rf-login-wa:hover {
+    background-color: #f0f7f3;
+  }
+}
+.rf-login-pill:active,
+.rf-login-wa:active {
+  transform: scale(0.98);
+  background-color: #e6f1eb;
+}
+
+/* Foco con teclado en todo lo interactivo: anillo verde sólido de 2 px
+   separado 2 px en blanco (4.99:1 contra el blanco del boleto). */
+.rf-login-ring:focus {
+  outline: none;
+}
+.rf-login-ring:focus-visible {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px var(--login-accent);
+}
+
+/* ── Debajo del boleto ───────────────────────────────────────────────────── */
+.rf-login-first {
+  grid-column: main;
+  grid-row: 5;
+  margin: 20px 8px 0;
+  text-align: center;
+  font-size: 15px;
+  line-height: 20px;
+  letter-spacing: -0.006em;
+  color: var(--login-ink-3);
+  text-wrap: balance;
+}
+.rf-login-first strong {
+  color: var(--login-ink);
+  font-weight: 600;
+}
+
+/* ── Celulares angostos: un poco menos de relleno en el boleto ───────────── */
+@media (max-width: 380px) {
+  .rf-ticket-body,
+  .rf-ticket-stub {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* ── Celulares bajos (SE, 360 × 740…): todo cabe sin desplazar ───────────── */
+@media (max-width: 639px) and (max-height: 700px) {
+  .rf-login-brand {
+    padding: max(24px, calc(env(safe-area-inset-top) + 16px)) 0 24px;
+  }
+  .rf-login .rf-login-logo-img {
+    height: 44px;
+  }
+  .rf-login-chip {
+    margin-top: 12px;
+  }
+  .rf-ticket-body {
+    padding-top: 24px;
+  }
+  .rf-login-first {
+    margin-top: 16px;
+  }
+}
+
+/* ── Tableta (≥ 640 px): misma composición, más aire y lema visible ──────── */
+@media (min-width: 640px) {
+  .rf-login {
+    grid-template-rows: minmax(0, 1fr) auto 80px auto auto minmax(max(24px, env(safe-area-inset-bottom)), 1.2fr);
+  }
+  .rf-login-band {
+    --clear-size: 300px 150px;
+    --clear-pos: 50% 56%;
+  }
+  .rf-login-band::after {
+    display: block;
+  }
+  .rf-login-brand {
+    padding: max(64px, calc(env(safe-area-inset-top) + 40px)) 0 40px;
+  }
+  .rf-login .rf-login-logo-img {
+    height: 64px;
+  }
+  .rf-login-tagline {
+    display: block;
+  }
+  .rf-ticket-body {
+    padding: 32px 32px 12px;
+  }
+  .rf-ticket-stub {
+    padding: 20px 32px 24px;
+  }
+  .rf-login-first {
+    margin-top: 24px;
+  }
+}
+
+/* ── Celular acostado (alto ≤ 500 px): franja compacta, «Usuario» a la vista ─ */
+@media (max-width: 1023px) and (max-height: 500px) and (orientation: landscape) {
+  .rf-login {
+    grid-template-rows: minmax(0, 1fr) auto 48px auto auto minmax(max(16px, env(safe-area-inset-bottom)), 1fr);
+  }
+  .rf-login-band {
+    --clear-size: 150px 70px;
+    --clear-pos: 50% 50%;
+  }
+  .rf-login-brand {
+    padding: max(20px, calc(env(safe-area-inset-top) + 12px)) 0 24px;
+  }
+  .rf-login .rf-login-logo-img {
+    height: 40px;
+  }
+  .rf-login-chip,
+  .rf-login-tagline {
+    display: none;
+  }
+}
+
+/* ── Computadora (≥ 1024 px, horizontal): panel de marca a la izquierda, boleto
+   a la derecha montado 48 px sobre el borde del panel (como en el celular, pero
+   de lado). Marca y boleto en una sola fila centrada en el alto: no queda gris
+   vacío. Una tableta grande en vertical conserva la franja de arriba. ── */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .rf-login {
+    grid-template-columns:
+      [full-start] minmax(64px, 1fr)
+      [brand-start] minmax(0, 520px) [brand-end]
+      minmax(48px, 1fr)
+      [ticket-start] 48px [band-end] 352px [ticket-end]
+      minmax(64px, 0.9fr) [full-end];
+    grid-template-rows: minmax(48px, 1fr) auto auto minmax(48px, 1fr);
+  }
+  .rf-login-band {
+    --clear-size: 560px 300px;
+    --clear-pos: 45% 46%;
+    grid-column: full-start / band-end;
+    grid-row: 1 / -1;
+    margin: 16px 0 16px 16px;
+    border-radius: 20px;
+    background:
+      radial-gradient(30% 44% at 100% 45%, rgb(var(--login-glow) / 0.3) 0%, rgb(var(--login-glow) / 0) 72%),
+      linear-gradient(180deg, var(--login-band-top) 0%, var(--login-band-mid) 58%, var(--login-band-low) 100%);
+  }
+  /* El festón pasa al borde derecho del panel (el que toca el boleto). */
+  .rf-login-band::after {
+    top: 0;
+    bottom: 0;
+    left: auto;
+    right: -1px;
+    width: 7px;
+    height: auto;
+    background: radial-gradient(circle at 100% 50%, var(--login-bg) 4.5px, transparent 5px) 0 4px / 7px 16px repeat-y;
+  }
+  .rf-login-brand {
+    grid-column: brand;
+    grid-row: 2;
+    align-self: center;
+    align-items: flex-start;
+    text-align: left;
+    padding: 0;
+  }
+  .rf-login .rf-login-logo-img {
+    height: 76px;
+  }
+  .rf-login-chip {
+    margin-top: 24px;
+  }
+  .rf-login-tagline {
+    max-width: 500px;
+    margin-top: 16px;
+    font-size: 34px;
+    line-height: 41px;
+    letter-spacing: -0.022em;
+  }
+  .rf-ticket {
+    grid-column: ticket;
+    grid-row: 2;
+  }
+  .rf-ticket-body {
+    padding: 32px 28px 12px;
+  }
+  .rf-ticket-stub {
+    padding: 20px 28px 24px;
+  }
+  /* Centrada debajo del boleto y siempre sobre el gris: el margen (56 px) es
+     mayor que lo que el boleto entra en el panel (48 px). */
+  .rf-login-first {
+    grid-column: ticket;
+    grid-row: 3;
+    margin: 20px 56px 0;
+  }
+}
+
+/* ── Menos movimiento: sin destello y sin entrada del boleto ─────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .rf-login-shine {
+    display: none;
+  }
+  .rf-ticket {
+    animation: none;
+  }
+}

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { publicService } from '@/services/publicSite';
-import { applyTheme, ADMIN_THEME_COLOR } from '@/store/theme';
+import { applyTheme, ADMIN_THEME_COLOR, LOGIN_THEME_COLOR } from '@/store/theme';
 
 const SITE = '_'; // alias single-tenant: "el rifero de este sitio"
 
@@ -15,6 +15,7 @@ const SITE = '_'; // alias single-tenant: "el rifero de este sitio"
 export function ThemeController(): null {
   const { pathname } = useLocation();
   const isAdmin = pathname === '/login' || pathname === '/admin' || pathname.startsWith('/admin/');
+  const isLogin = pathname === '/login';
   const { data } = useQuery({
     queryKey: ['public-rifero', SITE],
     queryFn: () => publicService.riferoBySubdomain(SITE),
@@ -23,20 +24,24 @@ export function ThemeController(): null {
 
   // Marca el documento en las rutas del administrador: el fondo de la página
   // (rebote del scroll en iOS, áreas fuera del panel) toma el gris del panel.
+  // En /login además `rf-login-route`: el rebote de arriba sale verde, como la
+  // franja de marca (regla en pages/auth/login.css).
   useEffect(() => {
     document.documentElement.classList.toggle('rf-admin-route', isAdmin);
-  }, [isAdmin]);
+    document.documentElement.classList.toggle('rf-login-route', isLogin);
+  }, [isAdmin, isLogin]);
 
   useEffect(() => {
     if (isAdmin) {
-      // El panel impone su color; en público lo decide el rifero (RiferoTheme).
-      applyTheme(false, ADMIN_THEME_COLOR);
+      // El panel impone su color (en /login, el verde de la franja); en público
+      // lo decide el rifero (RiferoTheme).
+      applyTheme(false, isLogin ? LOGIN_THEME_COLOR : ADMIN_THEME_COLOR);
       return;
     }
     // En público: hasta no conocer el ajuste del rifero, NO tocamos la clase que
     // ya puso el backend (evita el parpadeo claro→oscuro en sitios en oscuro).
     if (data) applyTheme(!!data.rifero?.publicDarkMode);
-  }, [isAdmin, data]);
+  }, [isAdmin, isLogin, data]);
 
   return null;
 }

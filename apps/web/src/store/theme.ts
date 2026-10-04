@@ -9,6 +9,11 @@
 // arranque e ícono).
 export const ADMIN_THEME_COLOR = '#F5F5F7';
 
+// En el inicio de sesión (/login) la pantalla abre con la franja verde de la
+// marca: la barra de estado toma su tono de arriba para fundirse con ella.
+// Debe coincidir con --login-band-top de pages/auth/login.css.
+export const LOGIN_THEME_COLOR = '#045A3B';
+
 // `themeColor` es opcional a propósito: en las páginas públicas lo fija el color
 // del rifero (ver RiferoTheme) y aquí NO se toca, para no pisarlo al navegar.
 export function applyTheme(dark: boolean, themeColor?: string): void {
