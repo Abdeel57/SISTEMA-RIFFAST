@@ -1,17 +1,23 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
-import { Headset, MessageCircle, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { Headset, MessageCircle, MoreHorizontal, SquarePen, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { buildWhatsappLink } from '@riffast/shared';
 import { webEnv } from '@/lib/env';
 import { useAuthStore } from '@/store/auth';
 import { usePortalContainer } from '@/components/ui/surface';
 import { cn } from '@/lib/cn';
+import { assistantService } from '@/services/assistant';
+import { AssistantChat } from '@/components/owner/assistant/AssistantChat';
 
 // ── Asistencia 24 h ──────────────────────────────────────────────
 // Chat de atención dentro del administrador: una burbuja flotante (que el
 // rifero puede arrastrar a donde no le estorbe) abre el panel de chat.
-// El chat se conecta con VITE_SUPPORT_CHAT_URL (se carga dentro del panel);
-// sin ella, el panel ofrece escribir por WhatsApp a Riffast.
+// Si el servidor tiene AI_API_KEY, el panel es el chat con IA (dudas y cambios
+// con confirmación). Si no, queda como antes: VITE_SUPPORT_CHAT_URL (se carga
+// dentro del panel) o escribir por WhatsApp a Riffast.
 
 interface AssistantState {
   open: boolean;
@@ -215,16 +221,76 @@ export function AssistantBubble({ reserve }: { reserve: number }) {
   );
 }
 
+// En celular, con el teclado abierto la hoja sube sobre él y se encoge al
+// espacio visible (visualViewport). null = sin teclado.
+function useKeyboardInset(enabled: boolean): { inset: number; height: number } | null {
+  const [state, setState] = useState<{ inset: number; height: number } | null>(null);
+  useEffect(() => {
+    const vv = typeof window !== 'undefined' ? window.visualViewport : null;
+    if (!enabled || !vv) {
+      setState(null);
+      return;
+    }
+    const update = () => {
+      const inset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      setState(inset > 80 ? { inset, height: vv.height } : null);
+    };
+    update();
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, [enabled]);
+  return state;
+}
+
 // ── Panel del chat ────────────────────────────────────────────────
 function AssistantPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
   const container = usePortalContainer();
   const user = useAuthStore((s) => s.user);
+  const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
+  const [chatKey, setChatKey] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
   const chatUrl = webEnv.supportChatUrl;
 
+  // ¿El servidor tiene IA (AI_API_KEY)? Se consulta al entrar al panel, antes
+  // de abrir la hoja. Sin IA (o si falla la consulta) la hoja queda como antes.
+  const statusQuery = useQuery({
+    queryKey: ['assistant-status'],
+    queryFn: assistantService.status,
+    staleTime: 5 * 60_000,
+    retry: 1,
+    enabled: !!user,
+  });
+  const chat = statusQuery.data?.activo ? statusQuery.data : null;
+  const checking = statusQuery.isLoading;
+  const keyboard = useKeyboardInset(open && !!chat);
+
   useEffect(() => {
-    if (!open) setLoaded(false);
+    if (!open) {
+      setLoaded(false);
+      setMenuOpen(false);
+    }
   }, [open]);
+
+  // Links internos del chat: navegan con el router y cierran la hoja.
+  const goTo = (path: string) => {
+    onOpenChange(false);
+    navigate(path);
+  };
+
+  const newConversation = async () => {
+    setMenuOpen(false);
+    try {
+      await assistantService.reset();
+      setChatKey((k) => k + 1);
+    } catch {
+      toast.error('No se pudo empezar una conversación nueva. Intenta de nuevo.');
+    }
+  };
 
   const waLink = webEnv.riffastWhatsapp
     ? buildWhatsappLink(
@@ -239,11 +305,17 @@ function AssistantPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (
         <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-rf-fade-in data-[state=closed]:animate-rf-fade-out sm:bg-black/20" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
-          className="fixed inset-x-0 bottom-0 z-50 flex h-[88dvh] flex-col overflow-hidden rounded-t-sheet bg-rf-surface text-rf-label shadow-sheet outline-none data-[state=open]:animate-rf-sheet-in data-[state=closed]:animate-rf-sheet-out sm:inset-x-auto sm:bottom-6 sm:right-6 sm:h-[min(640px,calc(100dvh-48px))] sm:w-[400px] sm:rounded-sheet sm:shadow-float sm:data-[state=open]:animate-rf-rise sm:data-[state=closed]:animate-rf-fade-out"
+          style={keyboard ? { bottom: keyboard.inset, height: `min(92dvh, ${Math.round(keyboard.height) - 8}px)` } : undefined}
+          className={cn(
+            'fixed inset-x-0 bottom-0 z-50 flex flex-col overflow-hidden rounded-t-sheet bg-rf-surface text-rf-label shadow-sheet outline-none data-[state=open]:animate-rf-sheet-in data-[state=closed]:animate-rf-sheet-out sm:inset-x-auto sm:bottom-6 sm:right-6 sm:h-[min(640px,calc(100dvh-48px))] sm:w-[400px] sm:rounded-sheet sm:shadow-float sm:data-[state=open]:animate-rf-rise sm:data-[state=closed]:animate-rf-fade-out',
+            chat ? 'h-[92dvh]' : 'h-[88dvh]',
+          )}
         >
           <div aria-hidden className="mx-auto mt-2 h-[5px] w-9 shrink-0 rounded-full bg-rf-separator sm:hidden" />
           {/* Encabezado */}
-          <div className="flex shrink-0 items-center gap-3 border-b border-rf-separator px-4 pb-3 pt-2 sm:pt-3">
+          {/* Con el chat activo, el botón ⋯ y el de cerrar van juntos para que el
+              subtítulo siga en dos líneas. Sin chat, el encabezado es el de siempre. */}
+          <div className={cn('flex shrink-0 items-center border-b border-rf-separator px-4 pb-3 pt-2 sm:pt-3', chat ? 'gap-2' : 'gap-3')}>
             <span className="rf-gem rf-gem-tile grid h-10 w-10 shrink-0 place-items-center rounded-full">
               <Headset className="h-5 w-5" />
             </span>
@@ -254,7 +326,47 @@ function AssistantPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (
                 Dudas y cambios en tu administrador, a cualquier hora
               </p>
             </div>
-            <DialogPrimitive.Close className="grid h-11 w-11 shrink-0 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45">
+            {chat && (
+              <div className="relative -mr-3 shrink-0">
+                <button
+                  type="button"
+                  aria-label="Opciones del chat"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  onClick={() => setMenuOpen((o) => !o)}
+                  className="grid h-11 w-11 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45"
+                >
+                  <span className="grid h-[30px] w-[30px] place-items-center rounded-full bg-rf-fill text-rf-secondary">
+                    <MoreHorizontal className="h-4 w-4" strokeWidth={2.5} />
+                  </span>
+                </button>
+                {menuOpen && (
+                  <>
+                    <div className="fixed inset-0 z-10" aria-hidden onClick={() => setMenuOpen(false)} />
+                    <div
+                      role="menu"
+                      className="absolute right-0 top-12 z-20 w-60 overflow-hidden rounded-control border border-rf-separator bg-rf-surface shadow-float animate-rf-pop-in"
+                    >
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => void newConversation()}
+                        className="flex min-h-[44px] w-full items-center gap-2.5 px-4 text-left text-callout text-rf-label outline-none active:bg-rf-fill focus-visible:bg-rf-fill"
+                      >
+                        <SquarePen className="h-[18px] w-[18px] text-rf-accent" />
+                        Nueva conversación
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+            <DialogPrimitive.Close
+              className={cn(
+                'grid h-11 w-11 shrink-0 place-items-center rounded-full outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45',
+                chat && '-mr-2',
+              )}
+            >
               <span className="grid h-[30px] w-[30px] place-items-center rounded-full bg-rf-fill text-rf-secondary">
                 <X className="h-4 w-4" strokeWidth={2.5} />
               </span>
@@ -263,7 +375,14 @@ function AssistantPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (
           </div>
 
           {/* Cuerpo */}
-          {chatUrl ? (
+          {checking ? (
+            <div className="flex-1 space-y-3 p-4" aria-hidden>
+              <div className="rf-skeleton h-12 w-2/3 rounded-2xl" />
+              <div className="rf-skeleton ml-auto h-10 w-1/2 rounded-2xl" />
+            </div>
+          ) : chat ? (
+            <AssistantChat key={chatKey} status={chat} onInternalLink={goTo} />
+          ) : chatUrl ? (
             <div className="relative flex-1">
               {!loaded && (
                 <div className="absolute inset-0 space-y-3 p-4" aria-hidden>
