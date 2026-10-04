@@ -47,7 +47,7 @@ export function parseRetryAfter(value: string | null, now = Date.now()): number 
 // Algunos proveedores repiten parte de la clave en el error ("Incorrect API key
 // provided: sk-abc…"). Se oculta antes de que llegue a cualquier log.
 export function redactKeys(text: string): string {
-  return text.replace(/\b(sk-ant-|sk-or-|sk-|AIza|gsk_|xai-|csk-)[A-Za-z0-9_\-*.]{4,}/g, '[clave oculta]');
+  return text.replace(/\b(sk-ant-|sk-or-|sk-|AIza|AQ\.|gsk_|xai-|csk-)[A-Za-z0-9_\-*.]{4,}/g, '[clave oculta]');
 }
 
 // Mensaje de error del proveedor (para logs y para clasificar). Los proveedores

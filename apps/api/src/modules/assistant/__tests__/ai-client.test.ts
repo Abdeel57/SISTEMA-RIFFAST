@@ -76,6 +76,7 @@ describe('detección de proveedor', () => {
     assert.equal(detectProvider('sk-ant-api03-abc'), 'anthropic');
     assert.equal(detectProvider('sk-or-v1-abc'), 'openrouter');
     assert.equal(detectProvider('AIzaSyAbc'), 'gemini');
+    assert.equal(detectProvider('AQ.Ab8RN6Kabc'), 'gemini'); // formato nuevo de AI Studio
     assert.equal(detectProvider('gsk_abc'), 'groq');
     assert.equal(detectProvider('xai-abc'), 'xai');
     assert.equal(detectProvider('csk-abc'), 'cerebras');

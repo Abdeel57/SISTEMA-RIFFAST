@@ -139,7 +139,7 @@ El proveedor se detecta por el prefijo de la clave; no hay que tocar código:
 |---|---|---|---|
 | `sk-ant-` | Anthropic | `claude-haiku-4-5-20251001` | sí |
 | `sk-or-` | OpenRouter | `google/gemini-3.1-flash-lite` | sí |
-| `AIza` | Gemini | `gemini-3.1-flash-lite` | sí |
+| `AIza` o `AQ.` | Gemini (las claves nuevas de AI Studio empiezan con `AQ.Ab`) | `gemini-3.1-flash-lite` | sí |
 | `gsk_` | Groq | `openai/gpt-oss-120b` | no |
 | `xai-` | xAI | `grok-4-1-fast-non-reasoning` | sí |
 | `csk-` | Cerebras | `gpt-oss-120b` | no |

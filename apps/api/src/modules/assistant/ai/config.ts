@@ -39,7 +39,9 @@ export function detectProvider(apiKey: string): ProviderId | null {
   const k = apiKey.trim();
   if (k.startsWith('sk-ant-')) return 'anthropic';
   if (k.startsWith('sk-or-')) return 'openrouter';
-  if (k.startsWith('AIza')) return 'gemini';
+  // Gemini: claves «Standard» (AIza…) y las nuevas «Auth» de AI Studio (AQ.Ab…),
+  // que Google emite por defecto desde 2026. Ambas van al endpoint nativo.
+  if (k.startsWith('AIza') || k.startsWith('AQ.')) return 'gemini';
   if (k.startsWith('gsk_')) return 'groq';
   if (k.startsWith('xai-')) return 'xai';
   if (k.startsWith('csk-')) return 'cerebras';
