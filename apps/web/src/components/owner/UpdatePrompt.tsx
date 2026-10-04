@@ -18,7 +18,7 @@ export function UpdatePrompt() {
         <button
           type="button"
           onClick={update}
-          className="h-10 shrink-0 rounded-full bg-rf-accent px-4 text-callout font-semibold text-white outline-none transition-opacity active:opacity-80 focus-visible:ring-2 focus-visible:ring-rf-accent/45 focus-visible:ring-offset-2"
+          className="rf-gem rf-gem-press h-10 shrink-0 rounded-full px-4 text-callout font-semibold outline-none transition-opacity active:opacity-80 focus-visible:ring-2 focus-visible:ring-rf-accent/45 focus-visible:ring-offset-2"
         >
           Actualizar
         </button>

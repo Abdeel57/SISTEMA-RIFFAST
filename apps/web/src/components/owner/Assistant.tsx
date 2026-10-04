@@ -205,7 +205,7 @@ export function AssistantBubble({ reserve }: { reserve: number }) {
         touchAction: 'none',
       }}
       className={cn(
-        'absolute z-40 grid h-14 w-14 place-items-center rounded-full bg-rf-accent text-white shadow-float outline-none focus-visible:ring-4 focus-visible:ring-rf-accent/30 active:brightness-95',
+        'rf-gem rf-gem-tile rf-gem-float absolute z-40 grid h-14 w-14 place-items-center rounded-full outline-none focus-visible:ring-4 focus-visible:ring-rf-accent/30 active:brightness-95',
         drag ? 'cursor-grabbing' : 'cursor-pointer transition-[transform,bottom,opacity] duration-slow ease-ios',
         hidden && 'pointer-events-none opacity-0',
       )}
@@ -244,7 +244,7 @@ function AssistantPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (
           <div aria-hidden className="mx-auto mt-2 h-[5px] w-9 shrink-0 rounded-full bg-rf-separator sm:hidden" />
           {/* Encabezado */}
           <div className="flex shrink-0 items-center gap-3 border-b border-rf-separator px-4 pb-3 pt-2 sm:pt-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-rf-accent text-white">
+            <span className="rf-gem rf-gem-tile grid h-10 w-10 shrink-0 place-items-center rounded-full">
               <Headset className="h-5 w-5" />
             </span>
             <div className="min-w-0 flex-1">
@@ -282,7 +282,7 @@ function AssistantPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (
             </div>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center px-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] text-center">
-              <span className="mb-4 grid h-16 w-16 place-items-center rounded-full bg-rf-accent/10 text-rf-accent">
+              <span className="rf-gem-soft mb-4 grid h-16 w-16 place-items-center rounded-full">
                 <MessageCircle className="h-8 w-8" />
               </span>
               <h3 className="text-heading">¿En qué te ayudamos?</h3>
@@ -294,7 +294,7 @@ function AssistantPanel({ open, onOpenChange }: { open: boolean; onOpenChange: (
                   href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rf-press mt-6 inline-flex h-[50px] w-full max-w-xs items-center justify-center gap-2 rounded-control bg-rf-accent px-5 text-body font-semibold text-white outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45 focus-visible:ring-offset-2"
+                  className="rf-press rf-gem rf-gem-raised rf-gem-press mt-6 inline-flex h-[50px] w-full max-w-xs items-center justify-center gap-2 rounded-control px-5 text-body font-semibold outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45 focus-visible:ring-offset-2"
                 >
                   <MessageCircle className="h-5 w-5" />
                   Escribir por WhatsApp

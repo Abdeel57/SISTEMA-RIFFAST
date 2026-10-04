@@ -33,8 +33,9 @@ const buttonVariants = cva(
 );
 
 // Botón del ADMINISTRADOR (estética Apple). Tres niveles por pantalla:
-//   primario   → default / brand / success: relleno verde (uno por vista).
-//   secundario → secondary / outline: tono suave del verde.
+//   primario   → default / brand / success: gema verde (uno por vista): degradado,
+//                filo iluminado y sombra suave; al presionar se oscurece y se hunde.
+//   secundario → secondary / outline: tono suave del verde con filo interior.
 //   de texto   → ghost / link: solo texto en verde.
 // Misma altura (50 px; 44 px el compacto), radio de 12 px y espaciado en todo
 // el panel. Estados: presionado (se hunde), foco (anillo), deshabilitado y
@@ -44,12 +45,14 @@ const adminButtonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-rf-accent text-white active:bg-rf-accent-pressed',
-        brand: 'bg-rf-accent text-white active:bg-rf-accent-pressed',
-        success: 'bg-rf-accent text-white active:bg-rf-accent-pressed',
-        secondary: 'bg-rf-accent/10 text-rf-accent active:bg-rf-accent/[0.16]',
-        outline: 'bg-rf-accent/10 text-rf-accent active:bg-rf-accent/[0.16]',
-        destructive: 'bg-rf-danger text-white',
+        default: 'rf-gem rf-gem-raised rf-gem-press',
+        brand: 'rf-gem rf-gem-raised rf-gem-press',
+        success: 'rf-gem rf-gem-raised rf-gem-press',
+        secondary:
+          'bg-rf-accent/10 text-rf-accent shadow-[inset_0_0_0_1px_rgb(var(--rf-accent)/0.12)] active:bg-rf-accent/[0.16]',
+        outline:
+          'bg-rf-accent/10 text-rf-accent shadow-[inset_0_0_0_1px_rgb(var(--rf-accent)/0.12)] active:bg-rf-accent/[0.16]',
+        destructive: 'rf-gem rf-gem-danger rf-gem-raised rf-gem-press',
         ghost: 'bg-transparent text-rf-accent active:bg-rf-accent/10',
         link: 'h-auto bg-transparent px-0 text-rf-accent underline-offset-4 active:opacity-60',
       },

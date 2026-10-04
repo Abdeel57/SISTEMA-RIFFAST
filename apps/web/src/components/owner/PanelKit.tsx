@@ -2,6 +2,7 @@ import { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { IconTile } from '@/components/owner/List';
 
 // Botón de solo ícono (44×44): «⋯» de las tarjetas, acciones del encabezado.
 // `label` es obligatorio: es lo que lee el lector de pantalla.
@@ -48,11 +49,7 @@ export function PanelHeader({
   return (
     <div className="mb-5 flex items-start justify-between gap-3">
       <div className="flex min-w-0 items-start gap-3">
-        {Icon && (
-          <span className="mt-0.5 grid h-10 w-10 shrink-0 place-items-center rounded-control bg-rf-accent/10 text-rf-accent">
-            <Icon className="h-5 w-5" />
-          </span>
-        )}
+        {Icon && <IconTile icon={Icon} tone="soft" size={40} className="mt-0.5" />}
         <div className="min-w-0">
           <h1 className="truncate text-heading text-rf-label">{title}</h1>
           {description && <p className="mt-0.5 text-callout text-rf-secondary">{description}</p>}
@@ -109,14 +106,7 @@ export function StatTile({
 }) {
   const inner = (
     <div className={cn(PANEL_CARD, 'flex h-full flex-col gap-3 p-4', to && 'rf-press')}>
-      <span
-        className={cn(
-          'grid h-8 w-8 place-items-center rounded-[9px]',
-          accent ? 'bg-rf-accent text-white' : 'bg-rf-accent/10 text-rf-accent',
-        )}
-      >
-        <Icon className="h-[18px] w-[18px]" />
-      </span>
+      <IconTile icon={Icon} tone={accent ? 'accent' : 'soft'} size={32} />
       <div className="min-w-0">
         <p className="truncate text-heading tabular-nums text-rf-label">{value}</p>
         <p className="mt-0.5 truncate text-callout text-rf-secondary">{label}</p>
@@ -155,11 +145,7 @@ export function SectionCard({
       {(title || action) && (
         <div className="flex items-center justify-between gap-3 border-b border-rf-separator px-4 py-3">
           <div className="flex min-w-0 items-center gap-2.5">
-            {Icon && (
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-[9px] bg-rf-accent/10 text-rf-accent">
-                <Icon className="h-4 w-4" />
-              </span>
-            )}
+            {Icon && <IconTile icon={Icon} tone="soft" size={32} />}
             <div className="min-w-0">
               {title && <h3 className="truncate text-body font-semibold text-rf-label">{title}</h3>}
               {description && <p className="truncate text-callout text-rf-secondary">{description}</p>}
@@ -227,7 +213,7 @@ export function ChoiceChips<T extends string | number>({
             onClick={() => onChange(o.value)}
             className={cn(
               'rf-press h-11 rounded-full px-4 text-callout font-semibold outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45',
-              active ? 'bg-rf-accent text-white' : 'bg-rf-fill text-rf-label active:bg-rf-fill-strong',
+              active ? 'rf-gem rf-gem-flat' : 'bg-rf-fill text-rf-label active:bg-rf-fill-strong',
             )}
           >
             {o.label}
@@ -238,7 +224,7 @@ export function ChoiceChips<T extends string | number>({
   );
 }
 
-// Barra de progreso de venta: delgada y sólida, en el verde de la marca.
+// Barra de progreso de venta: delgada, con el acabado gema del verde de la marca.
 export function ProgressBar({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(100, value));
   return (
@@ -249,7 +235,7 @@ export function ProgressBar({ value }: { value: number }) {
       aria-valuemin={0}
       aria-valuemax={100}
     >
-      <div className="h-full rounded-full bg-rf-accent transition-[width] duration-slow ease-ios" style={{ width: `${pct}%` }} />
+      <div className="rf-gem rf-gem-flat h-full rounded-full transition-[width] duration-slow ease-ios" style={{ width: `${pct}%` }} />
     </div>
   );
 }

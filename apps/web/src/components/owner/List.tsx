@@ -6,6 +6,44 @@ import { Switch } from '@/components/ui/switch';
 // Listas agrupadas como en Ajustes de iOS: un grupo = tarjeta blanca con filas
 // separadas por una línea fina que arranca donde empieza el texto.
 
+export type IconTone = 'accent' | 'neutral' | 'danger' | 'info' | 'soft';
+
+const TILE_TONE: Record<IconTone, string> = {
+  accent: 'rf-gem rf-gem-tile',
+  neutral: 'rf-gem rf-gem-graphite',
+  danger: 'rf-gem rf-gem-danger',
+  info: 'rf-gem rf-gem-info',
+  soft: 'rf-gem-soft',
+};
+
+// Cuadro de ícono del panel, con el acabado «gema» (ver .rf-gem en index.css).
+// Radio continuo proporcional como en iOS (~23 % del lado); `round` lo hace
+// círculo. El glifo va a ~60 % en cuadros chicos y a la mitad en los grandes.
+export function IconTile({
+  icon: Icon,
+  tone = 'accent',
+  size = 30,
+  round = false,
+  className,
+}: {
+  icon: LucideIcon;
+  tone?: IconTone;
+  size?: number;
+  round?: boolean;
+  className?: string;
+}) {
+  const glyph = size <= 32 ? 18 : Math.round(size / 2);
+  return (
+    <span
+      aria-hidden
+      className={cn('grid shrink-0 place-items-center', TILE_TONE[tone], className)}
+      style={{ width: size, height: size, borderRadius: round ? 9999 : Math.round(size * 0.235) }}
+    >
+      <Icon style={{ width: glyph, height: glyph }} strokeWidth={2} />
+    </span>
+  );
+}
+
 export function ListGroup({
   header,
   footer,
@@ -44,8 +82,8 @@ export type ListRowProps = RowAction & {
   icon?: LucideIcon;
   /** Elemento propio a la izquierda (en lugar de `icon`). */
   leading?: React.ReactNode;
-  /** Color del cuadro del ícono: verde de marca (default), gris o rojo. */
-  iconTone?: 'accent' | 'neutral' | 'danger';
+  /** Tono del cuadro del ícono: verde de marca (default), grafito, rojo, azul o suave. */
+  iconTone?: IconTone;
   /** Valor a la derecha (p. ej. «2 horas», un número). */
   value?: React.ReactNode;
   /** Control a la derecha (interruptor, botón). Desactiva el chevron. */
@@ -80,18 +118,7 @@ export function ListRow(props: ListRowProps) {
   const body = (
     <>
       {leading}
-      {!leading && Icon && (
-        <span
-          className={cn(
-            'grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[8px]',
-            iconTone === 'accent' && 'bg-rf-accent text-white',
-            iconTone === 'neutral' && 'bg-rf-fill-strong text-rf-label',
-            iconTone === 'danger' && 'bg-rf-danger text-white',
-          )}
-        >
-          <Icon className="h-[18px] w-[18px]" strokeWidth={2.1} />
-        </span>
-      )}
+      {!leading && Icon && <IconTile icon={Icon} tone={iconTone} />}
       <span className={cn('min-w-0 flex-1 py-3', center && 'text-center')}>
         <span className={cn('block text-body', destructive ? 'text-rf-danger' : 'text-rf-label', center && 'font-medium')}>
           {title}
@@ -169,11 +196,7 @@ export function ToggleRow({
   const Icon = icon;
   return (
     <div className={cn('flex min-h-[52px] items-center gap-3.5 px-4 py-3', disabled && 'opacity-60')}>
-      {Icon && (
-        <span className="grid h-[30px] w-[30px] shrink-0 place-items-center self-start rounded-[8px] bg-rf-accent text-white">
-          <Icon className="h-[18px] w-[18px]" strokeWidth={2.1} />
-        </span>
-      )}
+      {Icon && <IconTile icon={Icon} className="self-start" />}
       <label htmlFor={id} className={cn('min-w-0 flex-1', !disabled && 'cursor-pointer')}>
         <span className="block text-body text-rf-label">{title}</span>
         {description && <span className="mt-0.5 block text-callout text-rf-secondary">{description}</span>}

@@ -144,6 +144,93 @@
   }
 }
 
+@layer components {
+  /* ── Administrador: acabado «gema» ──────────────────────────────
+     El mismo acabado del ícono de la app (trébol sobre degradado) para
+     cuadros de ícono, botones primarios, insignias y la burbuja de
+     Asistencia: degradado vertical del verde (luz arriba), filo superior
+     iluminado, sombra interior abajo y una sombra suave del mismo tono.
+     Va en `components` para que las utilidades (p. ej. el anillo de foco)
+     puedan sobrescribirlo. */
+  .rf-gem {
+    --gem-top: #14a068;
+    --gem-mid: #0a8753;
+    --gem-bottom: #066b41;
+    --gem-shadow: 4 73 45;
+    --gem-drop: 0 1px 2px rgb(var(--gem-shadow) / 0.28), 0 3px 8px -3px rgb(var(--gem-shadow) / 0.35);
+    color: #fff;
+    background-image: linear-gradient(180deg, var(--gem-top) 0%, var(--gem-mid) 52%, var(--gem-bottom) 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.26),
+      inset 0 -1px 0 rgb(0 0 0 / 0.14),
+      var(--gem-drop);
+  }
+  /* El glifo flota apenas sobre la gema. */
+  .rf-gem svg {
+    filter: drop-shadow(0 1px 0.6px rgb(0 0 0 / 0.2));
+  }
+  /* Cuadros de ícono y burbujas (sin texto): el degradado más luminoso del
+     ícono de la app. Los botones conservan #08804F al centro para que el texto
+     blanco siga en AA. */
+  .rf-gem-tile {
+    --gem-top: #19b672;
+    --gem-mid: #0e9a5e;
+    --gem-bottom: #0a8051;
+  }
+  /* Tonos de la misma familia (gris grafito de iOS, rojo, azul). */
+  .rf-gem-graphite {
+    --gem-top: #a5a5ac;
+    --gem-mid: #8e8e93;
+    --gem-bottom: #737379;
+    --gem-shadow: 40 40 46;
+  }
+  .rf-gem-danger {
+    --gem-top: #f23a4c;
+    --gem-mid: #d70015;
+    --gem-bottom: #ae0011;
+    --gem-shadow: 120 0 12;
+  }
+  .rf-gem-info {
+    --gem-top: #3392ff;
+    --gem-mid: #0a72e6;
+    --gem-bottom: #0057b5;
+    --gem-shadow: 0 50 110;
+  }
+  /* Alturas de sombra: plana (insignias, barras), elevada (botones) y
+     flotante (burbuja de Asistencia). */
+  .rf-gem-flat {
+    --gem-drop: 0 0 0 transparent;
+  }
+  .rf-gem-raised {
+    --gem-drop: 0 1px 2px rgb(var(--gem-shadow) / 0.25), 0 8px 18px -8px rgb(var(--gem-shadow) / 0.55);
+  }
+  .rf-gem-float {
+    --gem-drop: 0 2px 6px rgb(0 0 0 / 0.12), 0 12px 28px -8px rgb(var(--gem-shadow) / 0.55);
+  }
+  /* Al presionar, la gema se oscurece y su sombra se recoge (se «hunde»);
+     la transición la da `.rf-press`. */
+  .rf-gem-press:active:not(:disabled):not([aria-disabled='true']) {
+    --gem-top: #0b8a55;
+    --gem-mid: #077546;
+    --gem-bottom: #055a37;
+    --gem-drop: 0 0 0 transparent;
+  }
+  .rf-gem-danger.rf-gem-press:active:not(:disabled):not([aria-disabled='true']) {
+    --gem-top: #d70015;
+    --gem-mid: #b80012;
+    --gem-bottom: #96000f;
+  }
+  /* Versión suave (íconos secundarios, pasos pendientes): tinte del verde con
+     filo interior, para que no se vea plano junto a las gemas. */
+  .rf-gem-soft {
+    color: rgb(var(--rf-accent));
+    background-image: linear-gradient(180deg, rgb(var(--rf-accent) / 0.07) 0%, rgb(var(--rf-accent) / 0.13) 100%);
+    box-shadow:
+      inset 0 0 0 1px rgb(var(--rf-accent) / 0.12),
+      inset 0 1px 0 rgb(255 255 255 / 0.7);
+  }
+}
+
 @layer utilities {
   /* ── Administrador: respuesta al tocar ────────────────────────── */
   /* Botones y tarjetas tocables: se hunden un poco al presionar (150 ms). */
@@ -151,7 +238,8 @@
     transition:
       transform 150ms cubic-bezier(0.32, 0.72, 0, 1),
       opacity 150ms ease-out,
-      background-color 150ms ease-out;
+      background-color 150ms ease-out,
+      box-shadow 150ms ease-out;
   }
   .rf-press:active:not(:disabled):not([aria-disabled='true']) {
     transform: scale(0.97);

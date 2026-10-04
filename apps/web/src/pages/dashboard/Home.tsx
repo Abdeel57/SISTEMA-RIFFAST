@@ -58,8 +58,8 @@ function StepBadge({ n, done }: { n: number; done: boolean }) {
   return (
     <span
       className={cn(
-        'grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full text-callout font-semibold',
-        done ? 'bg-rf-accent text-white' : 'bg-rf-accent/10 text-rf-accent',
+        'grid h-[30px] w-[30px] shrink-0 place-items-center rounded-full text-callout font-semibold tabular-nums',
+        done ? 'rf-gem rf-gem-tile' : 'rf-gem-soft',
       )}
     >
       {done ? <Check className="h-[18px] w-[18px]" strokeWidth={2.6} /> : n}

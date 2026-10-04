@@ -7,7 +7,7 @@ import { raffleService } from '@/services/raffles';
 import { reportService, type ReportType, type ReportFormat } from '@/services/payments';
 import { ApiError } from '@/lib/api';
 import { PanelIntro } from '@/components/owner/PanelKit';
-import { ListGroup } from '@/components/owner/List';
+import { IconTile, ListGroup } from '@/components/owner/List';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PageLoader, EmptyState, ErrorState } from '@/components/ui/misc';
@@ -49,9 +49,7 @@ function RaffleReportCard({ raffle }: { raffle: RaffleDTO }) {
     >
       {REPORT_TYPES.map(({ type, label, icon: Icon }) => (
         <div key={type} className="flex min-h-[56px] items-center gap-3 px-4 py-2">
-          <span className="grid h-[30px] w-[30px] shrink-0 place-items-center rounded-[8px] bg-rf-accent text-white">
-            <Icon className="h-[18px] w-[18px]" />
-          </span>
+          <IconTile icon={Icon} />
           <span className="min-w-0 flex-1 truncate text-body text-rf-label">{label}</span>
           <Button
             variant="secondary"

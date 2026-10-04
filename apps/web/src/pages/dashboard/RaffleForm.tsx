@@ -391,7 +391,7 @@ export default function RaffleForm() {
           aria-valuemax={STEPS.length}
           aria-label="Progreso de la rifa"
         >
-          <div className="h-full rounded-full bg-rf-accent transition-[width] duration-slow ease-ios" style={{ width: `${progress}%` }} />
+          <div className="rf-gem rf-gem-flat h-full rounded-full transition-[width] duration-slow ease-ios" style={{ width: `${progress}%` }} />
         </div>
         <span className="shrink-0 text-caption font-semibold tabular-nums text-rf-secondary">
           Paso {step + 1} de {STEPS.length}

@@ -28,7 +28,7 @@ const adminBadgeVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-rf-accent text-white',
+        default: 'rf-gem rf-gem-flat',
         secondary: 'bg-rf-fill-strong text-rf-label',
         outline: 'ring-1 ring-inset ring-rf-separator text-rf-label',
         success: 'bg-rf-accent/[0.12] text-rf-accent',

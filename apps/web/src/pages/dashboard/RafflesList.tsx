@@ -40,7 +40,7 @@ import { toast } from 'sonner';
 // Estado de la rifa sobre la foto: píldora sólida para leerse sobre cualquier imagen.
 const STATUS_STYLE: Record<RaffleStatus, string> = {
   DRAFT: 'bg-white/95 text-rf-secondary',
-  PUBLISHED: 'bg-rf-accent text-white',
+  PUBLISHED: 'rf-gem rf-gem-flat',
   FINISHED: 'bg-white/95 text-rf-info',
   CANCELLED: 'bg-white/95 text-rf-danger',
 };

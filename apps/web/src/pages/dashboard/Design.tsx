@@ -442,7 +442,7 @@ function SaveIndicator({ status, onRetry }: { status: SaveStatus; onRetry: () =>
     );
   if (status === 'saved')
     return (
-      <span className="inline-flex h-9 shrink-0 animate-rf-fade-in items-center gap-1.5 rounded-full bg-rf-accent px-3 text-caption font-semibold text-white shadow-raised">
+      <span className="rf-gem rf-gem-raised inline-flex h-9 shrink-0 animate-rf-fade-in items-center gap-1.5 rounded-full px-3 text-caption font-semibold">
         <Check className="h-4 w-4" /> Guardado
       </span>
     );
