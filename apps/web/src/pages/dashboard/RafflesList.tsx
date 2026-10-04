@@ -261,7 +261,7 @@ export default function RafflesList() {
 
   return (
     <div>
-      <HeaderAction label="Nueva rifa" icon={Plus} onClick={() => navigate('/admin/rifas/nueva')} />
+      <HeaderAction label="Nueva rifa" icon={Plus} onClick={() => navigate('/admin/rifas/nueva')} tourId="nueva-rifa" />
       <PanelIntro description="Crea, publica y administra tus sorteos." />
 
       {isLoading ? (

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Share2, Receipt } from 'lucide-react';
+import { Share2, Receipt, GraduationCap } from 'lucide-react';
+import { useAdminTour } from '@/components/owner/tour/AdminTour';
 import { formatMXN } from '@riffast/shared';
 import { userService } from '@/services/users';
 import { useAuthStore } from '@/store/auth';
@@ -17,6 +18,7 @@ import { cn } from '@/lib/cn';
 export default function SellerHome() {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
+  const { startTour } = useAdminTour();
   const link = user?.sellerCode ? buildSellerHomeUrl(user.sellerCode) : null;
 
   const statsQuery = useQuery({ queryKey: ['seller-stats'], queryFn: () => userService.myStats() });
@@ -99,6 +101,10 @@ export default function SellerHome() {
         {s && <ListRow title="Órdenes" value={s.ordersTotal.toLocaleString('es-MX')} />}
         {s && <ListRow title="Canceladas" value={s.cancelledOrders.toLocaleString('es-MX')} />}
         <ListRow icon={Receipt} title="Ver mis ventas" onClick={() => navigate('/admin/ordenes')} />
+      </ListGroup>
+
+      <ListGroup header="Ayuda">
+        <ListRow icon={GraduationCap} title="Ver tutorial" subtitle="Repasa cómo vender y cobrar" onClick={startTour} />
       </ListGroup>
     </div>
   );

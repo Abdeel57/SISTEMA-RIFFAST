@@ -13,6 +13,7 @@ import {
   FileBarChart,
   Settings,
   LogOut,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react';
 import { PageLoader } from '@/components/ui/misc';
@@ -26,6 +27,7 @@ import { SurfaceProvider } from '@/components/ui/surface';
 import { HeaderSlotProvider } from '@/components/owner/AdminChrome';
 import { AssistantProvider, AssistantBubble } from '@/components/owner/Assistant';
 import { UpdatePrompt } from '@/components/owner/UpdatePrompt';
+import { AdminTourProvider, useAdminTour } from '@/components/owner/tour/AdminTour';
 import { TabHomeIcon, TabOrdersIcon, TabRafflesIcon, TabMoreIcon, type TabIconProps } from '@/components/owner/TabIcons';
 
 function sectionTitle(pathname: string): string {
@@ -162,6 +164,7 @@ function DesktopSidebar({
   onNavigate: (to: string) => void;
   onLogout: () => void;
 }) {
+  const { startTour } = useAdminTour();
   const itemClass = 'rf-row flex h-11 w-full items-center gap-3 rounded-[10px] px-3 text-left text-callout outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45';
   return (
     <aside className="hidden w-[264px] shrink-0 flex-col border-r border-rf-separator bg-rf-surface lg:flex">
@@ -187,6 +190,7 @@ function DesktopSidebar({
                   <button
                     key={item.to}
                     type="button"
+                    data-tour={`nav-${item.to.split('/').pop()}`}
                     onClick={() => onNavigate(item.to)}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
@@ -210,6 +214,10 @@ function DesktopSidebar({
 
       {/* Pie: ver página pública + cerrar sesión */}
       <div className="shrink-0 space-y-0.5 border-t border-rf-separator p-3">
+        <button type="button" onClick={startTour} className={cn(itemClass, 'font-medium text-rf-label')}>
+          <GraduationCap className="h-5 w-5 shrink-0 text-rf-secondary" strokeWidth={1.9} />
+          Ver tutorial
+        </button>
         {showViewPage && (
           <button type="button" onClick={() => onNavigate('/')} className={cn(itemClass, 'font-medium text-rf-label')}>
             <Eye className="h-5 w-5 shrink-0 text-rf-secondary" strokeWidth={1.9} />
@@ -233,12 +241,15 @@ interface TabDef {
   active: boolean;
   badge?: number;
   onClick: () => void;
+  /** Marca para el tutorial del administrador (data-tour). */
+  tourId?: string;
 }
 
-function Tab({ label, icon: Icon, active, badge, onClick }: TabDef) {
+function Tab({ label, icon: Icon, active, badge, onClick, tourId }: TabDef) {
   return (
     <button
       type="button"
+      data-tour={tourId}
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={cn(
@@ -354,14 +365,14 @@ export function AdminDrawer() {
   // Pestañas de la barra flotante (el vendedor solo ve su panel y sus ventas).
   const tabs: TabDef[] = isSeller
     ? [
-        { label: 'Mi panel', icon: TabHomeIcon, active: onInicio, onClick: () => navigate('/admin/inicio') },
-        { label: 'Mis ventas', icon: TabOrdersIcon, active: onOrdenes, badge: pendingTotal, onClick: () => navigate('/admin/ordenes') },
+        { label: 'Mi panel', icon: TabHomeIcon, active: onInicio, tourId: 'nav-inicio', onClick: () => navigate('/admin/inicio') },
+        { label: 'Mis ventas', icon: TabOrdersIcon, active: onOrdenes, badge: pendingTotal, tourId: 'nav-ordenes', onClick: () => navigate('/admin/ordenes') },
       ]
     : [
-        { label: 'Inicio', icon: TabHomeIcon, active: onInicio, onClick: () => navigate('/admin/inicio') },
-        { label: 'Órdenes', icon: TabOrdersIcon, active: onOrdenes, badge: pendingTotal, onClick: () => navigate('/admin/ordenes') },
-        { label: 'Rifas', icon: TabRafflesIcon, active: onRifas, onClick: () => navigate('/admin/rifas') },
-        { label: 'Más', icon: TabMoreIcon, active: masActive, onClick: () => navigate('/admin/mas') },
+        { label: 'Inicio', icon: TabHomeIcon, active: onInicio, tourId: 'nav-inicio', onClick: () => navigate('/admin/inicio') },
+        { label: 'Órdenes', icon: TabOrdersIcon, active: onOrdenes, badge: pendingTotal, tourId: 'nav-ordenes', onClick: () => navigate('/admin/ordenes') },
+        { label: 'Rifas', icon: TabRafflesIcon, active: onRifas, tourId: 'nav-rifas', onClick: () => navigate('/admin/rifas') },
+        { label: 'Más', icon: TabMoreIcon, active: masActive, tourId: 'nav-mas', onClick: () => navigate('/admin/mas') },
       ];
   const activeTab = tabs.findIndex((t) => t.active);
 
@@ -376,6 +387,8 @@ export function AdminDrawer() {
   return (
     <SurfaceProvider value={surface}>
       <AssistantProvider>
+        {/* Tutorial del administrador: sale la primera vez en este dispositivo. */}
+        <AdminTourProvider>
         <div ref={setRoot} className="rf-admin fixed inset-0 z-50 flex">
           {/* Backdrop sólo en tablet (sm–md): deja ver la página detrás, click cierra.
               En escritorio (lg+) hay sidebar, así que no aplica. */}
@@ -521,6 +534,7 @@ export function AdminDrawer() {
             onConfirm={() => void handleLogout()}
           />
         </div>
+        </AdminTourProvider>
       </AssistantProvider>
     </SurfaceProvider>
   );

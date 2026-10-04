@@ -191,6 +191,7 @@ export function AssistantBubble({ reserve }: { reserve: number }) {
     <button
       ref={ref}
       type="button"
+      data-tour="asistente"
       aria-label="Asistencia 24 horas"
       title="Asistencia 24 h · puedes arrastrarla"
       onPointerDown={onPointerDown}

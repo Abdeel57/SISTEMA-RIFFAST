@@ -15,6 +15,7 @@ export function HeaderAction({
   onClick,
   disabled,
   iconOnly = false,
+  tourId,
 }: {
   label: string;
   icon?: LucideIcon;
@@ -22,12 +23,15 @@ export function HeaderAction({
   disabled?: boolean;
   /** Solo el ícono (el texto queda para el lector de pantalla). */
   iconOnly?: boolean;
+  /** Marca para el tutorial del administrador (data-tour). */
+  tourId?: string;
 }) {
   const slot = useContext(HeaderSlotContext);
   if (!slot) return null;
   return createPortal(
     <button
       type="button"
+      data-tour={tourId}
       onClick={onClick}
       disabled={disabled}
       aria-label={iconOnly ? label : undefined}

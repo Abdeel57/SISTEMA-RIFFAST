@@ -4,6 +4,7 @@ import {
   CreditCard,
   Eye,
   FileBarChart,
+  GraduationCap,
   Headset,
   LayoutDashboard,
   Palette,
@@ -16,6 +17,7 @@ import { useAuthStore } from '@/store/auth';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { ListGroup, ListRow } from '@/components/owner/List';
 import { useAssistant } from '@/components/owner/Assistant';
+import { useAdminTour } from '@/components/owner/tour/AdminTour';
 import { InstallRow } from '@/components/owner/InstallApp';
 import { useAdminInstall } from '@/lib/pwa/installState';
 
@@ -54,6 +56,7 @@ export function MoreMenu({ onPick }: { onPick: (to: string) => void }) {
   const navigate = useNavigate();
   const logout = useAuthStore((s) => s.logout);
   const { openAssistant } = useAssistant();
+  const { startTour } = useAdminTour();
   const { platform } = useAdminInstall();
   const canInstall = platform === 'ios' || platform === 'prompt';
   const [confirmLogout, setConfirmLogout] = useState(false);
@@ -75,7 +78,15 @@ export function MoreMenu({ onPick }: { onPick: (to: string) => void }) {
       {GROUPS.map((group) => (
         <ListGroup key={group.label} header={group.label}>
           {group.rows.map((row) => (
-            <ListRow key={row.title} icon={row.icon} title={row.title} subtitle={row.desc} onClick={() => onPick(row.to)} />
+            <ListRow
+              key={row.title}
+              icon={row.icon}
+              title={row.title}
+              subtitle={row.desc}
+              onClick={() => onPick(row.to)}
+              // Marca para el tutorial (Resumen apunta a Inicio: no se marca).
+              tourId={row.to === '/admin/inicio' ? undefined : `nav-${row.to.split('/').pop()}`}
+            />
           ))}
         </ListGroup>
       ))}
@@ -86,6 +97,12 @@ export function MoreMenu({ onPick }: { onPick: (to: string) => void }) {
           title="Asistencia 24 h"
           subtitle="Dudas y cambios en tu administrador"
           onClick={openAssistant}
+        />
+        <ListRow
+          icon={GraduationCap}
+          title="Tutorial del administrador"
+          subtitle="Repasa las funciones principales"
+          onClick={startTour}
         />
         {canInstall && <InstallRow />}
       </ListGroup>

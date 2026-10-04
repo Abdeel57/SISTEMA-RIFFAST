@@ -95,6 +95,8 @@ export type ListRowProps = RowAction & {
   external?: boolean;
   disabled?: boolean;
   className?: string;
+  /** Marca para el tutorial del administrador (data-tour). */
+  tourId?: string;
 };
 
 export function ListRow(props: ListRowProps) {
@@ -142,7 +144,7 @@ export function ListRow(props: ListRowProps) {
 
   if (props.to && !disabled) {
     return (
-      <Link to={props.to} className={rowClass}>
+      <Link to={props.to} className={rowClass} data-tour={props.tourId}>
         {body}
       </Link>
     );
@@ -151,6 +153,7 @@ export function ListRow(props: ListRowProps) {
     return (
       <a
         href={props.href}
+        data-tour={props.tourId}
         target={external ? '_blank' : undefined}
         rel={external ? 'noopener noreferrer' : undefined}
         className={rowClass}
@@ -161,12 +164,16 @@ export function ListRow(props: ListRowProps) {
   }
   if (props.onClick) {
     return (
-      <button type="button" onClick={props.onClick} disabled={disabled} className={rowClass}>
+      <button type="button" onClick={props.onClick} disabled={disabled} className={rowClass} data-tour={props.tourId}>
         {body}
       </button>
     );
   }
-  return <div className={rowClass}>{body}</div>;
+  return (
+    <div className={rowClass} data-tour={props.tourId}>
+      {body}
+    </div>
+  );
 }
 
 // Fila con interruptor (como Ajustes): título, explicación y el switch a la
