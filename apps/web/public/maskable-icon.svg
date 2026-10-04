@@ -82,7 +82,7 @@
   <!-- Trébol con volumen y sombra -->
   <g filter="url(#drop)">
     <g filter="url(#bevel)">
-      <use href="#clover" xlink:href="#clover" x="135.8" y="120" width="240.4" height="260" fill="url(#leaf)" fill-rule="evenodd"/>
+      <use href="#clover" xlink:href="#clover" x="123.8" y="107" width="264.4" height="286" fill="url(#leaf)" fill-rule="evenodd"/>
     </g>
   </g>
 </svg>
