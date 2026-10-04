@@ -258,9 +258,10 @@ export function createAssistantService(deps: ServiceDeps) {
       const created: ToolContext['created'] = { actions: [], call: null };
       let acc: Account | null = null;
       try {
+        // La cuenta va primero: si la IA está mal configurada, la alerta dice de qué cliente es.
+        acc = await loadAccount(auth);
         if (st.error) throw st.error;
         const client = st.client!;
-        acc = await loadAccount(auth);
         const raffles = await store.listRecentRaffles(auth.riferoId, { onlyPublic: !acc.isAdmin, take: 8 });
         const system = buildSystemPrompt(
           { MARCA: settings.marca, NOTA_IMAGENES: client.config.vision ? '' : NOTA_SIN_IMAGENES, HORARIO_LLAMADAS: settings.horarioLlamadas },

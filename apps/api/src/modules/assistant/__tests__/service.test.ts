@@ -423,6 +423,8 @@ describe('servicio: llamadas y avisos', () => {
     const r = await bad.service.mensaje(req(ADMIN), { texto: 'hola' });
     assert.equal(r.estado, 'error');
     assert.equal(bad.notifier.sent.length, 1);
+    assert.match(bad.notifier.sent[0].texto, /Cliente: Rifas Ana/);
+    assert.match(bad.notifier.sent[0].texto, /Página: https:\/\/rifasana\.com/);
 
     const flaky = setup({ ai: fakeAi([new AiError('proveedor', 'HTTP 503', 503)]) });
     await flaky.service.mensaje(req(ADMIN), { texto: 'hola' });
