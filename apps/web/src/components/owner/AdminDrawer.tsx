@@ -6,7 +6,6 @@ import {
   Home,
   Receipt,
   Ticket,
-  Menu,
   Palette,
   User,
   Users,
@@ -27,6 +26,7 @@ import { SurfaceProvider } from '@/components/ui/surface';
 import { HeaderSlotProvider } from '@/components/owner/AdminChrome';
 import { AssistantProvider, AssistantBubble } from '@/components/owner/Assistant';
 import { UpdatePrompt } from '@/components/owner/UpdatePrompt';
+import { TabHomeIcon, TabOrdersIcon, TabRafflesIcon, TabMoreIcon, type TabIconProps } from '@/components/owner/TabIcons';
 
 function sectionTitle(pathname: string): string {
   if (pathname.startsWith('/admin/ordenes')) return 'Órdenes';
@@ -225,35 +225,37 @@ function DesktopSidebar({
   );
 }
 
-// Pestaña de la barra inferior (estilo iOS): ícono + texto, verde si está activa.
-function Tab({
-  label,
-  icon: Icon,
-  active,
-  badge,
-  onClick,
-}: {
+// Pestaña de la barra flotante: ícono propio (línea fina en reposo, relleno
+// «gema» al activarse) + texto, verde si está activa. Se hunde al tocarla.
+interface TabDef {
   label: string;
-  icon: LucideIcon;
+  icon: (props: TabIconProps) => JSX.Element;
   active: boolean;
   badge?: number;
   onClick: () => void;
-}) {
+}
+
+function Tab({ label, icon: Icon, active, badge, onClick }: TabDef) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex h-tabbar min-w-0 flex-1 flex-col items-center justify-center gap-[3px] pt-1 outline-none transition-opacity duration-fast active:opacity-50 focus-visible:bg-rf-fill',
+        'group relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-[3px] rounded-full outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45',
         active ? 'text-rf-accent' : 'text-rf-secondary',
       )}
     >
-      <span className="relative">
-        <Icon className="h-6 w-6" strokeWidth={active ? 2.3 : 1.8} />
-        {badge !== undefined && <CountBadge count={badge} className="absolute -right-3 -top-1.5 ring-2 ring-white" />}
+      <span className="relative transition-transform duration-fast ease-ios group-active:scale-90">
+        <Icon active={active} />
+        {badge !== undefined && <CountBadge count={badge} className="absolute -right-2.5 -top-1 ring-2 ring-white" />}
       </span>
-      <span className={cn('max-w-full truncate px-1 text-caption leading-none', active ? 'font-semibold' : 'font-medium')}>
+      <span
+        className={cn(
+          'max-w-full truncate px-1 text-[11px] leading-none tracking-[-0.01em] transition-colors duration-fast',
+          active ? 'font-semibold' : 'font-medium',
+        )}
+      >
         {label}
       </span>
     </button>
@@ -346,8 +348,22 @@ export function AdminDrawer() {
 
   // Espacio que la burbuja de Asistencia deja libre abajo: la barra de guardar
   // de las sub-pantallas (también en escritorio, donde ocupa todo el ancho de la
-  // columna) o la barra de pestañas (49 px).
-  const bubbleReserve = isSubScreen ? 96 : isDesktop ? 24 : 49 + 12;
+  // columna) o la barra flotante de pestañas (62 px + 10 px de aire + 12 px).
+  const bubbleReserve = isSubScreen ? 96 : isDesktop ? 24 : 62 + 10 + 12;
+
+  // Pestañas de la barra flotante (el vendedor solo ve su panel y sus ventas).
+  const tabs: TabDef[] = isSeller
+    ? [
+        { label: 'Mi panel', icon: TabHomeIcon, active: onInicio, onClick: () => navigate('/admin/inicio') },
+        { label: 'Mis ventas', icon: TabOrdersIcon, active: onOrdenes, badge: pendingTotal, onClick: () => navigate('/admin/ordenes') },
+      ]
+    : [
+        { label: 'Inicio', icon: TabHomeIcon, active: onInicio, onClick: () => navigate('/admin/inicio') },
+        { label: 'Órdenes', icon: TabOrdersIcon, active: onOrdenes, badge: pendingTotal, onClick: () => navigate('/admin/ordenes') },
+        { label: 'Rifas', icon: TabRafflesIcon, active: onRifas, onClick: () => navigate('/admin/rifas') },
+        { label: 'Más', icon: TabMoreIcon, active: masActive, onClick: () => navigate('/admin/mas') },
+      ];
+  const activeTab = tabs.findIndex((t) => t.active);
 
   const backButton = raffleBack ? (
     <BackButton label="Rifas" onClick={() => navigate(raffleBack)} />
@@ -429,7 +445,8 @@ export function AdminDrawer() {
                 className={cn(
                   'mx-auto w-full max-w-[960px] px-gutter lg:px-8',
                   // En sub-pantallas móviles no hay tabs: respetar el home indicator.
-                  isSubScreen ? 'pb-[max(1.25rem,env(safe-area-inset-bottom))]' : 'pb-24',
+                  // Con tabs, dejar libre lo que tapa la barra flotante.
+                  isSubScreen ? 'pb-[max(1.25rem,env(safe-area-inset-bottom))]' : 'rf-dock-space',
                   'lg:pb-16',
                 )}
               >
@@ -451,27 +468,39 @@ export function AdminDrawer() {
               </div>
             </div>
 
-            {/* Barra de pestañas (sólo móvil/tablet). Se oculta en sub-pantallas y en
-                escritorio (que usa el sidebar). El vendedor ve solo su panel y ventas. */}
+            {/* Barra de pestañas flotante (sólo móvil/tablet): cápsula de vidrio sobre
+                el contenido, que se desvanece al pasar por debajo. Se oculta en
+                sub-pantallas y en escritorio (que usa el sidebar). */}
             {!isSubScreen && (
-              <nav
-                aria-label="Secciones"
-                className="relative z-20 flex shrink-0 border-t border-rf-separator bg-[rgba(250,250,252,0.97)] pb-safe lg:hidden"
-              >
-                {isSeller ? (
-                  <>
-                    <Tab label="Mi panel" icon={Home} active={onInicio} onClick={() => navigate('/admin/inicio')} />
-                    <Tab label="Mis ventas" icon={Receipt} active={onOrdenes} badge={pendingTotal} onClick={() => navigate('/admin/ordenes')} />
-                  </>
-                ) : (
-                  <>
-                    <Tab label="Inicio" icon={Home} active={onInicio} onClick={() => navigate('/admin/inicio')} />
-                    <Tab label="Órdenes" icon={Receipt} active={onOrdenes} badge={pendingTotal} onClick={() => navigate('/admin/ordenes')} />
-                    <Tab label="Rifas" icon={Ticket} active={onRifas} onClick={() => navigate('/admin/rifas')} />
-                    <Tab label="Más" icon={Menu} active={masActive} onClick={() => navigate('/admin/mas')} />
-                  </>
-                )}
-              </nav>
+              <>
+                <div
+                  aria-hidden
+                  className="rf-dock-veil pointer-events-none absolute inset-x-0 bottom-0 z-10 lg:hidden"
+                  style={{ height: 'calc(104px + env(safe-area-inset-bottom))' }}
+                />
+                <nav
+                  aria-label="Secciones"
+                  className="absolute inset-x-3 z-20 lg:hidden"
+                  style={{ bottom: 'max(10px, calc(env(safe-area-inset-bottom) - 10px))' }}
+                >
+                  <div className="rf-dock relative flex h-[62px] items-stretch rounded-full p-1.5">
+                    {/* Lente de la pestaña activa: se desliza al cambiar de sección. */}
+                    {activeTab >= 0 && (
+                      <span
+                        aria-hidden
+                        className="rf-dock-lens absolute inset-y-1.5 left-1.5 rounded-full"
+                        style={{
+                          width: `calc((100% - 12px) / ${tabs.length})`,
+                          transform: `translateX(${activeTab * 100}%)`,
+                        }}
+                      />
+                    )}
+                    {tabs.map((t) => (
+                      <Tab key={t.label} {...t} />
+                    ))}
+                  </div>
+                </nav>
+              </>
             )}
 
             {/* Asistencia 24 h: burbuja flotante y arrastrable, nunca sobre la barra. */}
