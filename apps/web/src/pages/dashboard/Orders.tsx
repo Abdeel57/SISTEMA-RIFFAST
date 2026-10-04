@@ -57,6 +57,7 @@ import { QrScanner } from '@/components/owner/QrScanner';
 import { PanelIntro, PANEL_CARD, IconButton } from '@/components/owner/PanelKit';
 import { HeaderAction } from '@/components/owner/AdminChrome';
 import { ActionSheet, type SheetAction } from '@/components/owner/ActionSheet';
+import { WhatsAppSheet } from '@/components/owner/WhatsAppSheet';
 import { cn } from '@/lib/cn';
 import { toast } from 'sonner';
 
@@ -322,6 +323,7 @@ function OrderCard({ order }: { order: OrderDTO }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [proofOpen, setProofOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [waOpen, setWaOpen] = useState(false);
 
   const invalidate = () => {
     void queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -567,17 +569,17 @@ function OrderCard({ order }: { order: OrderDTO }) {
         ) : (
           <div className="flex-1" />
         )}
-        {waLink && !(order.digitalTicketCode && !isPending) && (
-          <a
-            href={waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Escribir por WhatsApp"
-            title="Escribir por WhatsApp"
+        {/* WhatsApp: hoja con mensajes listos según el estado de la orden. */}
+        {waPhone && (
+          <button
+            type="button"
+            onClick={() => setWaOpen(true)}
+            aria-label="Mensajes de WhatsApp"
+            title="Mensajes de WhatsApp"
             className="rf-press grid h-11 w-11 shrink-0 place-items-center rounded-full bg-rf-fill text-rf-label outline-none focus-visible:ring-2 focus-visible:ring-rf-accent/45"
           >
             <MessageCircle className="h-[22px] w-[22px]" />
-          </a>
+          </button>
         )}
         <IconButton icon={MoreHorizontal} label="Más acciones" onClick={() => setMenuOpen(true)} />
       </div>
@@ -590,6 +592,7 @@ function OrderCard({ order }: { order: OrderDTO }) {
         actions={sheetActions}
       />
 
+      {waPhone && <WhatsAppSheet order={order} open={waOpen} onOpenChange={setWaOpen} />}
       {order.hasProof && <ProofDialog orderId={order.id} open={proofOpen} onOpenChange={setProofOpen} />}
       <EditBuyerDialog order={order} open={editOpen} onOpenChange={setEditOpen} />
 
