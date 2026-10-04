@@ -1,7 +1,7 @@
 {
   "id": "/admin",
-  "name": "Riffast | ADMIN",
-  "short_name": "Riffast ADMIN",
+  "name": "Riffast",
+  "short_name": "Riffast",
   "description": "Administra tus rifas desde el celular: órdenes, pagos, boletos y avisos de cada apartado.",
   "start_url": "/admin",
   "scope": "/",

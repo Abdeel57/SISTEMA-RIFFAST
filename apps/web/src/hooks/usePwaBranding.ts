@@ -5,7 +5,8 @@ import { publicService } from '@/services/publicSite';
 import { apiAssetUrl } from '@/lib/api';
 
 const SITE = '_'; // alias single-tenant: "el rifero de este sitio"
-const ADMIN_TITLE = 'Riffast | ADMIN';
+// Nombre de la app instalada (debajo del ícono en la pantalla de inicio).
+const ADMIN_APP_NAME = 'Riffast';
 
 // El administrador (/admin, /login) es SIEMPRE la marca Riffast, nunca la del
 // rifero: el panel es del producto (Riffast), no del organizador.
@@ -58,7 +59,7 @@ function setAppleStatusBar(style: 'default' | 'black-translucent'): void {
 // Aplica la marca de la PWA (favicon de la pestaña, ícono de A2HS, nombre y
 // manifest) según la sección, y la reafirma al navegar dentro de la SPA:
 //   - Administrador (/admin, /login): SIEMPRE Riffast. Logo de Riffast (nunca el
-//     del rifero), nombre "Riffast | ADMIN" y manifest que abre directo en /admin.
+//     del rifero), nombre de app "Riffast" y manifest que abre directo en /admin.
 //   - Público: la identidad del rifero del sitio (su logo como favicon y su nombre).
 // En producción el backend ya inyecta lo correcto en el HTML inicial (ver
 // site-html.ts); esto lo garantiza también en desarrollo y tras navegar.
@@ -78,7 +79,7 @@ export function usePwaBranding(): void {
   useEffect(() => {
     if (isAdmin) {
       setManifest('/admin.webmanifest');
-      setAppleTitle(ADMIN_TITLE);
+      setAppleTitle(ADMIN_APP_NAME);
       setAppleStatusBar('default');
       setIcon('/favicon.svg');
       setAppleTouchIcon('/apple-touch-icon.png');

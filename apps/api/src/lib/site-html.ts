@@ -128,7 +128,8 @@ export function injectMeta(
   return html;
 }
 
-const ADMIN_TITLE = 'Riffast | ADMIN';
+const ADMIN_TITLE = 'Riffast | ADMIN'; // pestaña del navegador
+const ADMIN_APP_NAME = 'Riffast'; // nombre debajo del ícono de la app instalada
 // Mismo gris que el fondo del panel (debe coincidir con ADMIN_THEME_COLOR de
 // apps/web/src/store/theme.ts).
 const ADMIN_THEME_COLOR = '#F5F5F7';
@@ -141,7 +142,7 @@ const ADMIN_THEME_COLOR = '#F5F5F7';
 function renderAdminIndex(rawHtml: string): string {
   let html = rawHtml;
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${ADMIN_TITLE}</title>`);
-  html = setName(html, 'apple-mobile-web-app-title', ADMIN_TITLE);
+  html = setName(html, 'apple-mobile-web-app-title', ADMIN_APP_NAME);
   // El panel es claro (fondo #F5F5F7, estilo iOS). iOS lee la barra de estado
   // del HTML al abrir la app instalada: con «black-translucent» el reloj y la
   // batería salían en blanco sobre blanco. «default» = texto oscuro legible.
