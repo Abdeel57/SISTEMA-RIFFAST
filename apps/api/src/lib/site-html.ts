@@ -3,21 +3,35 @@ import { isCurrency, isLocale } from '@riffast/shared';
 import { prisma } from './prisma.js';
 import { env } from '../config/env.js';
 import { escapeHtml } from './mailer.js';
-import { shareCardRelUrl } from '../modules/og/share-card.js';
+import { hasCardSource, shareCardRelUrl } from '../modules/og/share-card.js';
+import {
+  ADMIN_DESCRIPTION,
+  adminTitle,
+  eventNumberFromPath,
+  findShareRaffle,
+  raffleDescription,
+  raffleTitle,
+  siteDescription,
+} from '../modules/og/share-text.js';
 
 // Inyecta la marca del rifero del sitio (favicon, título y meta tags Open Graph)
 // en el index.html que sirve el backend. Así, ANTES de que cargue el JS:
 //   - la pestaña del navegador muestra el logo y el nombre de la página de rifas;
-//   - al compartir CUALQUIER enlace del sitio (incluida una rifa), la vista previa
-//     usa el logo y el nombre de la página, no los del evento.
+//   - al compartir un enlace (WhatsApp, Facebook…), la vista previa lleva la
+//     tarjeta con el logo y los colores del rifero; en una rifa, además, la foto
+//     del premio, el título, el premio, el precio y la fecha del sorteo.
+// Los crawlers no ejecutan JS: todo esto tiene que venir en el HTML del servidor.
 // Es single-tenant: hay un solo rifero por despliegue. Se cachea el perfil unos
 // segundos para no pegarle a la BD en cada carga de HTML.
 
 interface BrandProfile {
+  id: string;
   publicName: string;
   description: string | null;
   logoUrl: string | null;
   coverUrl: string | null;
+  primaryColor: string;
+  secondaryColor: string;
   publicDarkMode: boolean;
   locale: string;
   currency: string;
@@ -34,10 +48,13 @@ async function getSiteProfile(): Promise<BrandProfile | null> {
   const profile = await prisma.riferoProfile.findFirst({
     orderBy: { createdAt: 'asc' },
     select: {
+      id: true,
       publicName: true,
       description: true,
       logoUrl: true,
       coverUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
       publicDarkMode: true,
       locale: true,
       currency: true,
@@ -64,6 +81,63 @@ function setProp(html: string, prop: string, value: string): string {
 function setName(html: string, name: string, value: string): string {
   const re = new RegExp(`(<meta name="${name}" content=")[^"]*(")`);
   return html.replace(re, (_m, a: string, b: string) => `${a}${escapeHtml(value)}${b}`);
+}
+// Como setProp/setName, pero si la etiqueta no existe la añade antes de </head>.
+function upsertMeta(html: string, attr: 'property' | 'name', key: string, value: string): string {
+  if (new RegExp(`<meta ${attr}="${key}" content=`).test(html)) {
+    return attr === 'property' ? setProp(html, key, value) : setName(html, key, value);
+  }
+  return html.replace('</head>', `  <meta ${attr}="${key}" content="${escapeHtml(value)}" />\n  </head>`);
+}
+
+interface ShareMeta {
+  siteName: string;
+  title: string;
+  description: string;
+  image: string; // URL ABSOLUTA: WhatsApp ignora una relativa y la vista previa sale vacía
+  url: string;
+}
+
+// Vista previa al compartir (Open Graph + Twitter). La tarjeta mide 1200×630: el
+// formato horizontal que WhatsApp y Facebook muestran en grande.
+function applyShareMeta(rawHtml: string, m: ShareMeta): string {
+  let html = rawHtml;
+  html = upsertMeta(html, 'property', 'og:site_name', m.siteName);
+  html = upsertMeta(html, 'property', 'og:title', m.title);
+  html = upsertMeta(html, 'property', 'og:description', m.description);
+  html = upsertMeta(html, 'property', 'og:url', m.url);
+  html = upsertMeta(html, 'property', 'og:image', m.image);
+  html = upsertMeta(html, 'property', 'og:image:width', '1200');
+  html = upsertMeta(html, 'property', 'og:image:height', '630');
+  html = upsertMeta(html, 'property', 'og:image:alt', m.title);
+  html = upsertMeta(html, 'name', 'description', m.description);
+  html = upsertMeta(html, 'name', 'twitter:title', m.title);
+  html = upsertMeta(html, 'name', 'twitter:description', m.description);
+  html = upsertMeta(html, 'name', 'twitter:image', m.image);
+  return html;
+}
+
+function siteBase(request: FastifyRequest): string {
+  return env.publicWebUrl || `${request.protocol}://${request.headers.host ?? ''}`;
+}
+
+// og:image: la tarjeta del rifero (o de la rifa, con la foto del premio). Sin
+// logo, portada ni foto no hay nada propio que dibujar: va directo la imagen por
+// defecto, sin pasar por una redirección (no todos los lectores la siguen).
+function cardImage(
+  profile: BrandProfile,
+  request: FastifyRequest,
+  fallback: string,
+  event?: { number: number; photoUrl: string | null },
+): string {
+  const brand = {
+    logoUrl: profile.logoUrl,
+    coverUrl: profile.coverUrl,
+    primaryColor: profile.primaryColor,
+    secondaryColor: profile.secondaryColor,
+  };
+  if (!hasCardSource({ brand, photoUrl: event?.photoUrl })) return fallback;
+  return absolute(shareCardRelUrl(brand, event), request) ?? fallback;
 }
 
 // Código base OFICIAL del pixel de Meta, palabra por palabra como lo entrega
@@ -134,11 +208,12 @@ const ADMIN_APP_NAME = 'Riffast'; // nombre debajo del ícono de la app instalad
 // apps/web/src/store/theme.ts).
 const ADMIN_THEME_COLOR = '#F5F5F7';
 
-// El administrador (/admin, /login) es SIEMPRE la marca Riffast, nunca la del
-// rifero: el panel es del producto. Por eso NO le inyectamos el logo/nombre del
-// organizador. Le dejamos los íconos estáticos de Riffast, el título "Riffast |
-// ADMIN" y un manifest dedicado (abre directo en /admin con el ícono de Riffast),
-// para que al "Agregar a inicio" o compartir se vea Riffast, no el rifero.
+// El administrador (/admin, /login) lleva la marca Riffast en la pestaña, el
+// ícono y la app instalada: el panel es del producto. Le dejamos los íconos
+// estáticos de Riffast, el título "Riffast | ADMIN" y un manifest dedicado (abre
+// directo en /admin con el ícono de Riffast). La vista previa al COMPARTIR el
+// enlace sí lleva la identidad del rifero (ver renderBrandedIndex): quien lo
+// recibe (un vendedor, un socio) ve de qué página es el panel.
 function renderAdminIndex(rawHtml: string): string {
   let html = rawHtml;
   html = html.replace(/<title>[\s\S]*?<\/title>/, `<title>${ADMIN_TITLE}</title>`);
@@ -154,28 +229,62 @@ function renderAdminIndex(rawHtml: string): string {
 
 export async function renderBrandedIndex(rawHtml: string, request: FastifyRequest): Promise<string> {
   const path = (request.url || '/').split('?')[0];
-  if (path === '/login' || path === '/admin' || path.startsWith('/admin/')) {
-    return renderAdminIndex(rawHtml);
-  }
+  const base = siteBase(request);
+  const pageUrl = `${base}${path === '/' ? '' : path}`;
+  const fallbackImage = `${base}/og-default.png`;
 
   let profile: BrandProfile | null = null;
   try {
     profile = await getSiteProfile();
   } catch {
-    // Si la BD no responde, servimos el HTML sin marca (mejor que romper la carga).
-    return rawHtml;
+    profile = null; // si la BD no responde, servimos el HTML sin marca (mejor que romper la carga)
   }
-  if (!profile) return rawHtml;
 
-  const base = env.publicWebUrl || `${request.protocol}://${request.headers.host ?? ''}`;
+  if (path === '/login' || path === '/admin' || path.startsWith('/admin/')) {
+    const html = renderAdminIndex(rawHtml);
+    return applyShareMeta(html, {
+      siteName: profile?.publicName ?? 'Riffast',
+      title: profile ? adminTitle(profile) : 'Riffast · Panel de administración',
+      description: ADMIN_DESCRIPTION,
+      image: profile ? cardImage(profile, request, fallbackImage) : fallbackImage,
+      url: pageUrl,
+    });
+  }
+
+  if (!profile) {
+    // Sin perfil igual damos una vista previa válida (imagen con URL absoluta).
+    return applyShareMeta(rawHtml, {
+      siteName: 'Rifas y sorteos',
+      title: 'Rifas y sorteos',
+      description: 'Aparta tus boletos, paga fácil y recibe tu boleto digital con QR.',
+      image: fallbackImage,
+      url: pageUrl,
+    });
+  }
+
   const name = profile.publicName;
-  const description =
-    profile.description?.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200) ||
-    'Aparta tus boletos, paga fácil y recibe tu boleto digital con QR.';
   const logo = absolute(profile.logoUrl, request);
-  // Vista previa al compartir: tarjeta 1:1 con el logo sobre fondo blanco (ver
-  // modules/og/share-card.ts). El `?v=` invalida la caché de las redes al cambiar el logo.
-  const ogImage = absolute(shareCardRelUrl(profile), request);
+
+  // Vista previa al compartir (ver modules/og/share-card.ts y share-text.ts). En
+  // una rifa visible: su título, premio, precio y fecha, y la foto del premio con
+  // el logo del rifero; en el resto del sitio, la tarjeta de la página.
+  const eventNumber = eventNumberFromPath(path);
+  const raffle = eventNumber ? await findShareRaffle(profile.id, eventNumber).catch(() => null) : null;
+  const share: ShareMeta = raffle
+    ? {
+        siteName: name,
+        title: raffleTitle(raffle, profile),
+        description: raffleDescription(raffle, profile),
+        image: cardImage(profile, request, fallbackImage, { number: eventNumber!, photoUrl: raffle.photoUrl }),
+        url: pageUrl,
+      }
+    : {
+        siteName: name,
+        title: name,
+        description: siteDescription(profile),
+        image: cardImage(profile, request, fallbackImage),
+        url: pageUrl,
+      };
 
   let html = rawHtml;
 
@@ -231,22 +340,9 @@ export async function renderBrandedIndex(rawHtml: string, request: FastifyReques
       .replace('</head>', `  <link rel="icon" href="${escapeHtml(logo)}" />\n  </head>`);
   }
 
-  // Open Graph / Twitter → identidad de la página.
-  html = setProp(html, 'og:site_name', name);
-  html = setProp(html, 'og:title', name);
-  html = setProp(html, 'og:description', description);
-  html = setName(html, 'description', description);
+  // Open Graph / Twitter → identidad de la página (o de la rifa).
+  html = applyShareMeta(html, share);
   html = setName(html, 'apple-mobile-web-app-title', name);
-  if (ogImage) {
-    html = setProp(html, 'og:image', ogImage);
-    html = setName(html, 'twitter:image', ogImage);
-  }
-  // og:url (canónica del sitio). Si no existe el tag, lo añadimos.
-  if (/<meta property="og:url"/.test(html)) {
-    html = setProp(html, 'og:url', base);
-  } else {
-    html = html.replace('</head>', `  <meta property="og:url" content="${escapeHtml(base)}" />\n  </head>`);
-  }
 
   // Meta (Facebook): verificación de dominio + pixel. Solo en páginas públicas
   // (el administrador salió antes por renderAdminIndex).
